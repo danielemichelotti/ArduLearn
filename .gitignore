@@ -1,0 +1,9 @@
+# generati
+tools/node_modules/
+tools/app/build/
+tools/app/dist/
+__pycache__/
+*.pyc
+# file del PC
+.DS_Store
+Thumbs.db
