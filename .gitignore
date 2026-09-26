@@ -7,3 +7,4 @@ __pycache__/
 # file del PC
 .DS_Store
 Thumbs.db
+ArduLearnBridge/build/
