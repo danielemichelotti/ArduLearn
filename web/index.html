@@ -1494,7 +1494,9 @@ async function post(url, body) {
 //  La pagina controlla su Internet l'ultima versione (manifest.json nel repository), scarica i
 //  file e li passa alla scheda: la scheda non deve uscire su Internet.
 // =====================================================================
-const UPD_BASE = 'https://raw.githubusercontent.com/danielemichelotti/ArduLearn/main/aggiornamenti/';
+// ramo del repository: main per tutti; per provare una versione ?ramo=<nome> (vale per la sessione)
+const UPD_BRANCH = (() => { const r = new URLSearchParams(location.search).get('ramo'); try { if (r) sessionStorage.setItem('plcb-ramo', r); return r || sessionStorage.getItem('plcb-ramo') || 'main'; } catch { return r || 'main'; } })();
+const UPD_BASE = `https://raw.githubusercontent.com/danielemichelotti/ArduLearn/${encodeURIComponent(UPD_BRANCH)}/aggiornamenti/`;
 let updManifest = null, updChecked = false;
 const verCmp = (a, b) => {
   const x = String(a ?? '0').split('.').map(n => parseInt(n) || 0), y = String(b ?? '0').split('.').map(n => parseInt(n) || 0);
@@ -1514,11 +1516,11 @@ function updNeeded(m) {
 async function checkUpdates(force = false) {
   if (DEMO || !info.fs) { updChecked = true; return null; }
   let m = null;
-  try { const c = JSON.parse(localStorage.getItem('plcb-upd') || 'null'); if (!force && c && Date.now() - c.t < 6 * 3600e3) m = c.m; } catch {}
+  try { const c = JSON.parse(localStorage.getItem('plcb-upd-' + UPD_BRANCH) || 'null'); if (!force && c && Date.now() - c.t < 6 * 3600e3) m = c.m; } catch {}
   if (!m) {
     try {
       const r = await fetch(UPD_BASE + 'manifest.json', { cache: 'no-store' });
-      if (r.ok) { m = await r.json(); try { localStorage.setItem('plcb-upd', JSON.stringify({ t: Date.now(), m })); } catch {} }
+      if (r.ok) { m = await r.json(); try { localStorage.setItem('plcb-upd-' + UPD_BRANCH, JSON.stringify({ t: Date.now(), m })); } catch {} }
     } catch {}
   }
   updManifest = m; updChecked = true;
@@ -1560,7 +1562,7 @@ async function applyUpdate(parts) {
     toast('Aggiornamento completato: attendo che la scheda riparta…', 'ok');
     const back = await waitBoard(90000);
     hideBanner();
-    try { localStorage.removeItem('plcb-upd'); } catch {}
+    try { localStorage.removeItem('plcb-upd-' + UPD_BRANCH); } catch {}
     if (back) location.reload();
     else showBanner('warn', 'La scheda non risponde ancora dopo l\'aggiornamento: aspetta un minuto e ricarica la pagina.');
   } catch (e) {

@@ -1,0 +1,15 @@
+{
+ "r4wifi": {
+  "fw": "2.1",
+  "file": "PlcBlocchi_r4wifi.bin"
+ },
+ "bridge": {
+  "ver": "0.3.1",
+  "file": "ArduLearnBridge.bin"
+ },
+ "page": {
+  "ver": 3543942,
+  "file": "INDEX.GZ"
+ },
+ "note": "Prima versione con aggiornamento dalla rete: collegamento piu' stabile col modulo Wi-Fi."
+}

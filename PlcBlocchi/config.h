@@ -7,7 +7,7 @@
 //   - Arduino UNO R4 WiFi da solo: Wi-Fi integrato, nessuna shield
 // =====================================================================
 
-#define FW_VERSION "2.0"
+#define FW_VERSION "2.1"
 
 // ---- Scheda: lo stesso sorgente si compila per Mega 2560 e per UNO R4 WiFi ----
 // L'EXE di caricamento sceglie il firmware giusto; la pagina chiede /api/info

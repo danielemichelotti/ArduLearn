@@ -6,7 +6,7 @@
 //  IDE, arduino-cli e l'aggiornamento/ripristino del firmware.
 // =====================================================================
 
-#define BRIDGE_FW_VERSION "0.3.0"
+#define BRIDGE_FW_VERSION "0.3.1"
 #define BRIDGE_FW_MAJOR   0
 #define BRIDGE_FW_MINOR   3
 #define BRIDGE_FW_PATCH   0
