@@ -4,11 +4,11 @@ title: Chi sono
 sottotitolo: Il progetto e chi lo ha realizzato
 permalink: /chi-sono/
 ---
-Sono **Daniele Michelotti**, tecnico e progettista con una formazione e un'esperienza professionale nei settori dell'elettronica, dell'automazione, dell'informatica applicata e dei sistemi di controllo.
+Sono **Daniele Michelotti**, tecnico e progettista, con studi ed esperienza professionale nei settori dell'elettronica, dell'automazione, dell'informatica applicata e dei sistemi di controllo.
 
 Nel mio lavoro ho utilizzato Arduino, sistemi embedded, PLC Siemens e soluzioni di controllo per l'industria, occupandomi sia della progettazione e dell'integrazione degli impianti, sia della loro messa in opera.
 
-Per diversi anni sono stato anche formatore nel mondo della formazione professionale, insegnando materie tecniche a studenti di diversi indirizzi: dall'elettrico all'elettronico, fino alla meccatronica e all'automazione industriale. È proprio in aula che è nata l'idea di creare una piattaforma per avvicinarsi alla programmazione e all'automazione in modo semplice, concreto e graduale.
+Per diversi anni ho anche insegnato materie tecniche nella formazione professionale, a studenti di diversi indirizzi: dall'elettrico all'elettronico, fino alla meccatronica e all'automazione industriale. È proprio in aula che è nata l'idea di creare una piattaforma per avvicinarsi alla programmazione e all'automazione in modo semplice, concreto e graduale.
 
 Nel mondo industriale esistono strumenti molto potenti e completi, come i PLC Siemens, che permettono di affrontare la programmazione secondo logiche e metodologie professionali. Tuttavia, possono avere costi e complessità difficili da sostenere in un contesto didattico, soprattutto quando si vuole che ogni studente abbia il proprio sistema con cui sperimentare liberamente.
 
