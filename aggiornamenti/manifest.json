@@ -8,11 +8,20 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544687,
+  "ver": 3544978,
   "file": "INDEX.GZ"
  },
- "note": "LADDER online: anche il tratto verticale che unisce i rami diventa verde quando arriva corrente da una qualsiasi riga. · Esempi Termostato e Contapezzi: le scritte sul display mostrano di nuovo i valori.",
+ "note": "Indicatore in stile Lampada: con 0 e 1 resta spenta o accesa; con valori più grandi si illumina in proporzione al fondo scala (es. 512 su 1023 = metà luce).",
  "novita": [
+  {
+   "data": "27/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.2",
+   "page": 3544978,
+   "voci": [
+    "Indicatore in stile Lampada: con 0 e 1 resta spenta o accesa; con valori più grandi si illumina in proporzione al fondo scala (es. 512 su 1023 = metà luce)."
+   ]
+  },
   {
    "data": "27/09/2026",
    "fw": "2.2",
