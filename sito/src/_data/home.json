@@ -2,7 +2,7 @@
   "titolo": "Il PLC da laboratorio che si programma",
   "titolo_evidenza": "dal browser.",
   "sottotitolo": "Una scheda Arduino diventa un vero controllore per l'automazione. Gli studenti programmano in FBD, LADDER e GRAFCET, come in azienda, e vedono il loro programma prendere vita.",
-  "nota_mano": "gratuito e libero, fatto da un docente ✎",
+  "nota_mano": "gratuito e libero, fatto da un formatore ✎",
   "vantaggi": [
     { "titolo": "Solo il browser", "testo": "Gli studenti non installano nulla: aprono una pagina e iniziano a programmare." },
     { "titolo": "Costa quanto un Arduino", "testo": "Una scheda comune al posto di un PLC industriale: si attrezza tutta l'aula." },
