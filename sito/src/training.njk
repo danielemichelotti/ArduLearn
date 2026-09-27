@@ -16,14 +16,14 @@ permalink: /training/
     {% for c in video | categorie %}<button data-cat="{{ c }}">{{ c }}</button>{% endfor %}
   </div>
   <div class="griglia3" id="video">
-    {% for v in video %}{% set id = v.data.youtube | youtube_id %}
+    {% for v in video %}{% set id = v.data.youtube | youtube_id | copertina %}
     <div class="carta" data-cat="{{ v.data.categoria or 'Altri video' }}">
-      <button class="video" data-yt="{{ id }}" style="background-image:url('https://i.ytimg.com/vi/{{ id }}/hqdefault.jpg')" aria-label="Guarda: {{ v.data.title }}"></button>
+      <div class="video-box"><button class="video" data-yt="{{ id }}" style="background-image:url('/img/video/{{ id }}.jpg')" aria-label="Guarda: {{ v.data.title }}"></button></div>
       <div class="dentro"><span class="tag">{{ v.data.categoria or 'Altri video' }}</span><h3>{{ v.data.title }}</h3><p>{{ v.data.descrizione }}</p></div>
     </div>
     {% endfor %}
   </div>
-  <p class="nota-video" style="margin-top:18px">I video sono su YouTube: il lettore si carica solo quando premi ▶, in modalità senza cookie di profilazione (youtube-nocookie.com).</p>
+  <p class="nota-video" style="margin-top:18px">I video sono su YouTube: le copertine sono sul nostro sito e il lettore si carica da youtube-nocookie.com solo quando premi ▶ e dai il consenso. Dettagli nell'<a href="/privacy/">informativa privacy</a>.</p>
   {% else %}
   <div class="postit" style="max-width:420px">I primi video arrivano presto!
 Intanto prova il simulatore
@@ -31,12 +31,27 @@ o leggi il manuale.</div>
   {% endif %}
 </div></div>
 <script>
-// anteprima del video: YouTube si carica solo al clic (privacy nelle scuole)
+// il video si carica da YouTube solo al clic e con il consenso (Google riceve l'indirizzo IP)
+function avviaVideo(b) {
+  b.classList.add("attivo");
+  b.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + b.dataset.yt + '?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Video"></iframe>';
+}
 document.addEventListener("click", function (e) {
   var b = e.target.closest(".video[data-yt]");
   if (b && !b.classList.contains("attivo")) {
-    b.classList.add("attivo");
-    b.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + b.dataset.yt + '?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Video"></iframe>';
+    if (window.alPrivacy && window.alPrivacy.youtube()) avviaVideo(b);
+    else if (!b.parentNode.querySelector(".video-consenso")) {
+      var c = document.createElement("div");
+      c.className = "video-consenso";
+      c.innerHTML = '<div>Il video è ospitato su <b>YouTube</b> (Google): guardandolo, Google riceve il tuo indirizzo IP e può usare i propri cookie. <a href="/privacy/">Informativa</a></div>' +
+        '<label><input type="checkbox"> ricorda la scelta per gli altri video</label>' +
+        '<button class="priv-btn" type="button">▶ Guarda il video</button>';
+      c.querySelector("button").onclick = function () {
+        if (c.querySelector("input").checked && window.alPrivacy) window.alPrivacy.consentiYoutube();
+        c.remove(); avviaVideo(b);
+      };
+      b.parentNode.appendChild(c);
+    }
   }
   var f = e.target.closest("#filtri button");
   if (f) {

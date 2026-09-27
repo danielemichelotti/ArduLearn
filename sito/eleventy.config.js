@@ -1,6 +1,8 @@
 // Sito di ArduLearn. Si costruisce con "npm run build" (cartella _site/).
 // I contenuti stanno in src/ e si modificano anche dal pannello /admin (Sveltia CMS).
 import { HtmlBasePlugin } from "@11ty/eleventy";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 export default function (eleventyConfig) {
   // prova online: la stessa pagina che gira sulle schede, in modalità simulatore
@@ -23,6 +25,23 @@ export default function (eleventyConfig) {
   eleventyConfig.addFilter("youtube_id", u => {
     const m = String(u || "").match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([\w-]{11})/);
     return m ? m[1] : String(u || "").trim();
+  });
+  // copertine dei video salvate sul sito durante la costruzione: chi visita non contatta YouTube finché non avvia un video
+  const copertine = new Set();
+  eleventyConfig.addFilter("copertina", id => (copertine.add(id), id));
+  eleventyConfig.on("eleventy.after", async ({ dir }) => {
+    const out = path.join(dir.output, "img", "video");
+    await fs.mkdir(out, { recursive: true });
+    for (const id of copertine) {
+      if (!/^[\w-]{11}$/.test(id)) continue;
+      const file = path.join(out, id + ".jpg");
+      try { await fs.access(file); continue; } catch {}
+      try {
+        const r = await fetch(`https://i.ytimg.com/vi/${id}/hqdefault.jpg`);
+        if (!r.ok) throw new Error(r.status);
+        await fs.writeFile(file, Buffer.from(await r.arrayBuffer()));
+      } catch (e) { console.warn(`[copertine] ${id}: ${e.message}`); }
+    }
   });
   eleventyConfig.addFilter("categorie", list => [...new Set(list.map(v => v.data.categoria || "Altri video"))]);
 

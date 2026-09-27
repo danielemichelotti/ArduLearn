@@ -32,7 +32,8 @@
   <div class="wrap piede-in">
     <div>
       <b>{{ sito.nome }}</b> · ideato e realizzato da {{ sito.autore }}<br>
-      Software libero (GPL-3.0) · <a href="{{ sito.github }}">progetto su GitHub</a>
+      Software libero (GPL-3.0) · <a href="{{ sito.github }}">progetto su GitHub</a><br>
+      <a href="/privacy/">Privacy</a> · <a href="#" data-privacy-pref>Preferenze privacy</a>
     </div>
     <div class="dono">
       <span class="mano">se ti è utile, offrimi un caffè</span>
@@ -41,14 +42,7 @@
   </div>
   <div class="wrap nota-marchi">Arduino, UNO e Mega sono marchi di Arduino S.r.l.; la shield Ethernet &amp; PoE DFR0850 è un prodotto DFRobot. ArduLearn è un progetto indipendente, non affiliato a questi produttori.</div>
 </footer>
-<script>
-// Contatore delle visite (solo sul dominio pubblico): una richiesta, senza cookie e senza dati personali.
-(function () {
-  var domini = {{ sito.domini_contatore | dump | safe }};
-  if (domini.indexOf(location.hostname) < 0) return;
-  try { if (sessionStorage.getItem("al-visita")) return; sessionStorage.setItem("al-visita", "1"); } catch (e) {}
-  fetch({{ sito.contatore | dump | safe }}, { mode: "no-cors", credentials: "omit", keepalive: true }).catch(function () {});
-})();
-</script>
+<script>window.AL_PRIVACY = { contatore: {{ sito.contatore | dump | safe }}, domini: {{ sito.domini_contatore | dump | safe }}, base: {{ "/" | url | dump | safe }} };</script>
+<script src="/assets/privacy.js"></script>
 </body>
 </html>

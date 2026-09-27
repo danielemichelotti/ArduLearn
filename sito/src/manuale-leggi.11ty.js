@@ -19,5 +19,7 @@ export function render() {
 @media print { .barra-sito { display: none; } }
 </style>`;
   const barra = `<div class="barra-sito"><a href="/">← ArduLearn</a><span>Manuale del docente</span><span class="sp"></span><a class="pdf" href="/scarica/ArduLearn_manuale_docente.pdf">Scarica il PDF</a></div>`;
-  return html.replace("</head>", schermo + "</head>").replace("<body>", "<body>" + barra);
+  // niente collegamenti a Google Fonts: il carattere Caveat è sul sito
+  const pulito = html.replace(/<link rel="preconnect"[^>]*>\s*/g, "");
+  return pulito.replace("</head>", schermo + "</head>").replace("<body>", "<body>" + barra);
 }
