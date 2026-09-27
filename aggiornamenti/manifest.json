@@ -8,8 +8,8 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544264,
+  "ver": 3544357,
   "file": "INDEX.GZ"
  },
- "note": "Matrice LED: blocchi immagine e testo (caratteri 5x7, scorrimento), aggiornamento dalla rete piu' affidabile, controllo automatico del server web."
+ "note": "LADDER: gli indirizzi sopra contatti e bobine (%I0.0, %Q0.0...) non sono piu' tagliati"
 }
