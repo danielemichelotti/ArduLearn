@@ -129,3 +129,5 @@ section.grigio { background: var(--sfondo); }
 .carta .dentro .tag, .carta .dentro .btn { align-self: flex-start; }
 .griglia2 > .postit, .griglia3 > .postit { align-self: start; }
 .carta .foto { background-position: left top; }
+.contenuto .testo blockquote { margin: 18px 0; padding: 14px 20px; background: var(--postit); border-radius: 10px; font-size: 19px; transform: rotate(-.4deg); box-shadow: 0 6px 14px rgba(0,0,0,.08); }
+.contenuto .testo blockquote p { margin: 0; }
