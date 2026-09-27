@@ -82,14 +82,16 @@ section.tab.on{display:flex}
 #ghost{position:fixed;pointer-events:none;z-index:50;padding:6px 10px;border-radius:8px;color:#fff;font-weight:600;box-shadow:var(--shadow);opacity:.9}
 
 #canvasWrap{flex:1;min-width:0;position:relative;display:flex;flex-direction:column}
-#simViews{position:absolute;right:12px;bottom:40px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:5;max-height:calc(100% - 60px);overflow:auto}
+#simViews{position:absolute;inset:0;pointer-events:none;z-index:5}
+#simViews>div{position:absolute;pointer-events:auto;cursor:move;touch-action:none;box-shadow:var(--shadow)}
+[data-simctl]{cursor:pointer}.simbtn{fill:#e5e7eb;stroke:#9ca3af}.simbtn.on{fill:#16a34a;stroke:#15803d}.simbtxt{font:600 10px var(--font);fill:#374151;pointer-events:none}.simbtxt.on{fill:#fff}
+.simval{font:10.5px var(--mono);fill:var(--mut)}.simchip{fill:#fef3c7;stroke:#d97706}.simchip.on{fill:#16a34a;stroke:#15803d}.simchip.on+.simbtxt{fill:#fff}
+#simPop{position:fixed;z-index:75;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:var(--shadow);padding:8px 12px 10px;width:250px;font-size:12px}
+#simPop .row{margin:4px 0}#simPop input[type=range]{flex:1;min-width:0}#simPop .sv{min-width:60px;text-align:right;font-family:var(--mono)}
 #mtxView,#oledView,#lcdView{background:#111;border:1px solid var(--line2);border-radius:8px;padding:5px 8px 7px}
 #oledView .cap,#lcdView .cap{font-size:10px;color:#aaa;margin-bottom:3px}
 #oledView canvas{display:block;width:256px;height:128px;image-rendering:pixelated}
 #lcdView pre{margin:0;font:15px/1.15 var(--mono);color:#10240f;background:#9bc53d;padding:4px 6px;border-radius:3px;letter-spacing:1px}
-#simIO{background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:6px 10px 8px;width:260px;font-size:12px;box-shadow:var(--shadow)}
-#simIO h4{margin:0 0 4px;font-size:12px}#simIO .row{margin:3px 0}#simIO input[type=range]{flex:1;min-width:0}
-#simIO .sv{min-width:62px;text-align:right;font-family:var(--mono)}#simIO .leds{display:flex;flex-wrap:wrap;gap:3px}#simIO .leds i{width:10px;height:10px;border-radius:50%;background:#222;border:1px solid #444}
 .sitooff>*:not(.sitonote):not(h2){opacity:.45;pointer-events:none;filter:grayscale(.4)}
 .sitonote{font-size:12px;background:#fff3a8;color:#3b2f00;border-radius:6px;padding:6px 10px;margin:0 0 8px}
 .sito #followLbl{display:flex!important;opacity:.5}
@@ -371,7 +373,7 @@ dialog.hlp{padding:0;width:min(620px,94vw);max-width:94vw;max-height:88vh;overfl
       <div id="palList"></div>
     </aside>
     <div id="canvasWrap">
-      <div id="simViews"><div id="simIO" class="hide"></div><div id="oledView" class="hide" title="Display OLED, come sulla scheda"></div><div id="lcdView" class="hide" title="Display LCD, come sulla scheda"></div><div id="mtxView" class="hide" title="Matrice LED della scheda, in tempo reale"></div></div>
+      <div id="simViews"><div id="oledView" class="hide" title="Display OLED, come sulla scheda"></div><div id="lcdView" class="hide" title="Display LCD, come sulla scheda"></div><div id="mtxView" class="hide" title="Matrice LED della scheda, in tempo reale"></div></div>
       <div id="toolbar">
         <button id="palToggle" class="ico" title="Aggiungi blocco">＋ Blocco</button>
         <button class="ico newProj" title="Nuovo progetto: scegli blocchi (FBD), LADDER o GRAFCET">🗋 Nuovo…</button>
@@ -1571,53 +1573,168 @@ function renderSimDisplays() {
   }
   if (l && lv.dataset.k !== l) { lv.dataset.k = l; lv.innerHTML = `<div class="cap">Display LCD</div><pre>${esc(l)}</pre>`; }
 }
-// Simulatore: cursori per i sensori, stato degli attuatori (solo nella pagina, la scheda non c'entra)
+// ---------------------------------------------------------------------
+//  Simulatore: i comandi stanno su ogni blocco (ingressi, analogici, sensori) e ogni attuatore mostra il suo stato.
+//  Solo nel simulatore: con la scheda vera gli ingressi sono i pulsanti e i sensori veri.
+// ---------------------------------------------------------------------
+// sensori regolabili: chiave "tipo:pin" (uguale per blocchi, box LADDER e programma compilato)
 const SENS = {
-  71: i => [{ l: 'Temperatura', min: -100, max: 500, v: 235, u: '°C', dec: 1, o: 0 }, { l: 'Umidità', min: 0, max: 1000, v: 482, u: '%', dec: 1, o: 1 }],
-  72: i => [{ l: 'Temperatura', min: -200, max: 1000, v: 215, u: '°C', dec: 1, o: 0 }],
-  73: i => [{ l: 'Distanza', min: 20, max: 4000, v: 350, u: 'cm', dec: 1, o: 0, step: 10 }],
+  71: [{ l: 'Temperatura', min: -100, max: 500, v: 235, dec: 1, u: '°C' }, { l: 'Umidità', min: 0, max: 1000, v: 482, dec: 1, u: '%' }],
+  72: [{ l: 'Temperatura', min: -200, max: 1000, v: 215, dec: 1, u: '°C' }],
+  73: [{ l: 'Distanza', min: 20, max: 4000, v: 350, dec: 1, u: 'cm' }],
 };
-let simIOKey = '';
-function renderSimIO() {
-  const el = $('#simIO');
-  if (!el || typeof sim === 'undefined') return;
-  const P = sim.prog, list = P ? P.blocks.map((b, i) => [b, i]).filter(([b]) => b.t >= 70 && b.t <= 79) : [];
-  const show = online && live?.ld && list.length && $('#liveChk').checked;
-  el.classList.toggle('hide', !show);
-  if (!show) { simIOKey = ''; return; }
-  const key = sim.rev + ':' + list.map(([b, i]) => b.t + '@' + i).join(',');
-  if (key !== simIOKey) {                                  // struttura: solo quando cambia il programma (i cursori non si ricreano mentre li trascini)
-    simIOKey = key;
-    let h = '<h4>Sensori e attuatori simulati</h4>';
-    for (const [b, i] of list) {
-      const name = DEFS[b.t]?.name || 'Modulo';
-      if (SENS[b.t]) for (const f of SENS[b.t](i)) {
-        sim.modIn[i] ||= SENS[b.t](i).map(x => x.v);
-        h += `<div class="row" title="${esc(name)}"><span style="width:74px">${esc(f.l)}</span><input type="range" min="${f.min}" max="${f.max}" step="${f.step || 1}" value="${sim.modIn[i][f.o]}" data-sio="${i}:${f.o}:${f.dec}:${esc(f.u)}"><span class="sv" id="sv${i}_${f.o}"></span></div>`;
-      }
-      else if (b.t === 74) { sim.modIn[i] ||= [0, 0]; h += `<div class="row"><span style="width:74px">Encoder</span><button class="small" data-enc="${i}:-1">◀ gira</button><button class="small" data-enc="${i}:1">gira ▶</button></div>`; }
-      else if (b.t === 79) h += `<div class="row"><span style="width:74px">Orologio</span><span class="mut">ora del computer</span></div>`;
-      else h += `<div class="row"><span style="width:74px">${esc({ 70: 'Suono', 75: 'Servo', 76: 'Passo-passo', 77: 'Striscia LED', 78: 'Colore LED' }[b.t] || name)}</span><span class="sv" style="flex:1;text-align:left" id="ac${i}"></span></div>`;
-    }
-    el.innerHTML = h;
-  }
-  const fmt = (v, d, u) => (d ? (v / 10 ** d).toFixed(d) : v) + ' ' + u;
-  for (const r of $$('[data-sio]', el)) { const [i, o, d, u] = r.dataset.sio.split(':'); const out = $(`#sv${i}_${o}`); if (out) out.textContent = fmt(+r.value, +d, u); }
-  for (const [b, i] of list) {
-    const out = $('#ac' + i), v = sim.vals[i] || [0, 0], a = sim.act[i];
-    if (!out) continue;
-    if (b.t === 70) out.textContent = a?.on ? `♪ suona a ${a.f} Hz` : 'in silenzio';
-    if (b.t === 75) out.textContent = `angolo ${v[0]}°`;
-    if (b.t === 76) out.textContent = `posizione ${v[0]} passi${v[1] ? ' (fermo)' : ''}`;
-    if (b.t === 78) out.textContent = 'dà il colore ai LED della striscia';
-    if (b.t === 77) {
-      const lum = (Object.values(sim.act).find(x => x && x.lum !== undefined)?.lum ?? 255) / 255;
-      out.innerHTML = `<span class="leds">${(sim.leds.length ? sim.leds : [[0, 0, 0]]).slice(0, 30).map(([r, g, bb]) => `<i style="background:rgb(${Math.round(r * lum)},${Math.round(g * lum)},${Math.round(bb * lum)})"></i>`).join('')}</span>`;
-    }
-  }
+const SENS_PIN = { 71: 0, 72: 0, 73: 4, 74: 4 };                       // parametro con il pin nell'editor
+const sensVal = (key, o) => { const t = +key.split(':')[0]; if (typeof sim === 'undefined') return 0; sim.sens[key] ||= (SENS[t] || [{ v: 0 }, { v: 0 }]).map(f => f.v).concat([0]); return sim.sens[key][o]; };
+const simFmt = (v, f) => (f.dec ? (v / 10 ** f.dec).toFixed(f.dec) : v) + (f.u ? ' ' + f.u : '');
+// cursore SVG: data-* dicono cosa regola; x, w per disegnare
+function simSlider(x, y, w, attrs, label) {
+  return `<g data-simctl="sl" ${attrs} data-x="${x}" data-w="${w}"><rect x="${x - 4}" y="${y}" width="${w + 8}" height="20" fill="transparent"/>` +
+    (label ? `<text class="pl" x="${x}" y="${y + 1}">${esc(label)}</text>` : '') +
+    `<text class="simval" data-simv="val" x="${x + w}" y="${y + 1}" text-anchor="end"></text>` +
+    `<rect class="sl-track" x="${x}" y="${y + 8}" width="${w}" height="5" rx="2.5"/><rect class="sl-fill" data-simv="fill" x="${x}" y="${y + 8}" width="0" height="5" rx="2.5"/>` +
+    `<circle class="sl-knob" data-simv="knob" cx="${x}" cy="${y + 10.5}" r="7"/></g>`;
 }
-document.addEventListener('input', e => { const r = e.target.closest?.('[data-sio]'); if (!r) return; const [i, o] = r.dataset.sio.split(':').map(Number); (sim.modIn[i] ||= [0, 0])[o] = +r.value; renderSimIO(); });
-document.addEventListener('click', e => { const b = e.target.closest?.('[data-enc]'); if (!b) return; const [i, d] = b.dataset.enc.split(':').map(Number); (sim.modIn[i] ||= [0, 0])[1] += d; });
+// tastino HIGH/LOW di un ingresso digitale: clic = cambia e resta, tieni premuto = pulsante
+function simButton(x, y, w, pin, label = '') {
+  const on = typeof sim !== 'undefined' && sim.readPin(pin) ? ' on' : '';          // stato già giusto quando il disegno si rifà
+  return `<g data-simctl="din" data-pin="${pin}"><title>Clic: cambia e resta (interruttore) · Tieni premuto: acceso finché premi (pulsante)</title>` +
+    `<rect class="simbtn${on}" data-simv="btn" x="${x}" y="${y}" width="${w}" height="16" rx="5"/><text class="simbtxt${on}" data-simv="btxt" x="${x + w / 2}" y="${y + 11.5}" text-anchor="middle">${esc(label)}${on ? 'HIGH' : 'LOW'}</text></g>`;
+}
+// righe di comandi in fondo a un blocco FBD (altezza in più e disegno)
+function simBodyExtra(b) {
+  if (!DEMO) return 0;
+  if (b.t === 1) return 22;
+  if (b.t === 3) return 26;
+  if (b.t === 4) return 16;
+  if (SENS[b.t]) return 26 * SENS[b.t].length + 6;
+  if (b.t === 74 || b.t === 70 || b.t === 75 || b.t === 76 || b.t === 77) return 20;
+  return 0;
+}
+function simBodySvg(b, y) {
+  if (!DEMO) return '';
+  const k = b.k, t = (x, yy, str, extra = '') => `<text class="simval" ${extra} x="${x}" y="${yy}">${esc(str)}</text>`;
+  if (b.t === 1) return k[0] >= 0 ? simButton(10, y + 2, W - 20, k[0], 'livello del pin: ') : '';
+  if (b.t === 3) return k[0] >= 0 ? simSlider(12, y + 4, W - 24, `data-kind="ain" data-pin="${k[0]}" data-min="0" data-max="1023"`, 'regola') : '';
+  if (b.t === 4) return `<rect class="bar-bg" x="12" y="${y + 3}" width="${W - 24}" height="9" rx="3"/><rect class="bar-fg" data-simv="pwm" data-pin="${k[0]}" x="12" y="${y + 3}" width="0" height="9" rx="3"/>`;
+  if (SENS[b.t]) { const pin = k[SENS_PIN[b.t]]; if (pin < 0) return ''; return SENS[b.t].map((f, o) => simSlider(12, y + 10 + o * 26, W - 24, `data-kind="sens" data-key="${b.t}:${pin}" data-o="${o}" data-min="${f.min}" data-max="${f.max}"`, f.l)).join(''); }
+  if (b.t === 74) { const pin = k[4]; return pin < 0 ? '' : `<g data-simctl="enc" data-key="74:${pin}" data-d="-1"><rect class="simbtn" x="12" y="${y + 2}" width="70" height="16" rx="5"/><text class="simbtxt" x="47" y="${y + 13.5}" text-anchor="middle">◀ gira</text></g>` +
+    `<g data-simctl="enc" data-key="74:${pin}" data-d="1"><rect class="simbtn" x="${W - 82}" y="${y + 2}" width="70" height="16" rx="5"/><text class="simbtxt" x="${W - 47}" y="${y + 13.5}" text-anchor="middle">gira ▶</text></g>`; }
+  if (b.t === 70) return t(12, y + 13, '', `data-simv="tone" data-pin="${k[2]}"`);
+  if (b.t === 75) return t(12, y + 13, '', `data-simv="servo" data-id="${b.id}"`);
+  if (b.t === 76) return t(12, y + 13, '', `data-simv="step" data-id="${b.id}"`);
+  if (b.t === 77) return `<g data-simv="leds" transform="translate(12,${y + 4})"></g>`;
+  return '';
+}
+// aggiorna lo stato disegnato di tutti i comandi (chiamata a ogni lettura dei valori)
+function renderSimCtl() {
+  if (typeof sim === 'undefined') return;
+  for (const g of $$('[data-simctl="din"]')) {
+    const on = !!sim.readPin(+g.dataset.pin), r = g.querySelector('[data-simv="btn"]'), tx = g.querySelector('[data-simv="btxt"]');
+    r?.classList.toggle('on', on); if (tx) { tx.classList.toggle('on', on); tx.textContent = tx.textContent.replace(/(HIGH|LOW)$/, on ? 'HIGH' : 'LOW'); }
+    g.querySelector('.simchip')?.classList.toggle('on', on);
+  }
+  for (const g of $$('[data-simctl="sl"]')) {
+    const v = simSlGet(g), min = +g.dataset.min, max = +g.dataset.max, x = +g.dataset.x, w = +g.dataset.w, r = clamp((v - min) / (max - min || 1), 0, 1);
+    g.querySelector('[data-simv="fill"]')?.setAttribute('width', r * w);
+    g.querySelector('[data-simv="knob"]')?.setAttribute('cx', x + r * w);
+    const f = g.dataset.kind === 'sens' ? SENS[+g.dataset.key.split(':')[0]][+g.dataset.o] : { dec: 0, u: '' };
+    const tv = g.querySelector('[data-simv="val"]'); if (tv) tv.textContent = simFmt(v, f);
+  }
+  for (const el of $$('[data-simv="pwm"]')) el.setAttribute('width', (W - 24) * clamp((sim.pwm[+el.dataset.pin] || 0) / 255, 0, 1));
+  for (const el of $$('[data-simv="tone"]')) { const a = sim.tone[+el.dataset.pin]; el.textContent = a?.on ? `♪ suona a ${a.f} Hz` : 'in silenzio'; }
+  for (const el of $$('[data-simv="servo"]')) { const v = liveValue(+el.dataset.id, 0); el.textContent = v == null ? '' : `angolo del servo: ${v}°`; }
+  for (const el of $$('[data-simv="step"]')) { const v = liveValue(+el.dataset.id, 0); el.textContent = v == null ? '' : `posizione: ${v} passi`; }
+  const lum = (sim.lum ?? 255) / 255, leds = sim.leds.length ? sim.leds : [];
+  for (const el of $$('[data-simv="leds"]')) el.innerHTML = (leds.length ? leds : [[0, 0, 0]]).slice(0, 12).map(([r, g, bb], i) => `<circle cx="${6 + i * 12.5}" cy="6" r="5" fill="rgb(${Math.round(r * lum)},${Math.round(g * lum)},${Math.round(bb * lum)})" stroke="#555"/>`).join('');
+}
+function simSlGet(g) { return g.dataset.kind === 'ain' ? (sim.analog[+g.dataset.pin - FIRST_A] ?? 0) : sensVal(g.dataset.key, +g.dataset.o); }
+function simSlSet(g, v) { if (g.dataset.kind === 'ain') sim.analog[+g.dataset.pin - FIRST_A] = v; else { sensVal(g.dataset.key, 0); sim.sens[g.dataset.key][+g.dataset.o] = v; } renderSimCtl(); }
+// pulsanti e cursori: gestiti prima dell'editor (così non spostano i blocchi e non selezionano le celle)
+document.addEventListener('pointerdown', e => {
+  const c = DEMO && e.button === 0 && e.target.closest?.('[data-simctl]');
+  if (!c) return;
+  e.stopPropagation(); e.preventDefault();
+  const kind = c.dataset.simctl;
+  if (kind === 'din') {
+    const pin = +c.dataset.pin, before = sim.readPin(pin) ? 1 : 0, t0 = Date.now();
+    sim.inputs[pin] = before ? 0 : 1; renderSimCtl();
+    const up = () => { removeEventListener('pointerup', up, true); if (Date.now() - t0 > 350) { sim.inputs[pin] = before; renderSimCtl(); } };
+    addEventListener('pointerup', up, true);
+  } else if (kind === 'enc') { sensVal(c.dataset.key, 0); sim.sens[c.dataset.key][2] += +c.dataset.d; }
+  else if (kind === 'sl') {
+    const track = c.querySelector('.sl-track');
+    const move = ev => { const r = track.getBoundingClientRect(); const f = clamp((ev.clientX - r.left) / (r.width || 1), 0, 1); simSlSet(c, Math.round(+c.dataset.min + f * (+c.dataset.max - +c.dataset.min))); };
+    const up = () => { removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true); };
+    addEventListener('pointermove', move, true); addEventListener('pointerup', up, true); move(e);
+  } else if (kind === 'pop') simPopOpen(c, e);
+}, true);
+// LADDER/GRAFCET: cursori per analogici e sensori in una finestrella vicino al box
+function simPopOpen(c, e) {
+  $('#simPop')?.remove();
+  const items = JSON.parse(c.dataset.items || '[]');
+  const d = document.createElement('div'); d.id = 'simPop';
+  d.innerHTML = '<b>Regola (simulatore)</b>' + items.map(it => {
+    if (it.enc) return `<div class="row"><span style="width:80px">Encoder</span><button class="small" data-pe="${it.key}:-1">◀ gira</button><button class="small" data-pe="${it.key}:1">gira ▶</button></div>`;
+    const f = it.kind === 'ain' ? { l: 'Pin ' + pinName(it.pin), min: 0, max: 1023, dec: 0, u: '' } : SENS[+it.key.split(':')[0]][it.o];
+    const v = it.kind === 'ain' ? (sim.analog[it.pin - FIRST_A] ?? 0) : sensVal(it.key, it.o);
+    return `<div class="row"><span style="width:80px">${esc(f.l)}</span><input type="range" min="${f.min}" max="${f.max}" value="${v}" data-pk='${JSON.stringify(it)}'><span class="sv">${simFmt(v, f)}</span></div>`;
+  }).join('') + '<div class="small mut" style="margin-top:4px">Clic fuori per chiudere</div>';
+  document.body.appendChild(d);
+  d.style.left = Math.min(innerWidth - 270, e.clientX + 8) + 'px'; d.style.top = Math.min(innerHeight - d.offsetHeight - 10, e.clientY + 8) + 'px';
+  d.addEventListener('input', ev => {
+    const it = JSON.parse(ev.target.dataset.pk || 'null'); if (!it) return;
+    const v = +ev.target.value;
+    if (it.kind === 'ain') sim.analog[it.pin - FIRST_A] = v; else { sensVal(it.key, 0); sim.sens[it.key][it.o] = v; }
+    const f = it.kind === 'ain' ? { dec: 0, u: '' } : SENS[+it.key.split(':')[0]][it.o];
+    ev.target.nextElementSibling.textContent = simFmt(v, f);
+  });
+  d.addEventListener('click', ev => { const b = ev.target.closest('[data-pe]'); if (!b) return; const [t, pin, dd] = b.dataset.pe.split(':'); const key = t + ':' + pin; sensVal(key, 0); sim.sens[key][2] += +dd; });
+  setTimeout(() => addEventListener('pointerdown', function off(ev) { if (!d.contains(ev.target)) { d.remove(); removeEventListener('pointerdown', off, true); } }, true), 0);
+}
+// comandi per un box LADDER (sensori del modulo, ingressi analogici nei collegamenti)
+function simLadItems(e) {
+  const bx = LAD_BOXES[e.k], items = [];
+  const mt = bx?.mod?.t;
+  if (mt && (SENS[mt] || mt === 74)) {
+    const pin = +e.p['k' + SENS_PIN[mt]];
+    if (pin >= 0) { if (mt === 74) items.push({ enc: 1, key: '74:' + pin }); else SENS[mt].forEach((f, o) => items.push({ kind: 'sens', key: mt + ':' + pin, o })); }
+  }
+  for (const v of Object.values(e.a || {})) { const r = v && ladResolve(v, 'word'); if (r && !r.err && r.ain && !items.some(x => x.pin === r.pin)) items.push({ kind: 'ain', pin: r.pin }); }
+  return items;
+}
+// ingresso digitale (pin) indicato da un operando, oppure null
+// GRAFCET: un tastino per ogni ingresso digitale nella recettività, un "≋" per analogici e sensori
+function simGrafChips(t, x0, y) {
+  const seen = new Set(); let x = x0, h = '';
+  for (const m of String(t.cond || '').matchAll(/"[^"]+"|%?[A-Za-z_][\w.]*/g)) {
+    const tok = m[0].replace(/"/g, '');
+    if (seen.has(tok) || /^(AND|OR|NOT|XOR|TRUE|FALSE|RE|FE)$/i.test(tok) || /^X\d/.test(tok)) continue;
+    seen.add(tok);
+    const pin = simDinPin(tok);
+    if (pin != null) { const w = Math.max(34, tok.length * 6.5 + 12), on = typeof sim !== 'undefined' && sim.readPin(pin) ? ' on' : ''; h += `<g data-simctl="din" data-pin="${pin}"><title>${esc(tok)}: clic = cambia, tieni premuto = pulsante</title><rect class="simchip${on}" x="${x}" y="${y - 8}" width="${w}" height="16" rx="5"/><text class="simbtxt" x="${x + w / 2}" y="${y + 3.5}" text-anchor="middle">${esc(tok)}</text></g>`; x += w + 4; continue; }
+    const r = ladResolve(tok, 'word');
+    if (r && !r.err && r.ain) { h += `<g data-simctl="pop" data-items='${esc(JSON.stringify([{ kind: 'ain', pin: r.pin }]))}'><rect class="simchip" x="${x}" y="${y - 8}" width="26" height="16" rx="5"/><text class="simbtxt" x="${x + 13}" y="${y + 3.5}" text-anchor="middle">≋</text><title>Regola ${esc(tok)}</title></g>`; x += 30; }
+  }
+  return h;
+}
+function simDinPin(op) { const r = op && ladResolve(op, 'bit'); return r && !r.err && r.din ? r.pin : null; }
+// display trascinabili: la posizione si ricorda nel browser
+function simViewDrag(el, def) {
+  const key = 'plcb-view-' + el.id, pos = store.get(key, def);
+  el.style.right = pos.r + 'px'; el.style.bottom = pos.b + 'px';
+  el.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    e.stopPropagation(); e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, r0 = parseFloat(el.style.right), b0 = parseFloat(el.style.bottom), box = el.parentElement.getBoundingClientRect();
+    const move = ev => {
+      const r = clamp(r0 - (ev.clientX - sx), 0, box.width - el.offsetWidth), b = clamp(b0 - (ev.clientY - sy), 0, box.height - el.offsetHeight);
+      el.style.right = r + 'px'; el.style.bottom = b + 'px';
+    };
+    const up = () => { removeEventListener('pointermove', move, true); removeEventListener('pointerup', up, true); store.set(key, { r: parseFloat(el.style.right), b: parseFloat(el.style.bottom) }); };
+    addEventListener('pointermove', move, true); addEventListener('pointerup', up, true);
+  });
+}
+setTimeout(() => { simViewDrag($('#mtxView'), { r: 12, b: 40 }); simViewDrag($('#oledView'), { r: 12, b: 150 }); simViewDrag($('#lcdView'), { r: 300, b: 40 }); }, 0);
 function renderMtxView() {
   const el = $('#mtxView');
   if (!el) return;
@@ -2112,7 +2229,7 @@ function bodyH(b) {
     default: return DEFS[b.t]?.mod ? 20 : 0;
   }
 }
-function blockH(b) { return HEAD + PAD + rows(b) * ROW + bodyH(b) + PAD; }
+function blockH(b) { return HEAD + PAD + rows(b) * ROW + bodyH(b) + simBodyExtra(b) + PAD; }
 function inPos(b, i) { return { x: b.x, y: b.y + HEAD + PAD + i * ROW + ROW / 2 }; }
 function outPos(b, o) { return { x: b.x + W, y: b.y + HEAD + PAD + o * ROW + ROW / 2 }; }
 
@@ -2224,6 +2341,7 @@ function blockSvg(b, probs) {
     s += `<text class="pl" x="${W - 11}" y="${y + 4}" text-anchor="end">${esc(n)}</text>`;
   });
   s += bodySvg(b, HEAD + PAD + rows(b) * ROW);
+  s += simBodySvg(b, HEAD + PAD + rows(b) * ROW + bodyH(b));
   return s + '</g>';
 }
 
@@ -2272,7 +2390,7 @@ function pinState(p) {
 function applyLive() {
   renderMtxView();
   renderSimDisplays();
-  if (DEMO) renderSimIO();
+  if (DEMO) renderSimCtl();
   const show = $('#liveChk').checked && live && online && live.ld;
   for (const t of $$('[data-lv]')) {
     const [id, o] = t.dataset.lv.split(':').map(Number);
@@ -4673,7 +4791,8 @@ function ladElemSvg(e, x, y, cy, rh, on, vin, vout, err, key, instName) {
     if (e.k === 'nc') s += `<line class="lsym" x1="${mid - 6}" y1="${cy + 9}" x2="${mid + 6}" y2="${cy - 9}"/>`;
     if (e.k === 'p' || e.k === 'n') s += `<text class="lsymt" x="${mid}" y="${cy + 4}" text-anchor="middle">${e.k.toUpperCase()}</text>`;
     if (e.k === 'not') return s + `<text class="lsymt" x="${mid}" y="${cy - 14}" text-anchor="middle">NOT</text>`;
-    return s + opLabel(e.op, 'bit');
+    const dp = DEMO ? simDinPin(e.op) : null;          // simulatore: tastino dell'ingresso sotto il contatto
+    return s + opLabel(e.op, 'bit') + (dp != null ? simButton(mid - 20, cy + 13, 40, dp) : '');
   }
   if (isCoil(e.k)) {
     s += `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${mid - 10}" y2="${cy}"/><line class="${col(vin)}" x1="${mid + 10}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
@@ -4690,6 +4809,7 @@ function ladElemSvg(e, x, y, cy, rh, on, vin, vout, err, key, instName) {
   s += `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${bx0}" y2="${cy}"/><line class="${col(vout)}" x1="${bx0 + bw}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
   if (instName) s += `<text class="laddr" x="${bx0 + bw / 2}" y="${top - 4}" text-anchor="middle">"${instName}"</text>`;
   s += `<rect class="lbox" x="${bx0}" y="${top}" width="${bw}" height="${bh}" rx="3"/>`;
+  if (DEMO) { const it = simLadItems(e); if (it.length) s += `<g data-simctl="pop" data-items='${esc(JSON.stringify(it))}'><title>Regola i valori (simulatore)</title><rect class="simchip" x="${bx0 + bw - 22}" y="${top + 2}" width="19" height="15" rx="4"/><text class="simbtxt" x="${bx0 + bw - 12.5}" y="${top + 13}" text-anchor="middle">≋</text></g>`; }
   const extra = e.k === 'cmp' ? ' ' + (e.p.op || '==') : '';
   s += `<text class="lboxt" x="${bx0 + bw / 2}" y="${top + 12}" text-anchor="middle">${esc(bx.t + extra)}</text>`;
   let ly = top + 27;
@@ -6449,7 +6569,7 @@ function renderGraf() {
     let cond = t.mode === 'lad' ? '[LADDER]' : (t.cond || '<???>');
     if (cond.length > 30) cond = cond.slice(0, 29) + '…';
     els += `<g class="${cls}" data-gtr="${t.id}"><rect class="ghit" x="${x - 20}" y="${y - 9}" width="${70 + cond.length * 7.3}" height="18"/><line x1="${x - 14}" y1="${y}" x2="${x + 14}" y2="${y}"/>
-      <text class="gtn" x="${x + 20}" y="${y + 4}">T${t.n}</text><text class="gcond" x="${x + 46}" y="${y + 4}">${esc(cond)}</text><circle class="ghandle" data-ght="${t.id}" cx="${x}" cy="${y + 11}" r="4.5"><title>Trascina su una tappa: la aggiunge a valle (divergenza in AND)</title></circle></g>`;
+      <text class="gtn" x="${x + 20}" y="${y + 4}">T${t.n}</text><text class="gcond" x="${x + 46}" y="${y + 4}">${esc(cond)}</text>${DEMO && t.mode !== 'lad' ? simGrafChips(t, x + 56 + cond.length * 7.3, y) : ''}<circle class="ghandle" data-ght="${t.id}" cx="${x}" cy="${y + 11}" r="4.5"><title>Trascina su una tappa: la aggiunge a valle (divergenza in AND)</title></circle></g>`;
   }
   let tmp = '';
   if (gDrag?.kind === 'band' && gDrag.x1 !== undefined) tmp = `<rect class="gband" x="${Math.min(gDrag.x0, gDrag.x1)}" y="${Math.min(gDrag.y0, gDrag.y1)}" width="${Math.abs(gDrag.x1 - gDrag.x0)}" height="${Math.abs(gDrag.y1 - gDrag.y0)}"/>`;
@@ -7347,7 +7467,7 @@ async function start() {
 /*@SIM*/
 const SIM_R4 = DEMO && new URLSearchParams(location.search).has('r4'), SIM_NSV = SIM_R4 ? 128 : 32;   // come SCRIPT_VARS del firmware
 const sim = {
-  image: null, prog: null, run: 1, rev: 1, modIn: {}, act: {}, leds: [], op: '', lt: '', overrun: 0, draft: null, dr: 0, mem: { mb: new Uint8Array(16), mw: new Int32Array(32), sv: new Int32Array(SIM_NSV), pg: [0, 0, 0] }, vals: [], st: [], pins: {}, inputs: {}, analog: new Array(16).fill(512), t0: Date.now(),
+  image: null, prog: null, run: 1, rev: 1, sens: {}, pwm: {}, tone: {}, lum: 255, leds: [], op: '', lt: '', overrun: 0, draft: null, dr: 0, mem: { mb: new Uint8Array(16), mw: new Int32Array(32), sv: new Int32Array(SIM_NSV), pg: [0, 0, 0] }, vals: [], st: [], pins: {}, inputs: {}, analog: new Array(16).fill(512), t0: Date.now(),
   slots: store.get(SIM_R4 ? 'plcb-demo-slots-r4' : 'plcb-demo-slots', {}),
   // ?demo&r4&ap: scheda appena accesa, sulla sua rete (nessun Wi-Fi impostato)
   wifi: DEMO && new URLSearchParams(location.search).has('ap') ? { mode: 'ap', ssid: '', rssi: 0, ap: 'ArduLearn-6bb6', saved: 0, pass: '' }
@@ -7367,7 +7487,7 @@ const sim = {
     r.blocks.forEach((b, i) => { if (b.t === 7) this.vals[i][0] = b.k[0]; });
     this.pins = {};
     r.pins.forEach((m, p) => { if (m === PM.OUT) this.pins[p] = 0; });
-    this.modIn = {}; this.act = {}; this.leds = [];
+    this.pwm = {}; this.tone = {}; this.leds = []; this.lum = 255;
   },
   wifiInfo() { const { pass, ...w } = this.wifi; return w; },
   toggleInput(p) { this.inputs[p] = this.readPin(p) ? 0 : 1; },
@@ -7390,7 +7510,7 @@ const sim = {
         case 1: { const v = this.readPin(k[0]); o[0] = k[1] ? 1 - v : v; break; }
         case 3: o[0] = this.analog[k[0] - FIRST_A] ?? 0; break;
         case 2: this.pins[k[0]] = inp(b, 0) ? 1 : 0; break;
-        case 4: { const v = clamp(inp(b, 0), 0, 255); this.pins[k[0]] = v > 127 ? 1 : 0; break; }
+        case 4: { const v = clamp(inp(b, 0), 0, 255); this.pins[k[0]] = v > 127 ? 1 : 0; this.pwm[k[0]] = v; break; }
         case 5: o[0] = k[0]; break;
         case 10: case 11: case 12: case 13: case 14: {
           let n = 0, ones = 0;
@@ -7444,17 +7564,18 @@ const sim = {
         default: {
           const md = DEFS[b.t]?.mod;
           if (md?.sim) { o[0] = md.sim[0] ?? 0; o[1] = md.sim[1] ?? 0; }
-          const u = this.modIn[i];                                  // valori dei cursori del pannello "Sensori"
+          const spin = { 71: k[0], 72: k[0], 73: k[2] & 0xFF, 74: k[0] & 0xFF }[b.t];   // pin del sensore nel programma compilato
+          const u = spin != null ? this.sens[b.t + ':' + spin] : null;                    // valori dei cursori sul blocco
           if (u && b.t === 71) { o[0] = u[0]; o[1] = u[1]; }
           if (u && b.t === 72) { o[0] = u[0]; o[1] = 1; }
           if (u && b.t === 73) { if (inp(b, 0)) { o[0] = Math.min(u[0], (inp(b, 1) || 400) * 10); o[1] = u[0] <= (inp(b, 1) || 400) * 10 ? 1 : 0; } }
           if (b.t === 79) { const d = new Date(), f = [d.getHours(), d.getMinutes(), d.getSeconds(), d.getDate(), d.getMonth() + 1, d.getFullYear(), (d.getDay() + 6) % 7 + 1, d.getHours() * 100 + d.getMinutes(), d.getHours() * 60 + d.getMinutes(), d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()]; o[0] = f[k[0] & 15] ?? 0; o[1] = f[k[1] & 15] ?? 0; }
-          if (b.t === 70) this.act[i] = { on: !!inp(b, 0) && inp(b, 1) >= 31, f: inp(b, 1) };
-          if (b.t === 77) this.act[i] = { lum: clamp(inp(b, 0), 0, 255) };
+          if (b.t === 70) this.tone[k[2]] = { on: !!inp(b, 0) && inp(b, 1) >= 31, f: inp(b, 1) };
+          if (b.t === 77) this.lum = clamp(inp(b, 0), 0, 255);
           if (b.t === 78) { const n = inp(b, 0), rgb = [inp(b, 1), inp(b, 2), inp(b, 3)].map(v => clamp(v, 0, 255)); if (n < 0) { if (!this.leds.length) this.leds = Array.from({ length: 8 }, () => [0, 0, 0]); this.leds = this.leds.map(() => rgb); } else if (n < 60) { while (this.leds.length <= n) this.leds.push([0, 0, 0]); this.leds[n] = rgb; } }
           if (b.t === 75) o[0] = clamp(inp(b, 0), 0, 180);
           if (b.t === 76) { const tg = inp(b, 3), pm = (k[2] >> 29) & 1; if (inp(b, 2)) o[0] = 0; if (pm && inp(b, 0)) o[0] += Math.sign(tg - o[0]) * Math.min(Math.abs(tg - o[0]), Math.max(1, Math.round(Math.abs(inp(b, 1)) / 100))); else if (inp(b, 0)) o[0] += Math.round(inp(b, 1) / 100); o[1] = pm ? +(o[0] === tg) : +!(inp(b, 0) && inp(b, 1)); }
-          if (b.t === 74) { if (inp(b, 0) && !(s.f & 1)) o[0] = inp(b, 1); s.f = inp(b, 0) ? 1 : 0; if (u && u[1]) { o[0] += u[1]; o[1] = Math.sign(u[1]); u[1] = 0; } o[0] = clamp(o[0], inp(b, 2), inp(b, 3)); }
+          if (b.t === 74) { if (inp(b, 0) && !(s.f & 1)) o[0] = inp(b, 1); s.f = inp(b, 0) ? 1 : 0; if (u && u[2]) { o[0] += u[2]; o[1] = Math.sign(u[2]); u[2] = 0; } o[0] = clamp(o[0], inp(b, 2), inp(b, 3)); }
         }
       }
     });
