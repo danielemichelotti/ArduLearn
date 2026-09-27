@@ -2,12 +2,13 @@
 //   node gira.mjs 01                     registra dal simulatore in web/ e monta
 //   node gira.mjs 01 --monta             rimonta soltanto (dopo aver cambiato scritte, cartelli, audio)
 //   node gira.mjs 01 --monta --voce voce.wav [--musica musica.mp3]
+//   node gira.mjs 01 --provini           griglia con un fotogramma per scena, per controllare il video
 // I file finiti vanno in tools/video/out/<nome-video>/ (cartella esclusa dal repository).
 import fs from 'node:fs';
 import path from 'node:path';
 import { avviaServer } from './lib/server.mjs';
 import { registra } from './lib/regia.mjs';
-import { monta } from './lib/montaggio.mjs';
+import { monta, provini } from './lib/montaggio.mjs';
 import { schedaSito } from './lib/testi.mjs';
 
 const args = process.argv.slice(2);
@@ -22,6 +23,8 @@ if (!file) {
 const video = (await import('./video/' + file)).default;
 const cartella = path.join(qui, 'out', video.file);
 fs.mkdirSync(cartella, { recursive: true });
+
+if (args.includes('--provini')) { console.log(provini(video, cartella)); process.exit(0); }
 
 if (!args.includes('--monta')) {
   console.log(`Registro "${video.titolo}"…`);

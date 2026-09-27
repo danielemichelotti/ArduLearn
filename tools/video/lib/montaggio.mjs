@@ -204,3 +204,22 @@ export async function monta(video, cartella, { voce, musica } = {}) {
   const capitoli = reg.scene.filter(s => s.capitolo).map((s, i) => `${i ? mmss(DURATA_INTRO + s.inizio) : '0:00'} ${s.capitolo}`).join('\n');
   return { uscita: path.join(cartella, uscita), totale, capitoli };
 }
+
+// ---------- provini: un fotogramma a metà di ogni scena, in una griglia da controllare a colpo d'occhio ----------
+export function provini(video, cartella) {
+  const reg = JSON.parse(fs.readFileSync(path.join(cartella, 'registrazione.json'), 'utf8'));
+  const dir = path.join(cartella, 'provini');
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir);
+  const tempi = reg.scene.map(s => DURATA_INTRO + s.fine - 1.2);
+  tempi.forEach((t, i) => ffmpeg(['-ss', t.toFixed(2), '-i', `${video.file}.mp4`, '-frames:v', '1', '-vf', 'scale=640:360', `provini/p${String(i).padStart(2, '0')}.jpg`], cartella));
+  const n = tempi.length, col = 3, righe = Math.ceil(n / col);
+  const ing = [], lay = [];
+  for (let i = 0; i < righe * col; i++) {
+    if (i < n) ing.push('-i', `provini/p${String(i).padStart(2, '0')}.jpg`);
+    else ing.push('-f', 'lavfi', '-i', 'color=c=black:s=640x360:d=1');
+    lay.push(`${(i % col) * 640}_${Math.floor(i / col) * 360}`);
+  }
+  ffmpeg([...ing, '-filter_complex', `${Array.from({ length: righe * col }, (_, i) => `[${i}]`).join('')}xstack=inputs=${righe * col}:layout=${lay.join('|')}`, '-frames:v', '1', `${video.file}-provini.jpg`], cartella);
+  return path.join(cartella, `${video.file}-provini.jpg`);
+}

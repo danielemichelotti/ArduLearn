@@ -149,6 +149,21 @@ export class Regia {
     await attesa(350);
   }
 
+  // tiene premuto il tasto del mouse: nel simulatore i tastini degli ingressi fanno da pulsante
+  async tieni(dove, ms = 1200) {
+    await this.muovi(dove);
+    await attesa(200);
+    await this.p.mouse.down(); await attesa(ms); await this.p.mouse.up();
+    await attesa(400);
+  }
+
+  // scorrimento morbido fino all'elemento, che resta al centro dello schermo
+  async scorri(sel) {
+    const loc = typeof sel === 'string' ? this.p.locator(sel).first() : sel.first();
+    await loc.evaluate(e => e.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+    await attesa(1100);
+  }
+
   async scrivi(sel, testo, { ritmo = 110 } = {}) {
     await this.clic(sel, { dopo: 200 });
     await this.p.keyboard.type(testo, { delay: ritmo });
@@ -164,7 +179,7 @@ export class Regia {
   async scegli(sel, valore) {
     await this.clic(sel, { dopo: 250 });
     await this.p.keyboard.press('Escape').catch(() => { });
-    await this.p.locator(sel).first().selectOption(String(valore));
+    await this.p.locator(sel).first().selectOption(typeof valore === 'object' ? valore : String(valore));
     await attesa(400);
   }
 
@@ -189,7 +204,7 @@ export async function registra({ url, cartella, scene }) {
   const context = await browser.newContext({ viewport: VISTA, deviceScaleFactor: SCALA, colorScheme: 'dark', locale: 'it-IT' });
   await context.addInitScript(SCRIPT_PAGINA);
   const page = await context.newPage();
-  page.on('dialog', d => d.dismiss());
+  page.on('dialog', d => d.accept());          // le conferme native non si vedono nel video: si accettano
   page.on('pageerror', e => console.warn('  errore nella pagina:', e.message));
   await page.goto(url);
   await page.waitForLoadState('networkidle');
