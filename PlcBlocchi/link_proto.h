@@ -8,20 +8,18 @@
 //  Le richieste HTTP del browser passano cosi' come sono: l'ESP32 manda il testo
 //  della richiesta (S poi Q), il RA4M1 conferma ogni pacchetto (K) e risponde con
 //  il testo della risposta HTTP (R ... E): il server web del RA4M1 resta lo stesso.
-//  Si parte a 115200 baud; dopo H/h si passa a LINK_FAST_BAUD. Senza pacchetti
-//  validi per LINK_IDLE_MS entrambi tornano a 115200.
+//  Velocita' fissa (LINK_BAUD) fin dall'avvio: sul RA4M1 cambiarla vuol dire end()/begin()
+//  della seriale, che a volte lasciava la ricezione senza interrupt (collegamento muto).
 // =====================================================================
 #include <stdint.h>
 #include <stddef.h>
 
 #define LINK_SOF          0xA5
 #define LINK_MAX          256        // dati massimi in un pacchetto
-#define LINK_SLOW_BAUD    115200
-#define LINK_FAST_BAUD    2000000
-#define LINK_IDLE_MS      3000
+#define LINK_BAUD         1000000    // 10 us per byte: margine per il RA4M1 anche col PLC occupato
 
 // ESP32 -> RA4M1
-#define LINK_HELLO   'H'   // "b=<baud> m=<mac 12 cifre esadecimali> v=<versione>"  -> 'h'
+#define LINK_HELLO   'H'   // "m=<mac 12 cifre esadecimali> v=<versione>"  -> 'h'
 #define LINK_PING    'P'   // -> 'p'
 #define LINK_NET     'N'   // "s=<stato rete> ip=<a.b.c.d> ap=<nome rete propria>"  -> 'n'
 #define LINK_START   'S'   // inizio di una richiesta HTTP                          -> 'K'

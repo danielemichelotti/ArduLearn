@@ -8,7 +8,7 @@ void linkService();            // da chiamare spesso (task "svc"): saluto, batti
 bool linkUp();                 // il RA4M1 risponde
 void linkPause(uint32_t ms);   // il RA4M1 si sta caricando dalla USB: per un po' non lo si cerca
 const char* linkRaVersion();   // firmware ArduLearn del RA4M1 ("" se sconosciuto)
-uint32_t linkBaud();
+uint32_t linkBaud();           // velocita' del collegamento (fissa)
 
 // Richiesta HTTP inoltrata al RA4M1. Il corpo (bodyLen byte) viene chiesto a readBody a pezzi;
 // la risposta arriva a onHead (codice, tipo, lunghezza o -1) e poi a onData (corpo, a pezzi).

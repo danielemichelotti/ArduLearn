@@ -6,9 +6,9 @@
 //  IDE, arduino-cli e l'aggiornamento/ripristino del firmware.
 // =====================================================================
 
-#define BRIDGE_FW_VERSION "0.2.0"
+#define BRIDGE_FW_VERSION "0.3.0"
 #define BRIDGE_FW_MAJOR   0
-#define BRIDGE_FW_MINOR   2
+#define BRIDGE_FW_MINOR   3
 #define BRIDGE_FW_PATCH   0
 
 // RA4M1: BOOT e RESET comandati dall'ESP32 (tocco a 1200 baud = bootloader)

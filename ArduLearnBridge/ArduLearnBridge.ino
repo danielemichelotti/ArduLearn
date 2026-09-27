@@ -24,13 +24,14 @@
 #include "link.h"
 #include "wifimgr.h"
 #include "web.h"
+#include "ota.h"
 
 #define SERIAL_USER          USBSerial     // la porta seriale che vede il PC
 #define SERIAL_USER_INTERNAL Serial        // UART0 verso il Serial del RA4M1
 
 USBCDC USBSerial(0);
 static void usbEventCallback(void* arg, esp_event_base_t base, int32_t id, void* data);
-static volatile uint32_t quietUntil = 0;   // caricamento del RA4M1 in corso: niente messaggi sulla USB
+volatile uint32_t quietUntil = 0;   // caricamento del RA4M1 in corso: niente messaggi sulla USB
 
 // ---------------------------------------------------------------------
 //  Servizi di rete: mDNS e ricerca UDP
@@ -93,6 +94,7 @@ static void svcTask(void*) {
     webPoll();
     svcWhere = "netServices";
     netServices();
+    otaService();
     svcWhere = "pausa";
     svcLoops++;
     vTaskDelay(pdMS_TO_TICKS(5));
@@ -187,6 +189,7 @@ void setup() {
 // Ponte USB <-> Serial del RA4M1 (come nel firmware Arduino)
 static uint8_t buf[2048];
 void loop() {
+  if (bridgeHold) { delay(1); return; }   // aggiornamento del RA4M1: la sua seriale la usa BOSSA
   int n = 0;
   if (SERIAL_USER.available()) {
     n = min((unsigned int)SERIAL_USER.available(), sizeof(buf));

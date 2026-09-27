@@ -12,7 +12,7 @@
 
 static SemaphoreHandle_t mtx;
 static volatile bool up = false;
-static uint32_t curBaud = LINK_SLOW_BAUD;
+
 static uint32_t pausedUntil = 0, lastHello = 0, lastBeat = 0;
 static uint8_t  beatFails = 0;
 static char raFw[16] = "";
@@ -50,27 +50,16 @@ void linkLog(const char* fmt, ...) {
 
 bool linkUp() { return up; }
 const char* linkRaVersion() { return raFw; }
-uint32_t linkBaud() { return curBaud; }
+uint32_t linkBaud() { return LINK_BAUD; }
 void linkPause(uint32_t ms) { pausedUntil = millis() + ms; up = false; }
 
-static void setBaud(uint32_t b) {
-  if (b == curBaud) return;
-  LINK.flush();
-  LINK.updateBaudRate(b);
-  curBaud = b;
-}
 
 // Il RA4M1 non risponde piu' (riavviato, o tornato a 115200): si rifa' il saluto al prossimo giro
 static void lost() {
   linkLost++;
   up = false;
   lastHello = 0;
-  // la UART si reinizializza da capo (non basta cambiare velocita')
-  LINK.end();
-  LINK.setRxBufferSize(8192);
-  LINK.setTxBufferSize(4096);
-  LINK.begin(LINK_SLOW_BAUD, SERIAL_8N1, PIN_LINK_RX, PIN_LINK_TX);
-  curBaud = LINK_SLOW_BAUD;
+  while (LINK.available()) LINK.read();
 }
 
 static void sendFrame(uint8_t type, const void* data, size_t n) {
@@ -150,16 +139,15 @@ static void handleCommand(const uint8_t* p, uint16_t n) {
 }
 
 // ---------------------------------------------------------------------
-//  Saluto: a 115200 si scambiano H/h, poi si passa alla velocita' alta e si controlla con P/p
+// Saluto: H/h (MAC e versioni), poi una prova con P/p
 // ---------------------------------------------------------------------
 static bool hello() {
   uint8_t mac[6], buf[LINK_MAX + 1];
   uint16_t len;
   wifiMac(mac);
   char msg[64];
-  snprintf(msg, sizeof(msg), "b=%lu m=%02x%02x%02x%02x%02x%02x v=%s", (unsigned long)LINK_FAST_BAUD,
+  snprintf(msg, sizeof(msg), "m=%02x%02x%02x%02x%02x%02x v=%s",
            mac[0], mac[1], mac[2], mac[3], mac[4], mac[5], BRIDGE_FW_VERSION);
-  setBaud(LINK_SLOW_BAUD);
   while (LINK.available()) LINK.read();
   linkHelloTries++;
   sendFrame(LINK_HELLO, msg, strlen(msg));
@@ -167,13 +155,10 @@ static bool hello() {
   buf[len] = 0;
   const char* fw = strstr((char*)buf, "fw=");
   if (fw) { strlcpy(raFw, fw + 3, sizeof(raFw)); char* sp = strchr(raFw, ' '); if (sp) *sp = 0; }
-  delay(5);                                   // il RA4M1 cambia velocita' dopo aver risposto
-  setBaud(LINK_FAST_BAUD);
   for (uint8_t i = 0; i < 3; i++) {
     sendFrame(LINK_PING, nullptr, 0);
     if (expect(LINK_PONG, buf, len, 100)) { netDirty = true; linkHelloOk++; return true; }
   }
-  setBaud(LINK_SLOW_BAUD);                    // la velocita' alta non va: si riprova da capo
   return false;
 }
 
@@ -199,7 +184,7 @@ void linkBegin() {
   mtx = xSemaphoreCreateMutex();
   LINK.setRxBufferSize(8192);
   LINK.setTxBufferSize(4096);
-  LINK.begin(LINK_SLOW_BAUD, SERIAL_8N1, PIN_LINK_RX, PIN_LINK_TX);
+  LINK.begin(LINK_BAUD, SERIAL_8N1, PIN_LINK_RX, PIN_LINK_TX);
 }
 
 void linkService() {

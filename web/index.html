@@ -60,6 +60,8 @@ nav.tabs button.on{background:var(--panel);box-shadow:var(--shadow);font-weight:
 .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-weight:600;font-size:12px;border:1px solid var(--line2)}
 .pill.run{background:var(--on-soft);border-color:var(--on);color:var(--on)}
 .pill.stop{background:var(--err-soft);border-color:var(--err);color:var(--err)}
+.pill.upd{background:#f08c00;border-color:#f08c00;color:#fff;cursor:pointer;animation:blinkupd 1.2s ease-in-out infinite}
+@keyframes blinkupd{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(240,140,0,0)}50%{opacity:.75;box-shadow:0 0 0 5px rgba(240,140,0,.45)}}
 .spacer{flex:1}
 
 main{flex:1;min-height:0;display:flex;position:relative}
@@ -325,6 +327,7 @@ dialog.hlp{padding:0;width:min(620px,94vw);max-width:94vw;max-height:88vh;overfl
     <button data-tab="settings">Impostazioni</button>
   </nav>
   <div class="spacer"></div>
+  <button id="updPill" class="pill upd hide" title="C'è una versione nuova di ArduLearn per questa scheda: clicca per aggiornare">⬆ Aggiornamento disponibile</button>
   <span id="runPill" class="pill">—</span>
   <button id="runBtn" class="ico" title="Avvia / ferma il programma sulla scheda"></button>
   <button id="uploadBtn" class="pri ico" title="Invia il programma alla scheda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg>Carica sulla scheda</button>
@@ -516,6 +519,7 @@ dialog.hlp{padding:0;width:min(620px,94vw);max-width:94vw;max-height:88vh;overfl
     <div class="card" id="setTeacher"></div>
     <div class="card"><h2>Scheda</h2><div id="setBoard"></div></div>
     <div class="card hide" id="setWifiCard"><h2>Rete Wi-Fi</h2><div id="setWifi"></div></div>
+    <div class="card hide" id="setUpdCard"><h2>Aggiornamento del firmware</h2><div id="setUpd"></div></div>
     <div class="card"><h2>Display OLED <span class="mut">(SSD1306 128×64, I²C)</span></h2><div id="setOled"></div></div>
     <div class="card"><h2>Display LCD <span class="mut">(HD44780 16×2 / 20×4)</span></h2><div id="setLcd"></div></div>
     <div class="card hide" id="setRtcCard"><h2>Orologio <span class="mut">(modulo RTC DS3231)</span></h2><div id="setRtc"></div></div>
@@ -1483,6 +1487,138 @@ async function post(url, body) {
   if (r.status === 403) { authed = false; renderAuth(); }
   if (!r.ok || j.ok === false) throw new Error(j.err || ('Errore ' + r.status));
   return j;
+}
+
+// =====================================================================
+//  Aggiornamenti (UNO R4 WiFi con il firmware ArduLearnBridge: info.fs)
+//  La pagina controlla su Internet l'ultima versione (manifest.json nel repository), scarica i
+//  file e li passa alla scheda: la scheda non deve uscire su Internet.
+// =====================================================================
+const UPD_BASE = 'https://raw.githubusercontent.com/danielemichelotti/ArduLearn/main/aggiornamenti/';
+let updManifest = null, updChecked = false;
+const verCmp = (a, b) => {
+  const x = String(a ?? '0').split('.').map(n => parseInt(n) || 0), y = String(b ?? '0').split('.').map(n => parseInt(n) || 0);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; }
+  return 0;
+};
+// versione della pagina = minuti dal 2020 (tools/build_web.py)
+const pageDate = v => v ? new Date(1577836800000 + v * 60000).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+function updNeeded(m) {
+  if (!m || !info.fs) return [];
+  const out = [];
+  if (m.r4wifi?.fw && verCmp(m.r4wifi.fw, info.fw) > 0) out.push({ k: 'ra', name: 'Firmware del PLC (RA4M1)', from: info.fw, to: m.r4wifi.fw, file: m.r4wifi.file });
+  if (m.page?.ver && +m.page.ver > +(info.pv || 0)) out.push({ k: 'page', name: 'Pagina web', from: pageDate(info.pv), to: pageDate(m.page.ver), file: m.page.file, ver: m.page.ver });
+  if (m.bridge?.ver && verCmp(m.bridge.ver, info.bridge) > 0) out.push({ k: 'esp', name: 'Firmware del modulo Wi-Fi (ESP32)', from: info.bridge, to: m.bridge.ver, file: m.bridge.file });
+  return out;
+}
+async function checkUpdates(force = false) {
+  if (DEMO || !info.fs) { updChecked = true; return null; }
+  let m = null;
+  try { const c = JSON.parse(localStorage.getItem('plcb-upd') || 'null'); if (!force && c && Date.now() - c.t < 6 * 3600e3) m = c.m; } catch {}
+  if (!m) {
+    try {
+      const r = await fetch(UPD_BASE + 'manifest.json', { cache: 'no-store' });
+      if (r.ok) { m = await r.json(); try { localStorage.setItem('plcb-upd', JSON.stringify({ t: Date.now(), m })); } catch {} }
+    } catch {}
+  }
+  updManifest = m; updChecked = true;
+  $('#updPill').classList.toggle('hide', !updNeeded(m).length);
+  if ($('#tab-settings')?.classList.contains('on')) renderUpd();
+  return m;
+}
+// tipo di file: firmware ESP32 (0xE9), pagina (gzip) o firmware del RA4M1 (vettori ARM)
+function updKind(u8) {
+  if (u8[0] === 0xE9) return 'esp';
+  if (u8[0] === 0x1f && u8[1] === 0x8b) return 'page';
+  const sp = (u8[0] | u8[1] << 8 | u8[2] << 16 | u8[3] << 24) >>> 0;
+  return sp > 0x20000000 && sp <= 0x20008000 ? 'ra' : null;
+}
+const UPD_NAMES = { ra: 'firmware del PLC (RA4M1)', page: 'pagina web', esp: 'firmware del modulo Wi-Fi (ESP32)' };
+async function waitBoard(ms) {
+  const t0 = Date.now();
+  await new Promise(r => setTimeout(r, 4000));
+  while (Date.now() - t0 < ms) {
+    try { const r = await fetch('/api/info', { cache: 'no-store' }); if (r.ok) return true; } catch {}
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  return false;
+}
+// parts: [{k, data: ArrayBuffer, ver?}]; ordine: RA4M1, pagina, ESP32 (che poi si riavvia)
+async function applyUpdate(parts) {
+  const order = { ra: 0, page: 1, esp: 2 };
+  parts = [...parts].sort((a, b) => order[a.k] - order[b.k]);
+  showBanner('warn', 'Aggiornamento in corso: non spegnere la scheda e non chiudere la pagina.');
+  try {
+    for (const p of parts) {
+      toast('Aggiorno: ' + UPD_NAMES[p.k] + '…');
+      if (p.k === 'ra') await post('/api/ota?target=ra', p.data);
+      else if (p.k === 'page') {
+        await post('/api/file?name=INDEX.GZ', p.data);
+        await post('/api/file?name=INDEX.VER', new TextEncoder().encode(String(p.ver || Math.floor((Date.now() - 1577836800000) / 60000))));
+      } else await post('/api/ota?target=esp', p.data);
+    }
+    toast('Aggiornamento completato: attendo che la scheda riparta…', 'ok');
+    const back = await waitBoard(90000);
+    hideBanner();
+    try { localStorage.removeItem('plcb-upd'); } catch {}
+    if (back) location.reload();
+    else showBanner('warn', 'La scheda non risponde ancora dopo l\'aggiornamento: aspetta un minuto e ricarica la pagina.');
+  } catch (e) {
+    hideBanner();
+    toast('Aggiornamento non riuscito: ' + e.message, 'err');
+  }
+}
+async function confirmUpdate(list) {
+  return confirmDlg('Aggiornare ' + list.join(', ') + '?\nIl programma si ferma per qualche secondo (fino a un minuto) e poi riparte da solo. Non spegnere la scheda durante l\'aggiornamento.', 'Aggiorna');
+}
+async function updateOnline() {
+  const need = updNeeded(updManifest);
+  if (!need.length) return;
+  if (!await confirmUpdate(need.map(n => UPD_NAMES[n.k]))) return;
+  await withPin(async () => {
+    const parts = [];
+    for (const n of need) {
+      toast('Scarico: ' + UPD_NAMES[n.k] + '…');
+      const r = await fetch(UPD_BASE + n.file, { cache: 'no-store' });
+      if (!r.ok) throw new Error('Download non riuscito (' + n.file + ')');
+      const data = await r.arrayBuffer();
+      if (updKind(new Uint8Array(data)) !== n.k) throw new Error('File scaricato non valido (' + n.file + ')');
+      parts.push({ k: n.k, data, ver: n.ver });
+    }
+    await applyUpdate(parts);
+  });
+}
+async function updateFromFiles(files) {
+  const parts = [];
+  for (const f of files) {
+    const data = await f.arrayBuffer(), k = updKind(new Uint8Array(data));
+    if (!k) return toast(`"${f.name}" non è un file di aggiornamento di ArduLearn per la UNO R4 WiFi`, 'err');
+    parts.push({ k, data });
+  }
+  if (!parts.length || !await confirmUpdate(parts.map(p => UPD_NAMES[p.k]))) return;
+  await withPin(() => applyUpdate(parts));
+}
+function renderUpd() {
+  const el = $('#setUpd');
+  if (!el || !info.fs) return;
+  const lock = authed ? '' : 'disabled';
+  const need = updNeeded(updManifest);
+  const m = updManifest;
+  const state = DEMO ? 'nel simulatore non si controlla' : !updChecked ? 'controllo in corso…'
+    : !m ? 'non verificabile (serve Internet sul PC; il repository deve essere pubblico)'
+    : need.length ? `<b style="color:#f08c00">disponibile: ${need.map(n => `${esc(n.name)} ${esc(String(n.to))}`).join(', ')}</b>${m.note ? `<br><span class="small">${esc(m.note)}</span>` : ''}`
+    : 'la scheda è aggiornata';
+  el.innerHTML = `<dl class="kv"><dt>PLC (RA4M1)</dt><dd>${esc(info.fw || '—')}</dd><dt>Modulo Wi-Fi (ESP32)</dt><dd>${esc(info.bridge || '—')}</dd>
+      <dt>Pagina web</dt><dd>${pageDate(info.pv)}</dd><dt>Ultima versione</dt><dd>${state}</dd></dl>
+    <div class="row" style="margin-top:10px;flex-wrap:wrap">${need.length ? `<button class="pri" id="updGo" ${lock}>Aggiorna</button>` : ''}
+      <button id="updCheck">Cerca aggiornamenti</button>
+      <button id="updFile" ${lock} title="Firmware .bin del PLC o del modulo Wi-Fi, oppure INDEX.GZ">Aggiorna da file…</button>
+      <input type="file" id="updFileIn" accept=".bin,.gz" multiple class="hide"></div>
+    <p class="small mut">Durante l'aggiornamento il programma si ferma per qualche secondo e poi riparte da solo.</p>`;
+  $('#updCheck').onclick = () => { updChecked = false; renderUpd(); checkUpdates(true); };
+  if ($('#updGo')) $('#updGo').onclick = updateOnline;
+  $('#updFile').onclick = () => $('#updFileIn').click();
+  $('#updFileIn').onchange = e => { const f = [...e.target.files]; e.target.value = ''; if (f.length) updateFromFiles(f); };
 }
 
 async function loadInfo() {
@@ -2591,6 +2727,7 @@ function renderRun() {
   btn.innerHTML = live.run ? '■ Ferma' : '▶ Avvia';
 }
 $('#runBtn').onclick = () => withPin(async () => { await post('/api/run?s=' + (live?.run ? 0 : 1)); });
+$('#updPill').onclick = openUpdate;
 
 function renderStatus() {
   const mod = isModified();
@@ -3065,6 +3202,8 @@ $('#examples').addEventListener('click', async e => {
 // =====================================================================
 //  Scheda "Impostazioni"
 // =====================================================================
+function openUpdate() { switchTab('settings'); $('#setUpdCard')?.scrollIntoView({ block: 'center' }); if (updNeeded(updManifest).length) updateOnline(); }
+
 function renderSettings() {
   const lock = authed ? '' : 'disabled';
   $('#setTeacher').innerHTML = `<h2>Accesso docente</h2>` + (authed
@@ -3082,6 +3221,8 @@ function renderSettings() {
     <div class="row" style="margin-top:12px"><span>Nome in rete</span><input id="hostIn" value="${esc(info.host)}" maxlength="15" ${lock} style="width:160px"><span class="mut">.local</span><button id="hostSave" ${lock}>Salva</button></div>
     <p class="small mut">Dai a ogni scheda un nome diverso (es. <b>plc1</b>, <b>plc2</b>) e scrivilo su un'etichetta: gli studenti apriranno <b>http://plc1.local</b>. Se il nome non funziona sulla rete della scuola, usa lo script <b>trova_plc.py</b> o l'app ArduLearn (Trova le schede) dal PC del docente.</p>`;
   $('#setWifiCard').classList.toggle('hide', !isWifi);
+  $('#setUpdCard').classList.toggle('hide', !info.fs);
+  renderUpd();
   if (isWifi) renderWifi(info.wifi || {}, true);
   $('#setOled').innerHTML = `<div class="row"><span>Controller</span><select id="oledT" ${lock}><option value="0">SSD1306 (di solito 0,96")</option><option value="1" ${info.oled?.t ? 'selected' : ''}>SH1106 (di solito 1,3")</option></select>
     <span>Indirizzo I²C</span><input id="oledA" value="0x${(info.oled?.a ?? 60).toString(16).toUpperCase()}" style="width:80px" ${lock}><button id="oledSave" ${lock}>Salva</button>
@@ -6746,14 +6887,16 @@ async function start() {
     await loadInfo();
     if (auth) authed = (await getJson('/api/auth')).ok;
     renderAuth();
-    const { project: bp, ids } = await fetchBoardProgram();
+    let bp, ids;
+    try { ({ project: bp, ids } = await fetchBoardProgram()); }
+    catch (e) { bp = emptyProject(); ids = []; toast(`Il programma sulla scheda non si può aprire nell'editor (${e.message}): ricaricalo`, 'err'); }
     board = { project: bp, ids, rev: info.rev, json: logicJson(bp) };
     const draft = store.get(draftKey());
     if (draft?.project) migrateProject(draft.project);
     knownDr = info.dr ?? null;
     const shared = !authed && following() && info.dr ? await fetchSharedDraft().catch(() => null) : null;
     if (shared) {
-      project = shared; markSynced(); setOnline(true); renderAll(); requestAnimationFrame(fitView); maybeWifiBanner(); liveLoop(); return;
+      project = shared; markSynced(); setOnline(true); renderAll(); requestAnimationFrame(fitView); maybeWifiBanner(); checkUpdates(); liveLoop(); return;
     }
     if (draft?.project && draft.rev === info.rev && logicJson(draft.project) !== board.json) {
       project = draft.project;
@@ -6773,6 +6916,7 @@ async function start() {
   renderAll();
   requestAnimationFrame(fitView);
   maybeWifiBanner();
+  checkUpdates();
   liveLoop();
 }
 

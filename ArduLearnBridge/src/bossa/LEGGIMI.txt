@@ -1,0 +1,4 @@
+File di BOSSA (https://github.com/arduino/BOSSA, ramo unor4wifi), licenza BSD (vedi LICENSE),
+presi dal firmware "USB bridge" di Arduino per l'UNO R4 WiFi: servono all'ESP32 per scrivere
+il firmware del RA4M1 (come bossac dal PC). Unica modifica: in Samba.cpp i messaggi di debug
+sono disattivati invece di usare la libreria Arduino_DebugUtils.

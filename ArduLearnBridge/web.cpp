@@ -2,6 +2,9 @@
 #include "bridge_config.h"
 #include "link.h"
 #include "wifimgr.h"
+#include "ota.h"
+#include <Update.h>
+#include <Preferences.h>
 #include <esp_http_server.h>
 #include <lwip/sockets.h>
 #include <LittleFS.h>
@@ -151,9 +154,24 @@ static bool pinOk(httpd_req_t* req) {
   if (s == 200 && strstr(resp, "\"ok\":true")) {
     strlcpy(okPin, pin, sizeof(okPin));
     okPinAt = millis();
+    Preferences p;                          // ultimo PIN giusto: serve se il RA4M1 non risponde (vedi postOta)
+    p.begin("ardulearn", false);
+    if (p.getString("pin", "") != pin) p.putString("pin", pin);
+    p.end();
     return true;
   }
   return false;
+}
+
+// Con il RA4M1 muto (firmware guasto) il PIN si confronta con l'ultimo verificato
+static bool pinOkOffline(httpd_req_t* req) {
+  char pin[12];
+  getHeader(req, "X-Pin", pin, sizeof(pin));
+  Preferences p;
+  p.begin("ardulearn", true);
+  String saved = p.getString("pin", "1234");
+  p.end();
+  return pin[0] && saved == pin;
 }
 
 // ---------------------------------------------------------------------
@@ -434,6 +452,47 @@ static esp_err_t postProgram(httpd_req_t* req) {
   return httpd_resp_send_chunk(req, nullptr, 0);
 }
 
+// Aggiornamento: target=esp (firmware dell'ESP32) o target=ra (firmware del RA4M1)
+static esp_err_t postOta(httpd_req_t* req) {
+  char target[8];
+  if (!getParam(req, "target", target, sizeof(target))) return replyErr(req, 400, "Manca target (esp o ra)");
+  bool esp = !strcmp(target, "esp"), ra = !strcmp(target, "ra");
+  if (!esp && !ra) return replyErr(req, 400, "target: esp o ra");
+  if (!pinOk(req) && !(pinStatus < 0 && pinOkOffline(req))) return pinError(req);
+  if (req->content_len <= 0) return replyErr(req, 400, "Dimensione non valida");
+  if (esp) {
+    static uint8_t buf[4096];
+    int32_t left = req->content_len;
+    int n = recvSome(req, buf, min((int32_t)sizeof(buf), left));
+    if (n <= 0) return replyErr(req, 400, "Ricezione non riuscita");
+    if (buf[0] != 0xE9) return replyErr(req, 400, "Non e' un firmware per il modulo Wi-Fi (ESP32)");   // intestazione delle app ESP32
+    if (!Update.begin(req->content_len, U_FLASH)) return replyErr(req, 400, "Firmware troppo grande per la partizione");
+    if (Update.write(buf, n) != (size_t)n) { Update.abort(); return replyErr(req, 400, "Scrittura non riuscita"); }
+    left -= n;
+    while (left > 0) {
+      n = recvSome(req, buf, min((int32_t)sizeof(buf), left));
+      if (n <= 0 || Update.write(buf, n) != (size_t)n) { Update.abort(); return replyErr(req, 400, "Ricezione non riuscita"); }
+      left -= n;
+    }
+    if (!Update.end(true)) {
+      String e = String("Firmware non valido: ") + Update.errorString();
+      return replyErr(req, 400, e.c_str());
+    }
+    otaRestartLater();                        // la scheda riparte fra poco con il firmware nuovo
+    return sendJson(req, 200, "{\"ok\":true,\"restart\":true}");
+  }
+  static const char RA_PATH[] = "/OTA/RA.BIN";
+  LittleFS.mkdir("/OTA");
+  if ((int32_t)req->content_len > 240 * 1024) return replyErr(req, 400, "File troppo grande per il RA4M1");
+  if (!receiveToFile(req, RA_PATH)) return replyErr(req, 400, "Ricezione non riuscita");
+  String err;
+  bool ok = otaCheckRaImage(RA_PATH, err) && otaFlashRa(RA_PATH, err);
+  LittleFS.remove(RA_PATH);
+  infoWanted = true;
+  if (!ok) return replyErr(req, 400, err.c_str());
+  return replyOk(req);
+}
+
 // Toglie la "}" finale da una risposta JSON per aggiungere dei campi
 static void openJson(String& s) {
   int e = s.lastIndexOf('}');
@@ -556,6 +615,7 @@ static esp_err_t apiRoute(httpd_req_t* req) {
     return replyOk(req);
   }
   if (is(u, "/api/program")) { infoWanted = true; return postProgram(req); }
+  if (is(u, "/api/ota"))     return postOta(req);
   if (is(u, "/api/config")) { forgetPin(); infoWanted = true; }   // PIN o nome forse cambiati
   if (is(u, "/api/run") || is(u, "/api/erase")) infoWanted = true;
   return proxy(req);
