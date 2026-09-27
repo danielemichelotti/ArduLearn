@@ -230,6 +230,18 @@ dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;font-family:var(--mono);font-size:13
 .status b{color:var(--fg);font-weight:600}
 .credit{margin-left:auto;opacity:.6;font-size:11px}
 .stcode{width:100%;font:12px/1.45 var(--mono);min-height:200px;tab-size:2;white-space:pre}
+.stbig{float:right;font-size:12px;padding:1px 8px;margin:-2px 0 2px 6px}
+#codeBig{position:fixed;inset:0;z-index:70;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:2vh 2vw}
+#codeBig .cbwin{background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);width:100%;height:100%;max-width:1500px;display:flex;flex-direction:column;overflow:hidden}
+#codeBig .cbhd{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+#codeBig .cbhd h3{margin:0;font-size:16px}
+#codeBig .cbbody{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:0}
+#codeBig .cbleft{display:flex;flex-direction:column;min-height:0;padding:10px 12px;gap:8px}
+#codeBig .cbed{flex:1;display:flex;min-height:0;border:1px solid var(--line2);border-radius:8px;overflow:hidden;background:var(--panel)}
+#codeBig .cbnum{margin:0;padding:8px 8px 8px 6px;min-width:44px;text-align:right;font:14px/1.5 var(--mono);color:var(--mut);background:var(--bg);border-right:1px solid var(--line);overflow:hidden;user-select:none;white-space:pre}
+#codeBig textarea{flex:1;border:0;border-radius:0;padding:8px 10px;font:14px/1.5 var(--mono);tab-size:2;white-space:pre;resize:none;outline:none;overflow:auto}
+#codeBig .cbhelp{overflow:auto;padding:4px 16px 16px;border-left:1px solid var(--line);font-size:13px}
+@media (max-width:900px){#codeBig .cbbody{grid-template-columns:1fr}#codeBig .cbhelp{display:none}}
 .sterr{color:var(--err);font-size:12px;margin-top:4px}.stok{color:var(--on);font-size:12px;margin-top:4px}
 .sthelp{font-size:12px;color:var(--mut)}.sthelp code{font-size:11px}
 #grafWrap{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -2682,7 +2694,7 @@ function paramField(b, p) {
   if (p.t === 'mpin') return `<label class="field"><span>${esc(p.label)}</span><select data-mpin="${p.k}">${mpinOptions(b, p)}</select></label>`;
   if (p.t === 'script') {
     let msg; try { const r = stCompile(b.code || ''); msg = `<div class="stok">✓ corretto · ${r.code.length} byte · variabili: ${r.locals.join(', ') || 'nessuna'}</div>`; } catch (e) { msg = `<div class="sterr">✗ ${esc(e.message)}</div>`; }
-    return `<label class="field"><span>${esc(p.label)}</span><textarea class="stcode" data-f="code" spellcheck="false" rows="14">${esc(b.code || '')}</textarea></label><div id="stMsg">${msg}</div>
+    return `${bigBtn('st')}<label class="field"><span>${esc(p.label)}</span><textarea class="stcode" data-f="code" spellcheck="false" rows="14">${esc(b.code || '')}</textarea></label><div id="stMsg">${msg}</div>
       <details class="sthelp"><summary>Sintassi</summary><p>Ingressi <code>IN1…IN4</code>, uscite <code>OUT1</code> <code>OUT2</code>: il blocco mostra solo quelli che lo script usa (fino al numero più alto); altre variabili si creano assegnandole (<code>x := 5;</code>) e ricordano il valore da un ciclo all'altro. Memorie condivise: <code>%M0.0…%M7.7</code>, <code>%MW0…%MW30</code>.</p>
       <p><code>IF a &gt; 10 THEN … ELSIF … ELSE … END_IF;</code><br><code>FOR i := 1 TO 10 BY 1 DO … END_FOR;</code><br><code>WHILE x &lt; 5 DO … END_WHILE;</code><br><code>REPEAT … UNTIL x = 0 END_REPEAT;</code> · <code>EXIT;</code></p>
       <p>Operatori <code>+ - * / MOD = &lt;&gt; &lt; &lt;= &gt; &gt;= AND OR XOR NOT</code>, funzioni <code>ABS MIN MAX LIMIT(min, x, max) MILLIS()</code>, tempi <code>T#2S</code>. Commenti <code>(* … *)</code> o <code>//</code>.</p></details>`;
@@ -2702,13 +2714,69 @@ function cUsersNote(f) {
   const n = fnUsers(f.id).length;
   return n > 1 ? `Usata da <b>${n} blocchi</b>: modificando il codice cambiano tutti (ognuno ha le sue variabili).` : 'Usata solo da questo blocco. Dalla colonna a sinistra (Funzioni C del progetto) puoi aggiungerne altri che la usano.';
 }
+// Riquadro grande per scrivere il codice (Script ST, funzioni C, box SCL del LADDER)
+const bigBtn = (kind, n) => `<button type="button" class="small stbig" data-stbig="${kind}"${n ? ` data-stn="${esc(n)}"` : ''} title="Apri il codice in un riquadro grande (numeri di riga, errori, guida)">⤢ Ingrandisci</button>`;
+function codeBigOpen(kind, n) {
+  const selOf = { st: '[data-f="code"]', c: '[data-f="ccode"]', scl: `[data-lpar="${n}"]` }[kind];
+  const src = () => $('#inspector ' + selOf);
+  const t0 = src();
+  if (!t0) return;
+  const title = { st: 'Script ST', c: 'Funzione C', scl: 'Script ST del box SCL' }[kind];
+  const b = sel?.kind === 'block' && blockById(sel.id);
+  const name = kind === 'c' ? (fnById(b?.fn)?.name || '') + '()' : b?.label || '';
+  const help = kind === 'c' ? HELP_C : HELP_ST + (kind === 'scl' ? '<p class="small">Nel box SCL: <code>IN1 IN2 IN3 EN OUT1 OUT2</code>; lo script gira solo quando arriva corrente (EN = 1).</p>' : '');
+  const box = document.createElement('div');
+  box.id = 'codeBig';
+  box.innerHTML = `<div class="cbwin" role="dialog" aria-label="${title}"><div class="cbhd"><h3>${title}${name ? ' · ' + esc(name) : ''}</h3><div class="spacer"></div>
+    <span class="small mut">Esc per chiudere</span><button class="pri" data-cbclose>Chiudi</button></div>
+    <div class="cbbody"><div class="cbleft"><div class="cbed"><pre class="cbnum"></pre><textarea spellcheck="false"></textarea></div><div class="cbmsg"></div></div>
+    <div class="cbhelp">${help}</div></div></div>`;
+  document.body.appendChild(box);
+  const ta = $('textarea', box), num = $('.cbnum', box), msg = $('.cbmsg', box);
+  ta.value = t0.value;
+  let dirty = false, timer = 0;
+  const check = code => {
+    if (kind === 'c') return cMsg(code);
+    try {
+      if (kind === 'st') { const r = stCompile(code); return `<div class="stok">✓ corretto · ${r.code.length} byte · variabili: ${esc(r.locals.join(', ') || 'nessuna')}</div>`; }
+      stCompile('IF EN THEN ' + code + '\nEND_IF;', { ins: ['IN1', 'IN2', 'IN3', 'EN'] }); return '<div class="stok">✓ corretto</div>';
+    } catch (e) { return `<div class="sterr">✗ ${esc(e.message)}</div>`; }
+  };
+  const lines = () => { num.textContent = Array.from({ length: ta.value.split('\n').length }, (_, i) => i + 1).join('\n'); num.scrollTop = ta.scrollTop; };
+  const push = ev => { const t = src(); if (!t) return; t.value = ta.value; t.dispatchEvent(new Event(ev, { bubbles: true })); };
+  const update = () => {
+    lines(); msg.innerHTML = check(ta.value); dirty = true;
+    if (kind === 'scl') { clearTimeout(timer); timer = setTimeout(() => { push('change'); dirty = false; }, 500); }   // il box SCL si salva a fine modifica
+    else push('input');
+  };
+  ta.addEventListener('input', update);
+  ta.addEventListener('scroll', () => { num.scrollTop = ta.scrollTop; });
+  ta.addEventListener('keydown', e => {
+    e.stopPropagation();                                            // Canc, Ctrl+Z… non agiscono sul foglio sotto
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); document.execCommand('insertText', false, '  '); }
+  });
+  const close = () => {
+    clearTimeout(timer);
+    if (dirty && kind !== 'st') push('change');                     // C: i fili delle porte sparite si staccano; SCL: salvataggio
+    box.remove(); document.removeEventListener('keydown', onEsc, true);
+    src()?.focus();
+  };
+  const onEsc = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  document.addEventListener('keydown', onEsc, true);
+  $('[data-cbclose]', box).onclick = close;
+  box.addEventListener('mousedown', e => { if (e.target === box) close(); });
+  lines(); msg.innerHTML = check(ta.value);
+  ta.focus(); ta.setSelectionRange(t0.selectionStart || 0, t0.selectionEnd || 0);
+}
+document.addEventListener('click', e => { const bb = e.target.closest('[data-stbig]'); if (bb) { e.preventDefault(); codeBigOpen(bb.dataset.stbig, bb.dataset.stn); } });
 function cscriptField(b) {
   const f = fnById(b.fn);
   const opts = (project.funcs || []).map(x => `<option value="${x.id}" ${x.id === b.fn ? 'selected' : ''}>${esc(x.name)}()</option>`).join('');
   let h = `<label class="field"><span>Funzione della libreria del progetto</span><select data-cfn>${f ? '' : '<option value="" selected>— scegli —</option>'}${opts}</select></label>`;
   if (!f) return h;
   h += `<p class="small mut" id="cUsers" style="margin:-4px 0 8px">${cUsersNote(f)}</p>`;
-  h += `<label class="field"><span>Codice C della funzione</span><textarea class="stcode" data-f="ccode" spellcheck="false" rows="16">${esc(f.code)}</textarea></label><div id="stMsg">${cMsg(f.code)}</div>
+  h += `${bigBtn('c')}<label class="field"><span>Codice C della funzione</span><textarea class="stcode" data-f="ccode" spellcheck="false" rows="16">${esc(f.code)}</textarea></label><div id="stMsg">${cMsg(f.code)}</div>
     <div class="row" style="margin-top:8px"><button data-act="crename">Rinomina…</button><button data-act="cdup">Duplica come nuova funzione</button></div>
     <details class="sthelp"><summary>Sintassi</summary>
       <p><code>int nome(int a, bool b, int &amp;u) { … }</code>: i parametri normali sono gli <b>ingressi</b> del blocco (fino a 8), quelli con <code>&amp;</code> e il valore di <code>return</code> sono le <b>uscite</b> (fino a 4). Tipi: <code>int long byte bool void</code> (tutti numeri interi a 32 bit; bool vale 0 o 1).</p>
@@ -4825,7 +4893,7 @@ function renderLadInspector() {
         else if (p.text) h += `<label class="field"><span>${esc(p.label)}</span><input data-lpar="${p.n}" maxlength="40" value="${esc(v)}"></label>`;
         else if (p.script) {
           let msg; try { stCompile('IF EN THEN ' + (v || '') + '\nEND_IF;', { ins: ['IN1', 'IN2', 'IN3', 'EN'] }); msg = '<div class="stok">✓ corretto</div>'; } catch (x) { msg = `<div class="sterr">✗ ${esc(x.message)}</div>`; }
-          h += `<label class="field"><span>${esc(p.label)}</span><textarea class="stcode" data-lpar="${p.n}" spellcheck="false" rows="12">${esc(v)}</textarea></label>${msg}<p class="sthelp">Variabili: <code>IN1 IN2 IN3 EN OUT1 OUT2</code> e quelle che crei; <code>%M0.0</code>, <code>%MW2</code> per le memorie. IF / FOR / WHILE / REPEAT come nel blocco Script ST.</p>`;
+          h += `${bigBtn('scl', p.n)}<label class="field"><span>${esc(p.label)}</span><textarea class="stcode" data-lpar="${p.n}" spellcheck="false" rows="12">${esc(v)}</textarea></label>${msg}<p class="sthelp">Variabili: <code>IN1 IN2 IN3 EN OUT1 OUT2</code> e quelle che crei; <code>%M0.0</code>, <code>%MW2</code> per le memorie. IF / FOR / WHILE / REPEAT come nel blocco Script ST.</p>`;
         }
         else if (p.mpin) {
           let opts = `<option value="-1">— ${p.opt ? 'nessuno' : 'scegli'} —</option>`;

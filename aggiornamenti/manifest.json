@@ -8,11 +8,20 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544398,
+  "ver": 3544516,
   "file": "INDEX.GZ"
  },
- "note": "Il nome del progetto si cambia anche dall'editor: basta cliccare il titolo nel pannello a destra. · I programmi salvati sulla scheda si possono rinominare con il pulsante \"Rinomina\" nella scheda Progetti. · Prima di aggiornare la scheda, la pagina mostra l'elenco delle novità della nuova versione.",
+ "note": "Script ST, funzioni C e box SCL: il pulsante \"⤢ Ingrandisci\" apre il codice in un riquadro grande, con i numeri di riga, gli errori mentre scrivi e la guida del linguaggio a lato.",
  "novita": [
+  {
+   "data": "27/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.2",
+   "page": 3544516,
+   "voci": [
+    "Script ST, funzioni C e box SCL: il pulsante \"⤢ Ingrandisci\" apre il codice in un riquadro grande, con i numeri di riga, gli errori mentre scrivi e la guida del linguaggio a lato."
+   ]
+  },
   {
    "data": "27/09/2026",
    "fw": "2.2",

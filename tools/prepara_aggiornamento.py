@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
