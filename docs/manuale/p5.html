@@ -1,0 +1,189 @@
+
+<!-- ======================= 17 ESERCIZI ======================= -->
+<h1 class="cap"><span class="n">17</span>Esercizi guidati</h1>
+<p class="capsub">Sette esercitazioni, dalla più semplice alla più complessa. Ognuna ha la soluzione pronta negli Esempi della pagina.</p>
+<p>Ogni esercizio indica l'obiettivo, cosa collegare (tutti si possono fare anche solo con i comandi virtuali), la soluzione commentata e qualche variante per differenziare. Le soluzioni si aprono da <b>Progetti → Esempi</b>: si può far lavorare la classe da zero e mostrare la soluzione alla fine, oppure partire dall'esempio e chiedere le varianti.</p>
+
+<div class="ex">
+  <h3>Esercizio 1 · Il primo lampeggio</h3>
+  <span class="lab">Obiettivo</span><p>Prendere confidenza con la pagina: blocchi, fili, caricamento, comandi virtuali.</p>
+  <span class="lab">Consegna</span><p>Un interruttore nella pagina fa lampeggiare il LED della scheda (D13): 0,3 s acceso e 0,3 s spento.</p>
+  <span class="lab">Materiale</span><p>Nessuno: il LED "L" è già sulla scheda.</p>
+  <span class="sol">SOLUZIONE FBD · esempio "Primo programma"</span>
+  <div class="figwrap"><div class="fig" data-f="fbd_primo" data-w="140"></div></div>
+  <p>Interruttore virtuale → <b>Lampeggiatore</b> (EN) con ON = OFF = 300 ms → Uscita digitale D13. Quando l'interruttore è spento, EN vale 0 e il LED resta spento.</p>
+  <span class="sol">SOLUZIONE LADDER · esempio "Lampeggio con due timer"</span>
+  <div class="figwrap"><div class="fig" data-f="lad_lampeggio" data-w="140"></div></div>
+  <p>Due TON da 0,5 s si resettano a vicenda: quando il primo finisce accende l'uscita e avvia il secondo, che a sua volta resetta il primo. È lo schema classico dei PLC senza blocco lampeggiatore.</p>
+  <span class="lab">Varianti</span><ul><li>Cambiare i tempi con un <b>Cursore virtuale</b> collegato a ON.</li><li>Aggiungere un secondo LED che lampeggia in opposizione (NOT).</li></ul>
+</div>
+
+<div class="ex">
+  <h3>Esercizio 2 · Marcia e arresto di un motore</h3>
+  <span class="lab">Obiettivo</span><p>Capire la memoria (autoritenuta) e la priorità dell'arresto.</p>
+  <span class="lab">Consegna</span><p>Il pulsante MARCIA accende il motore, che resta acceso anche rilasciando il pulsante; il pulsante ARRESTO lo spegne. Se si premono insieme, deve vincere l'arresto.</p>
+  <span class="lab">Materiale</span><p>Due pulsanti su D2 (Marcia) e D3 (Arresto) verso GND; un LED su D13 al posto del motore. Oppure solo pulsanti virtuali.</p>
+  <span class="sol">SOLUZIONE FBD · esempio "Marcia / arresto"</span>
+  <div class="figwrap"><div class="fig" data-f="fbd_marcia" data-w="140"></div></div>
+  <p>Il pulsante vero e quello virtuale entrano in un OR (così funzionano entrambi) e vanno in S e R di una <b>Memoria SR</b> con "prevale RESET". L'uscita Q comanda il motore.</p>
+  <span class="sol">SOLUZIONE LADDER · esempio "Marcia / arresto (LADDER)"</span>
+  <div class="figwrap"><div class="fig" data-f="lad_marcia" data-w="120"></div></div>
+  <p>Contatto Marcia in parallelo al contatto del Motore (autoritenuta), in serie al contatto NC di Arresto, e la bobina Motore.</p>
+  <span class="lab">Domande per la classe</span><ul><li>Cosa succede se il filo dell'arresto si rompe? Come si collega un arresto "sicuro"? (contatto NC, capitolo 7)</li><li>Rifare la versione LADDER con le bobine S e R.</li></ul>
+</div>
+
+<div class="ex">
+  <h3>Esercizio 3 · La luce delle scale</h3>
+  <span class="lab">Obiettivo</span><p>Usare un temporizzatore a impulso.</p>
+  <span class="lab">Consegna</span><p>Premendo il pulsante la luce si accende e resta accesa 5 secondi, poi si spegne da sola.</p>
+  <span class="lab">Materiale</span><p>Un pulsante su D2, un LED su D13 (o pulsante virtuale).</p>
+  <span class="sol">SOLUZIONE FBD · esempio "Luce delle scale"</span>
+  <div class="figwrap"><div class="fig" data-f="fbd_scale" data-w="140"></div></div>
+  <p>Pulsante (vero o virtuale) → <b>Impulso (TP)</b> con PT = 5000 ms → luce. Durante l'impulso altre pressioni non allungano il tempo.</p>
+  <span class="sol">SOLUZIONE LADDER · esempio "Luce delle scale (LADDER)"</span>
+  <div class="figwrap"><div class="fig" data-f="lad_scale" data-w="130"></div></div>
+  <span class="lab">Varianti</span><ul><li>Con un <b>TOF</b> invece del TP: che differenza c'è se si tiene premuto il pulsante?</li><li>Due pulsanti (piano terra e primo piano) in OR.</li><li>Far lampeggiare la luce negli ultimi 2 secondi (confronto sul tempo ET).</li></ul>
+</div>
+
+<div class="ex">
+  <h3>Esercizio 4 · Il contapezzi</h3>
+  <span class="lab">Obiettivo</span><p>Contatori, fronti e display.</p>
+  <span class="lab">Consegna</span><p>Un sensore conta i pezzi che passano; a 10 pezzi si accende la spia "scatola piena" e sul display compare il conteggio. Un pulsante azzera.</p>
+  <span class="lab">Materiale</span><p>Pulsante o sensore su un ingresso, pulsante di reset, LED; facoltativi display OLED o LCD.</p>
+  <span class="sol">SOLUZIONE FBD · esempio "Contapezzi"</span>
+  <div class="figwrap"><div class="fig" data-f="fbd_contapezzi" data-w="145"></div></div>
+  <p><b>Contatore</b> con PV = 10: CU dal sensore, R dal reset, Q alla spia, CV al display ("Pezzi: {1}").</p>
+  <span class="sol">SOLUZIONE LADDER · esempio "Contapezzi con display (LADDER)"</span>
+  <div class="figwrap"><div class="fig" data-f="lad_contapezzi" data-w="140"></div></div>
+  <span class="lab">Varianti</span><ul><li>Mostrare anche le scatole completate (secondo contatore).</li><li>Scrivere "{1:3}" per vedere 007 invece di 7.</li></ul>
+</div>
+
+<div class="ex">
+  <h3>Esercizio 5 · Il semaforo</h3>
+  <span class="lab">Obiettivo</span><p>Le sequenze: prima con i blocchi Passo, poi con il GRAFCET.</p>
+  <span class="lab">Consegna</span><p>Verde 4 s, giallo 1,5 s, rosso 4 s, e poi di nuovo verde, all'infinito.</p>
+  <span class="lab">Materiale</span><p>Tre LED (verde, giallo, rosso) su tre uscite, con resistenze; facoltativo il display.</p>
+  <span class="sol">SOLUZIONE FBD · esempio "Semaforo a passi"</span>
+  <div class="figwrap"><div class="fig" data-f="fbd_semaforo" data-w="150"></div></div>
+  <p>Tre blocchi <b>Passo</b> in catena: il verde è il passo iniziale; T = 1 (costante "Sempre vero") e MIN = durata della luce. L'AVANTI dell'ultimo torna all'IN del primo.</p>
+  <span class="sol">SOLUZIONE GRAFCET · esempio "Semaforo con tempi di tappa"</span>
+  <div class="two"><div class="figwrap" style="margin:0"><div class="fig" data-f="graf_semaforo" data-w="62"></div></div>
+  <div><p>Tre tappe con azione <b>N</b> sulle lampade (e MSG sul display). Le transizioni usano il tempo di tappa: <code>X1.T &gt; T#5S</code> (verde), <code>X2.T &gt; T#2S</code> (giallo), <code>X3.T &gt; T#5S</code> (rosso, e si torna alla tappa 1). Nell'esempio i tempi sono un po' diversi da quelli della consegna: un buon primo esercizio è correggerli.</p><p class="note">Confronta le due soluzioni: quale si legge meglio?</p></div></div>
+  <span class="lab">Varianti</span><ul><li>Pulsante pedonale: rosso anticipato alla richiesta.</li><li>Lampeggio del giallo di notte (interruttore "notte").</li></ul>
+</div>
+
+<div class="ex">
+  <h3>Esercizio 6 · Il carrello avanti e indietro</h3>
+  <span class="lab">Obiettivo</span><p>Un vero esercizio di automazione con finecorsa, marcia ed emergenza.</p>
+  <span class="lab">Consegna</span><p>Con il carrello a sinistra (FC_sx) e il pulsante Marcia, il carrello va avanti fino al finecorsa destro (FC_dx), poi torna indietro fino a FC_sx e si ferma. L'emergenza ferma tutto e riporta la sequenza all'inizio.</p>
+  <span class="lab">Materiale</span><p>Pulsanti per Marcia, Emergenza (NC), due finecorsa; due LED o due relè per Avanti e Indietro.</p>
+  <span class="sol">SOLUZIONE GRAFCET · esempio "Carrello avanti e indietro (GRAFCET)"</span>
+  <div class="two"><div class="figwrap" style="margin:0"><div class="fig" data-f="graf_carrello" data-w="62"></div></div>
+  <div><p>Tappa 1 <i>Attesa</i>; T1 = <code>Marcia AND FC_sx</code>; tappa 2 <i>Avanti</i> (N Avanti); T2 = <code>FC_dx</code>; tappa 3 <i>Indietro</i> (N Indietro); T3 = <code>FC_sx</code> torna alla 1.</p><p>Condizione di reinizializzazione: <code>Emergenza</code>. Un segmento LADDER di sicurezza resetta Avanti e Indietro con l'emergenza.</p></div></div>
+  <span class="lab">Varianti</span><ul><li>Pausa di 3 s a destra prima di tornare (tappa con <code>X4.T &gt; T#3S</code>).</li><li>Contare i cicli e fermarsi dopo 5 (azione P1 con un contatore).</li><li>Ciclo continuo con un selettore automatico/singolo.</li></ul>
+</div>
+
+<div class="ex">
+  <h3>Esercizio 7 · Il termostato</h3>
+  <span class="lab">Obiettivo</span><p>Grandezze analogiche, conversione e isteresi.</p>
+  <span class="lab">Consegna</span><p>Un potenziometro simula un sensore di temperatura da 0 a 50 °C. La ventola si accende sopra 28 °C e si spegne solo sotto 26 °C; il display mostra la temperatura con un decimale.</p>
+  <span class="lab">Materiale</span><p>Potenziometro su A0, LED o relè per la ventola, display OLED facoltativo.</p>
+  <span class="sol">SOLUZIONE FBD · esempio "Termostato"</span>
+  <div class="figwrap"><div class="fig" data-f="fbd_termostato" data-w="150"></div></div>
+  <p>Ingresso analogico → <b>Scala</b> 0…1023 → 0…500 (decimi di grado) → <b>Soglia con isteresi</b> 280 / 260 → ventola. Il valore va anche al display OLED ("Temp:" con un decimale), insieme allo stato della ventola.</p>
+  <span class="lab">Domande per la classe</span><ul><li>Perché serve l'isteresi? Provare con un semplice Confronto: cosa succede vicino a 28 °C?</li><li>Sostituire il potenziometro con un sensore DS18B20 (capitolo 13).</li></ul>
+</div>
+
+<!-- ======================= 18 LIMITI ======================= -->
+<h1 class="cap"><span class="n">18</span>Limiti del prodotto</h1>
+<p class="capsub">ArduLearn è uno strumento didattico: ecco cosa non fa, per scegliere gli esercizi giusti.</p>
+<table>
+  <tr><th style="width:30%">Limite</th><th>Dettaglio</th></tr>
+  <tr><td><b>Non è un PLC di sicurezza</b></td><td>Non va usato per comandare macchine reali o proteggere persone. Gli arresti di emergenza veri devono agire direttamente sull'alimentazione, non passare dal programma.</td></tr>
+  <tr><td><b>Dimensione del programma</b></td><td>Massimo <b>96 blocchi</b> (anche LADDER e GRAFCET diventano blocchi interni). Spazio: 7.680 byte (UNO R4), 8.192 byte (Mega con microSD), 3.072 byte (Mega senza microSD). Testi dei display e script: 1.024 byte (UNO R4), 512 byte (Mega).</td></tr>
+  <tr><td><b>Solo numeri interi</b></td><td>Niente numeri con la virgola: si lavora in decimi o centesimi. La divisione è intera (7 ÷ 2 = 3).</td></tr>
+  <tr><td><b>Memorie</b></td><td>Merker %M0.0–%M7.7 e parole %MW0–%MW30. I loro valori, i contatori e i temporizzatori <b>ripartono da zero</b> a ogni accensione: non esistono memorie "ritentive".</td></tr>
+  <tr><td><b>Script</b></td><td>ST: 16 variabili per script, codice fino a 400 byte, niente CASE. C: una funzione per blocco, niente virgola, array, stringhe, accesso diretto ai pin. Massimo 4000 istruzioni per ciclo.</td></tr>
+  <tr><td><b>Velocità</b></td><td>Adatto a segnali "umani" (pulsanti, finecorsa, sensori lenti). Non legge impulsi velocissimi (encoder industriali ad alta risoluzione, contatori veloci).</td></tr>
+  <tr><td><b>Corrente dei pin</b></td><td>Circa 20 mA (Mega) e 8 mA (UNO R4 WiFi) per pin, a 5 V: ogni carico più grande di un LED richiede relè o driver.</td></tr>
+  <tr><td><b>Rete Wi-Fi (UNO R4)</b></td><td>Solo 2,4 GHz, reti con password semplice (non WPA2-Enterprise/eduroam). Reti che isolano i dispositivi impediscono di vedere la scheda. Circa 7 collegamenti contemporanei: con classi numerose alcuni PC possono dover ricaricare la pagina.</td></tr>
+  <tr><td><b>Rete via cavo (Mega)</b></td><td>La scheda risponde a una richiesta alla volta: con molti studenti collegati la pagina può essere lenta. Mentre cerca l'indirizzo in rete (DHCP) il ciclo può fermarsi qualche secondo.</td></tr>
+  <tr><td><b>Pagina</b></td><td>Pensata per PC con mouse e schermo grande: su telefono non è utilizzabile.</td></tr>
+  <tr><td><b>Linguaggi</b></td><td>Un progetto usa un solo linguaggio (il GRAFCET include segmenti LADDER); non c'è conversione automatica fra FBD, LADDER e GRAFCET.</td></tr>
+  <tr><td><b>Aggiornamenti</b></td><td>UNO R4 dalla pagina (serve Internet sul PC); Mega solo via USB con l'app.</td></tr>
+  <tr><td><b>Schede supportate</b></td><td>Solo UNO R4 WiFi e Mega 2560 con shield DFR0850. Non Arduino Uno classico, UNO R4 Minima o altre schede.</td></tr>
+  <tr><td><b>Uso come Arduino normale</b></td><td>Sulla UNO R4 WiFi ArduLearn sostituisce il firmware del modulo Wi-Fi: per tornare a usare le librerie Wi-Fi di Arduino si deve <b>riscrivere il firmware originale del modulo Wi-Fi</b> dall'IDE Arduino (<b>Strumenti → Aggiornamento firmware</b>). Sulla Mega basta caricare un altro sketch.</td></tr>
+</table>
+
+<!-- ======================= 19 FAQ ======================= -->
+<h1 class="cap"><span class="n">19</span>Problemi e soluzioni</h1>
+<p class="capsub">Le situazioni più frequenti in laboratorio, e cosa fare.</p>
+<table>
+  <tr><th style="width:34%">Problema</th><th>Cosa fare</th></tr>
+  <tr><td>L'app non trova la scheda</td><td>PC e scheda devono essere sulla stessa rete. Controlla il firewall di Windows (deve permettere l'app). Sulla UNO R4 guarda l'indirizzo che scorre sulla matrice e aprilo a mano. Alcune reti Wi-Fi scolastiche isolano i dispositivi: serve una rete dedicata.</td></tr>
+  <tr><td>La pagina non si apre con il nome .local</td><td>Usa l'indirizzo numerico (dall'app, dalla matrice o dal display). Il nome .local non funziona su tutte le reti.</td></tr>
+  <tr><td>La UNO R4 non si collega al Wi-Fi</td><td>Dopo 3 tentativi torna sulla sua rete ArduLearn-xxxx: ricollegati e ricontrolla nome e password. Reti a 5 GHz o con nome utente personale non sono supportate.</td></tr>
+  <tr><td>"PIN errato" / PIN dimenticato</td><td>App → Monitor seriale → <code>pin reset</code>: il PIN torna 1234.</td></tr>
+  <tr><td>"Carica sulla scheda" dice di correggere i problemi</td><td>Leggi l'elenco nel pannello a destra (clic su un problema = porta al blocco): pin non scelto, pin riservato, blocchi senza collegamenti necessari, troppi blocchi.</td></tr>
+  <tr><td>I pulsanti virtuali non fanno nulla</td><td>Il programma deve essere caricato e senza modifiche in sospeso ("✓ uguale alla scheda").</td></tr>
+  <tr><td>Il pulsante funziona "al contrario"</td><td>Con l'ingresso pull-up attiva <b>Inverti</b> (o "logica inversa" in LADDER/GRAFCET).</td></tr>
+  <tr><td>Un'uscita non si accende</td><td>Usa <b>Prova uscita</b> nella scheda Pin (a programma fermo) per separare i problemi di cablaggio da quelli di programma. Ricorda il limite di corrente del pin.</td></tr>
+  <tr><td>Uno studente ha "perso" il lavoro</td><td>Riaprendo la pagina sullo stesso PC le modifiche non caricate vengono riprese. Per il futuro: Scarica file o uno slot.</td></tr>
+  <tr><td>Le modifiche di uno studente vengono sostituite</td><td>È attivo "Segui il docente": togli la spunta per lavorare in autonomia.</td></tr>
+  <tr><td>Il display non mostra niente</td><td>Impostazioni → Cerca dispositivi I²C; controlla indirizzo e tipo (SSD1306/SH1106). Sulla Mega i fili vanno a 20/21, sulla UNO R4 ad A4/A5.</td></tr>
+  <tr><td>La Mega si riavvia aprendo il monitor seriale</td><td>È normale: il programma riparte dopo qualche secondo.</td></tr>
+  <tr><td>Il caricamento del firmware fallisce</td><td>Chiudi IDE Arduino e altri programmi che usano la porta, cambia cavo USB; sulla UNO R4 premi due volte il tasto RESET e riprova.</td></tr>
+  <tr><td>Sulla matrice LED compare una X</td><td>Il PLC non riesce a comunicare con il modulo Wi-Fi: scollega e ricollega l'alimentazione; se continua, ricarica il firmware con l'app.</td></tr>
+  <tr><td>"Aggiornamento non verificabile"</td><td>Il PC non raggiunge Internet (GitHub): aggiorna da un PC collegato o con l'app.</td></tr>
+</table>
+
+<!-- ======================= APPENDICE ======================= -->
+<h1 class="cap"><span class="n">A</span>Appendice</h1>
+<p class="capsub">Comandi del monitor seriale, glossario e contatti.</p>
+<h2>Comandi del monitor seriale (115200 baud)</h2>
+<table>
+  <tr><th style="width:26%">Comando</th><th>Cosa fa</th><th style="width:16%">Schede</th></tr>
+  <tr><td><code>help</code></td><td>elenco dei comandi</td><td>entrambe</td></tr>
+  <tr><td><code>info</code></td><td>versione, nome, rete, indirizzo, programma, memoria libera</td><td>entrambe</td></tr>
+  <tr><td><code>run</code> / <code>stop</code></td><td>avvia / ferma il programma (ricordato)</td><td>entrambe</td></tr>
+  <tr><td><code>io</code>, <code>io on</code>, <code>io off</code></td><td>stato di ingressi, uscite e blocchi (una volta / ogni secondo / basta)</td><td>entrambe</td></tr>
+  <tr><td><code>pin reset</code></td><td>PIN docente di nuovo 1234</td><td>entrambe</td></tr>
+  <tr><td><code>sd</code></td><td>diagnosi della microSD</td><td>Mega</td></tr>
+  <tr><td><code>ip dhcp</code> · <code>ip A M G</code></td><td>indirizzo automatico · indirizzo fisso (anche dai campi dell'app)</td><td>Mega</td></tr>
+  <tr><td><code>mac …</code></td><td>cambia l'indirizzo MAC (ogni scheda della rete deve averne uno diverso)</td><td>Mega</td></tr>
+  <tr><td><code>wifi</code></td><td>stato del Wi-Fi</td><td>UNO R4</td></tr>
+  <tr><td><code>wifi clear</code></td><td>dimentica la rete e riattiva la rete ArduLearn-xxxx</td><td>UNO R4</td></tr>
+  <tr><td><code>wifi ap</code></td><td>passa alla rete della scheda senza dimenticare quella salvata</td><td>UNO R4</td></tr>
+</table>
+<h2>Glossario</h2>
+<table>
+  <tr><td style="width:24%"><b>PLC</b></td><td>Controllore logico programmabile: il "cervello" delle macchine automatiche.</td></tr>
+  <tr><td><b>Ciclo (scansione)</b></td><td>Un giro completo: lettura ingressi, esecuzione del programma, scrittura uscite.</td></tr>
+  <tr><td><b>FBD</b></td><td>Function Block Diagram: programma a blocchi collegati.</td></tr>
+  <tr><td><b>LADDER (KOP)</b></td><td>Linguaggio a contatti, simile a uno schema elettrico.</td></tr>
+  <tr><td><b>GRAFCET / SFC</b></td><td>Rappresentazione a tappe e transizioni delle sequenze.</td></tr>
+  <tr><td><b>Recettività</b></td><td>La condizione scritta su una transizione del GRAFCET.</td></tr>
+  <tr><td><b>Merker</b></td><td>Memoria interna di un bit (%M), usata come "relè ausiliario".</td></tr>
+  <tr><td><b>Pull-up</b></td><td>Modo di un ingresso che lo tiene a 1 a riposo: il pulsante verso GND lo porta a 0.</td></tr>
+  <tr><td><b>PWM</b></td><td>Uscita che si accende e spegne velocissima per regolare luminosità o velocità (0–255).</td></tr>
+  <tr><td><b>Fronte</b></td><td>L'istante in cui un segnale cambia; in ArduLearn dura un ciclo.</td></tr>
+  <tr><td><b>Firmware</b></td><td>Il programma "di base" installato sulla scheda con l'app: ArduLearn stesso.</td></tr>
+  <tr><td><b>Slot</b></td><td>Uno dei 99 posti in cui la scheda conserva i programmi salvati.</td></tr>
+  <tr><td><b>I²C</b></td><td>Il collegamento a 4 fili (GND, 5V, SDA, SCL) usato da display e orologio.</td></tr>
+  <tr><td><b>DHCP / .local</b></td><td>Il modo in cui la rete dà un indirizzo alla scheda / il nome facile della scheda (es. ardulearn-2b28.local).</td></tr>
+</table>
+
+<div class="box ok keep" style="margin-top:8mm">
+  <span class="t" style="font-size:13pt">Contatti e aggiornamenti</span>
+  <p>ArduLearn è stato ideato e realizzato da <b>Daniele Michelotti</b>. È software libero (licenza GPL-3.0): si può usare, copiare e migliorare liberamente.</p>
+  <p>E-mail: <b>daniele.michelotti@gmail.com</b><br>Progetto, app e nuove versioni: <b>github.com/danielemichelotti/ArduLearn</b></p>
+  <p>ArduLearn è gratuito: se ti è utile, puoi sostenerlo con una donazione su PayPal: <b>paypal.me/danistn</b></p>
+  <p class="small" style="color:#6b7280;font-size:8.5pt">Arduino, UNO e Mega sono marchi di Arduino S.r.l.; la shield Ethernet &amp; PoE DFR0850 è un prodotto DFRobot. ArduLearn è un progetto indipendente, non affiliato a questi produttori.</p>
+</div>
+
+<script src="data.js"></script>
+<script src="figdefs.js"></script>
+<script src="figs.js"></script>
+<script src="paginate.js"></script>
+</body>
+</html>

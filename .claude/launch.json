@@ -4,8 +4,26 @@
     {
       "name": "web-demo",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "web"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--directory",
+        "web"
+      ],
       "port": 8765
+    },
+    {
+      "name": "sito",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8766",
+        "--directory",
+        "sito/_anteprima"
+      ],
+      "port": 8766
     }
   ]
 }

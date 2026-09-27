@@ -1,0 +1,10 @@
+---
+layout: base.njk
+---
+<div class="testata"><div class="wrap">
+  <h1>{{ title }}</h1>
+  {% if sottotitolo %}<p>{{ sottotitolo }}</p>{% endif %}
+</div></div>
+<div class="contenuto"><div class="wrap"><div class="testo">
+{{ content | safe }}
+</div></div></div>

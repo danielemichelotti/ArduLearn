@@ -1,0 +1,32 @@
+---
+layout: base.njk
+title: Prova online
+permalink: /prova/
+---
+<div class="testata"><div class="wrap">
+  <h1>Prova ArduLearn, senza scheda</h1>
+  <p>{{ testi.prova.intro }}</p>
+</div></div>
+<div class="contenuto"><div class="wrap">
+  <div style="display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1;min-width:300px">
+      <h2>Apri il simulatore</h2>
+      <p class="lead">Si apre l'editor completo, lo stesso della scheda. Scegli un esempio da <b>Progetti</b>, premi <b>Carica sulla scheda</b> e usa interruttori e cursori: vedi i collegamenti accendersi, il display e la matrice LED.</p>
+      <div class="prova-avvio">
+        <a class="btn blu" href="/prova/app/?demo&amp;sito&amp;r4" target="_blank" rel="noopener">Simula la UNO R4 WiFi</a>
+        <a class="btn bordo" href="/prova/app/?demo&amp;sito" target="_blank" rel="noopener">Simula la Mega 2560</a>
+      </div>
+      <p class="nota-video" style="margin-top:10px">Funziona su computer con un browser recente (Chrome, Edge, Firefox). Su telefono lo schermo è troppo piccolo.</p>
+    </div>
+    <div class="postit">{{ testi.prova.postit }}</div>
+  </div>
+
+  <h2 style="margin-top:44px">Oppure parti da un esempio</h2>
+  <div class="griglia3 esempi" style="margin-top:16px">
+    {% for e in testi.prova.esempi %}
+    <a href="/prova/app/?demo&amp;sito&amp;r4&amp;esempio={{ e.numero }}" target="_blank" rel="noopener"><div class="carta"><div class="dentro"><span class="tag">{{ e.linguaggio }}</span><h3>{{ e.nome }}</h3><p>{{ e.testo }}</p></div></div></a>
+    {% endfor %}
+  </div>
+
+  <div class="avviso" style="margin-top:36px"><b>Cosa cambia rispetto alla scheda vera?</b> Nel simulatore non servono il PIN del docente, la rete Wi-Fi e gli aggiornamenti: si vedono ma sono spenti, con la spiegazione. I sensori (temperatura, distanza…) si regolano con dei cursori e l'orologio usa l'ora del computer. Per conservare un progetto usa <b>Progetti → Scarica file</b>.</div>
+</div></div>

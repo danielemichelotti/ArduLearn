@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if title and title != sito.nome %}{{ title }} · {% endif %}{{ sito.nome }}</title>
+<meta name="description" content="{{ descrizione or sito.descrizione }}">
+<link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/assets/sito.css">
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="marchio" href="/"><img src="/img/logo-bianco.svg" alt="" width="34" height="34"><span>{{ sito.nome }}</span></a>
+    <input type="checkbox" id="menu-t" class="menu-t"><label for="menu-t" class="menu-b" aria-label="Menu">☰</label>
+    <nav class="menu">
+      <a href="/prova/"{% if page.url == "/prova/" %} class="on"{% endif %}>Prova online</a>
+      <a href="/training/"{% if page.url == "/training/" %} class="on"{% endif %}>Training</a>
+      <a href="/manuale/"{% if page.url == "/manuale/" %} class="on"{% endif %}>Manuale</a>
+      {%- for p in collections.pagine %}{% if p.data.menu %}
+      <a href="{{ p.url }}"{% if page.url == p.url %} class="on"{% endif %}>{{ p.data.title }}</a>
+      {%- endif %}{% endfor %}
+      <a href="/chi-sono/"{% if page.url == "/chi-sono/" %} class="on"{% endif %}>Chi sono</a>
+      <a href="/scarica/" class="cta">Scarica</a>
+    </nav>
+  </div>
+</header>
+<main>
+{{ content | safe }}
+</main>
+<footer class="piede">
+  <div class="wrap piede-in">
+    <div>
+      <b>{{ sito.nome }}</b> · ideato e realizzato da {{ sito.autore }}<br>
+      Software libero (GPL-3.0) · <a href="{{ sito.github }}">progetto su GitHub</a>
+    </div>
+    <div class="dono">
+      <span class="mano">se ti è utile, offrimi un caffè</span>
+      <a class="btn-dono" href="{{ sito.donazione }}" target="_blank" rel="noopener">♥ Fai una donazione</a>
+    </div>
+  </div>
+  <div class="wrap nota-marchi">Arduino, UNO e Mega sono marchi di Arduino S.r.l.; la shield Ethernet &amp; PoE DFR0850 è un prodotto DFRobot. ArduLearn è un progetto indipendente, non affiliato a questi produttori.</div>
+</footer>
+<script>
+// Contatore delle visite (solo sul dominio pubblico): una richiesta, senza cookie e senza dati personali.
+(function () {
+  var domini = {{ sito.domini_contatore | dump | safe }};
+  if (domini.indexOf(location.hostname) < 0) return;
+  try { if (sessionStorage.getItem("al-visita")) return; sessionStorage.setItem("al-visita", "1"); } catch (e) {}
+  fetch({{ sito.contatore | dump | safe }}, { mode: "no-cors", credentials: "omit", keepalive: true }).catch(function () {});
+})();
+</script>
+</body>
+</html>

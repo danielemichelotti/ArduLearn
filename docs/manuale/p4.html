@@ -1,0 +1,183 @@
+
+<!-- ======================= 12 DISPLAY ======================= -->
+<h1 class="cap"><span class="n">12</span>Display, matrice LED e immagini</h1>
+<p class="capsub">Far "parlare" l'impianto: messaggi, valori, icone e animazioni.</p>
+
+<h2>I display che si possono collegare</h2>
+<table>
+  <tr><th style="width:26%">Display</th><th>Collegamento</th><th>Note</th></tr>
+  <tr><td><b>OLED 128×64</b> (0,96" o 1,3")</td><td>4 fili: GND, 5V, SDA, SCL (Mega: pin 20 e 21; UNO R4: A4 e A5)</td><td>21 caratteri × 8 righe. Controller SSD1306 o SH1106 (se vedi pixel a caso, scegli l'altro nelle Impostazioni).</td></tr>
+  <tr><td><b>LCD 16×2 / 20×4</b> con modulo I²C</td><td>come l'OLED (indirizzo di solito 0x27 o 0x3F)</td><td>Si imposta in <b>Impostazioni → Display LCD</b>.</td></tr>
+  <tr><td><b>LCD</b> collegato in parallelo</td><td>6 fili sui pin scelti nelle Impostazioni</td><td>Quei pin diventano riservati.</td></tr>
+  <tr><td><b>Matrice LED</b> 12×8</td><td>già sulla UNO R4 WiFi</td><td>Numeri brevi, scritte che scorrono, icone.</td></tr>
+</table>
+<p>I display sono facoltativi e si possono collegare anche a scheda accesa: la scheda li cerca ogni 3 secondi. Se nessun blocco scrive sul display, la scheda mostra da sola nome, indirizzo e stato: comodo per sapere l'indirizzo senza PC. In <b>Impostazioni</b> il pulsante <span class="btn">Cerca dispositivi I²C</span> dice cosa è collegato.</p>
+
+<h2>Scrivere testi e valori</h2>
+<p>I blocchi <b>Scritta su OLED</b> e <b>Scritta su LCD</b> (in LADDER i box OLED e LCD, in GRAFCET l'azione MSG) scrivono un messaggio di massimo 40 caratteri in una riga e colonna, quando EN vale 1. Nel testo i <b>segnaposto</b> vengono sostituiti dai valori dei fili V1 e V2:</p>
+<table>
+  <tr><th style="width:20%">Segnaposto</th><th>Risultato</th><th style="width:34%">Esempio (V1 = 235)</th></tr>
+  <tr><td><code>{1}</code> <code>{2}</code></td><td>il valore di V1 o V2</td><td>"Pezzi: {1}" → Pezzi: 235</td></tr>
+  <tr><td><code>{1.1}</code> <code>{1.2}</code></td><td>con uno o due decimali</td><td>"T: {1.1} C" → T: 23.5 C</td></tr>
+  <tr><td><code>{1:3}</code></td><td>almeno 3 cifre, con zeri davanti</td><td>V1 = 7 → 007</td></tr>
+  <tr><td><code>{1:3.1}</code></td><td>le due cose insieme</td><td>V1 = 57 → 05.7</td></tr>
+</table>
+<p>L'effetto può essere <b>Lampeggia</b> o <b>Scorre</b> (se il testo è più lungo della riga). Con il blocco <b>Pagine display</b> si preparano fino a 16 schermate diverse e si sfogliano con dei pulsanti: ogni scritta ha l'ingresso PAGINA che dice in quale schermata compare.</p>
+
+<h2>La matrice LED della UNO R4 WiFi</h2>
+<div class="two w">
+  <div>
+    <p>Con il blocco <b>Testo su matrice LED</b> il testo resta fermo se entra (circa 2 caratteri, per esempio "42"), altrimenti <b>scorre</b>. Il blocco <b>Immagine su matrice LED</b> mostra un'immagine 12×8, anche animata. La pagina mostra in basso a destra un'<b>anteprima</b> identica a quella della scheda.</p>
+    <p>Quando nessun programma usa la matrice, la scheda la usa per sé: un puntino che si muove = RUN, un quadrato = STOP, un trattino = nessun programma, "!" = errore nel programma, e l'indirizzo che scorre quando la rete cambia.</p>
+  </div>
+  <div class="figwrap" style="margin:0"><div class="fig" data-f="fbd_matrice" data-w="75"></div></div>
+</div>
+
+<h2>Disegnare immagini e animazioni</h2>
+<div class="figwrap"><div class="fig" data-f="images" data-w="150"></div><div class="cap-f">La scheda "Immagini" con l'icona pronta "Ventola (animata)".</div></div>
+<ol class="legend">
+  <li><span class="n">1</span><span class="btn">Nuova</span>, <span class="btn">Nuova 12×8 (matrice)</span>, <span class="btn">Icone pronte</span> (lampadina, ventola, termometro, allarme, frecce, motore…).</li>
+  <li><span class="n">2</span>Strumenti: matita, gomma, riempi, linea, rettangolo, testo, inverti, specchia, sposta, <b>Importa foto…</b>.</li>
+  <li><span class="n">3</span>Il disegno: tasto sinistro disegna, tasto destro cancella.</li>
+  <li><span class="n">4</span><b>Fotogrammi</b>: con più fotogrammi l'immagine diventa un'animazione (con la velocità in ms).</li>
+</ol>
+<p>Le immagini fanno parte del progetto e occupano spazio nel programma (la pagina dice quanti byte). Si mostrano con i blocchi <b>Immagine su OLED</b> e <b>Immagine su matrice LED</b>.</p>
+
+<!-- ======================= 13 MODULI ======================= -->
+<h1 class="cap"><span class="n">13</span>Moduli: sensori e attuatori</h1>
+<p class="capsub">Blocchi pronti per i componenti più usati nei laboratori, senza scrivere codice.</p>
+<p>I blocchi dei moduli sono nella categoria <b>Moduli (sensori e attuatori)</b> della colonna di sinistra (in LADDER, nel menu <b>Box…</b>). Scegliendo i pin nel blocco, la pagina li riserva al modulo.</p>
+<table>
+  <tr><th style="width:22%">Modulo</th><th>Cosa dà / cosa fa</th><th style="width:36%">Collegamento e note</th></tr>
+  <tr><td><b>Suono (tone)</b></td><td>Fa suonare un cicalino passivo alla frequenza FREQ (Hz) finché EN = 1.</td><td>Cicalino passivo o piccolo altoparlante con resistenza da 100 Ω. Sulla Mega mentre suona non funziona il PWM sui pin 9 e 10.</td></tr>
+  <tr><td><b>DHT11 / DHT22</b></td><td>Temperatura e umidità in <b>decimi</b> (235 = 23,5 °C), aggiornate ogni 2 s.</td><td>Un pin dati; resistenza da 10 kΩ verso 5 V (i moduli su basetta ce l'hanno già).</td></tr>
+  <tr><td><b>Sonda DS18B20</b></td><td>Temperatura in decimi, circa una volta al secondo; uscita OK se la sonda risponde.</td><td>Un pin dati con resistenza da 4,7 kΩ fra dati e 5 V. Una sonda per pin.</td></tr>
+  <tr><td><b>Distanza HC-SR04</b></td><td>Distanza in <b>millimetri</b> (fino a MAX cm), circa 16 volte al secondo.</td><td>Pin TRIG e ECHO.</td></tr>
+  <tr><td><b>Encoder rotativo</b></td><td>Posizione (fra MIN e MAX) e verso di rotazione della manopola.</td><td>Pin A: Mega 2, 3, 18 o 19; <b>UNO R4 solo 2 o 3</b>. Massimo 2 encoder. Il pulsante della manopola è un ingresso normale.</td></tr>
+  <tr><td><b>Servomotore</b></td><td>Porta il servo all'ANGOLO (0–180°), con velocità VEL facoltativa.</td><td>Un pin di segnale. Massimo 4 servo. Sulla Mega disattiva il PWM sui pin 44–46. Più servo: alimentazione esterna a 5 V.</td></tr>
+  <tr><td><b>Motore passo-passo</b></td><td>Velocità o posizione (TARGET in passi; 2048 = un giro del 28BYJ-48).</td><td>28BYJ-48 con scheda ULN2003 (4 pin) oppure driver STEP/DIR. Velocità entro qualche centinaio di passi/s.</td></tr>
+  <tr><td><b>Striscia LED RGB (WS2812)</b> + <b>Colore LED</b></td><td>Fino a 60 LED colorati: si sceglie il colore di ogni LED (o di tutti) e la luminosità.</td><td>Pin DIN; alimentazione a 5 V, separata se i LED sono molti.</td></tr>
+  <tr><td><b>Orologio RTC DS3231</b></td><td>Ore, minuti, giorno… anche come HHMM (es. 1030) per gli orari.</td><td>Sugli stessi fili del display (SDA/SCL). Si regola in <b>Impostazioni → Orologio</b> con l'ora del PC.</td></tr>
+</table>
+<div class="postit">Tutte le misure sono numeri interi: temperature e umidità in decimi, distanze in mm. Per confrontarle si usano direttamente questi numeri (28,0 °C → 280).</div>
+<div class="box att"><span class="t">Alcuni moduli rallentano un po' il ciclo</span>Il DHT ferma il ciclo per circa 25 ms ogni 2 s, l'HC-SR04 per qualche millisecondo per metro misurato. Per un impianto didattico è irrilevante, ma spiega perché la "durata massima del ciclo" nella barra di stato sale.</div>
+<div class="clear"></div>
+
+<!-- ======================= 14 ELETTRICO ======================= -->
+<h1 class="cap"><span class="n">14</span>Collegamenti elettrici</h1>
+<p class="capsub">Schemi semplici per il banco di lavoro, e le regole per non rovinare le schede (e nessuno si faccia male).</p>
+
+<div class="box att"><span class="t">Regole di sicurezza</span><ul style="margin:1mm 0 0">
+  <li>Le schede lavorano a <b>5 volt</b>. <b>Mai</b> collegare direttamente la tensione di rete (230 V) né far cablare agli studenti circuiti a 230 V: per comandare carichi di potenza si usano <b>moduli relè</b> con contatti isolati, cablati e controllati dal docente, in bassa tensione quando possibile (12/24 V).</li>
+  <li>Un pin dà pochissima corrente: <b>circa 20 mA sulla Mega</b>, <b>circa 8 mA sulla UNO R4 WiFi</b>. Direttamente si accende solo un LED con la sua resistenza: motori, lampade, elettrovalvole passano da un relè o da un transistor.</li>
+  <li>Motori, servo e strisce LED vanno alimentati a parte; il <b>GND</b> dell'alimentatore va unito a quello della scheda.</li>
+  <li>Cablare sempre a scheda <b>scollegata</b>; ricontrollare prima di alimentare.</li>
+  <li>I sensori industriali a 24 V non si collegano direttamente: serve un modulo di interfaccia (optoisolatore).</li>
+</ul></div>
+
+<div class="two">
+<div class="keep">
+<h3>① Pulsante o finecorsa</h3>
+<svg viewBox="0 0 300 170" style="width:78mm" font-family="Segoe UI, Arial">
+  <rect x="8" y="10" width="90" height="150" rx="8" fill="#0e7c86"/><text x="53" y="32" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Arduino</text>
+  <circle cx="98" cy="60" r="5" fill="#f5d06f"/><text x="58" y="64" fill="#fff" font-size="12">D2</text><circle cx="98" cy="130" r="5" fill="#f5d06f"/><text x="52" y="134" fill="#fff" font-size="12">GND</text>
+  <path d="M103 60 H180 V78" stroke="#1f2937" stroke-width="3" fill="none"/><path d="M103 130 H180 V114" stroke="#1f2937" stroke-width="3" fill="none"/>
+  <circle cx="180" cy="80" r="3.5" fill="#1f2937"/><circle cx="180" cy="112" r="3.5" fill="#1f2937"/><path d="M180 112 L200 86" stroke="#1f2937" stroke-width="3"/>
+  <text x="208" y="96" font-size="19" class="hand" fill="#c92a2a">pulsante NA</text>
+  <text x="150" y="160" text-anchor="middle" font-size="16" class="hand" fill="#c92a2a">modo "Ingresso pull-up" + Inverti</text>
+</svg>
+</div>
+<div class="keep">
+<h3>② LED</h3>
+<svg viewBox="0 0 300 170" style="width:78mm" font-family="Segoe UI, Arial">
+  <rect x="8" y="10" width="90" height="150" rx="8" fill="#0e7c86"/><text x="53" y="32" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Arduino</text>
+  <circle cx="98" cy="60" r="5" fill="#f5d06f"/><text x="54" y="64" fill="#fff" font-size="12">D13</text><circle cx="98" cy="130" r="5" fill="#f5d06f"/><text x="52" y="134" fill="#fff" font-size="12">GND</text>
+  <path d="M103 60 H130" stroke="#1f2937" stroke-width="3"/><rect x="130" y="52" width="46" height="16" rx="3" fill="#f1f3f5" stroke="#1f2937" stroke-width="2"/><text x="153" y="90" text-anchor="middle" font-size="12">470 Ω</text>
+  <path d="M176 60 H215 V80" stroke="#1f2937" stroke-width="3" fill="none"/>
+  <path d="M203 80 H227 L215 100 Z" fill="#ff6b6b" stroke="#1f2937" stroke-width="2"/><path d="M203 100 H227" stroke="#1f2937" stroke-width="3"/>
+  <path d="M215 100 V130 H103" stroke="#1f2937" stroke-width="3" fill="none"/>
+  <text x="235" y="84" font-size="16" class="hand" fill="#c92a2a">gamba lunga</text><text x="235" y="104" font-size="16" class="hand" fill="#c92a2a">verso D13</text>
+  <text x="150" y="160" text-anchor="middle" font-size="16" class="hand" fill="#c92a2a">sempre con la resistenza!</text>
+</svg>
+</div>
+<div class="keep">
+<h3>③ Modulo relè (carichi più grandi)</h3>
+<svg viewBox="0 0 300 190" style="width:78mm" font-family="Segoe UI, Arial">
+  <rect x="8" y="10" width="90" height="150" rx="8" fill="#0e7c86"/><text x="53" y="32" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Arduino</text>
+  <circle cx="98" cy="55" r="5" fill="#f5d06f"/><text x="60" y="59" fill="#fff" font-size="12">5V</text>
+  <circle cx="98" cy="85" r="5" fill="#f5d06f"/><text x="60" y="89" fill="#fff" font-size="12">D7</text>
+  <circle cx="98" cy="115" r="5" fill="#f5d06f"/><text x="52" y="119" fill="#fff" font-size="12">GND</text>
+  <rect x="140" y="40" width="80" height="95" rx="6" fill="#1971c2"/><text x="180" y="62" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">RELÈ</text>
+  <text x="146" y="80" fill="#fff" font-size="10">VCC</text><text x="146" y="98" fill="#fff" font-size="10">IN</text><text x="146" y="116" fill="#fff" font-size="10">GND</text>
+  <path d="M103 55 H125 V76 H140 M103 85 H125 V94 H140 M103 115 H125 V112 H140" stroke="#1f2937" stroke-width="2.5" fill="none"/>
+  <text x="196" y="80" fill="#fff" font-size="10">COM</text><text x="196" y="98" fill="#fff" font-size="10">NO</text>
+  <path d="M220 76 H250 V60 H285 M220 94 H250 V120" stroke="#e03131" stroke-width="2.5" fill="none"/>
+  <circle cx="250" cy="138" r="14" fill="#fff3bf" stroke="#1f2937" stroke-width="2"/><path d="M240 128 L260 148 M260 128 L240 148" stroke="#1f2937" stroke-width="1.5"/><path d="M250 152 V170 H285" stroke="#e03131" stroke-width="2.5" fill="none"/>
+  <text x="262" y="56" font-size="14" class="hand" fill="#c92a2a">alim. 12 V</text>
+  <text x="150" y="185" text-anchor="middle" font-size="15" class="hand" fill="#c92a2a">il carico ha la sua alimentazione</text>
+</svg>
+</div>
+<div class="keep">
+<h3>④ Potenziometro (analogico)</h3>
+<svg viewBox="0 0 300 170" style="width:78mm" font-family="Segoe UI, Arial">
+  <rect x="8" y="10" width="90" height="150" rx="8" fill="#0e7c86"/><text x="53" y="32" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Arduino</text>
+  <circle cx="98" cy="55" r="5" fill="#f5d06f"/><text x="60" y="59" fill="#fff" font-size="12">5V</text>
+  <circle cx="98" cy="90" r="5" fill="#f5d06f"/><text x="60" y="94" fill="#fff" font-size="12">A0</text>
+  <circle cx="98" cy="125" r="5" fill="#f5d06f"/><text x="52" y="129" fill="#fff" font-size="12">GND</text>
+  <path d="M103 55 H200 V65 M103 125 H200 V115" stroke="#1f2937" stroke-width="3" fill="none"/>
+  <rect x="190" y="65" width="20" height="50" rx="3" fill="#f1f3f5" stroke="#1f2937" stroke-width="2"/>
+  <path d="M103 90 H175 M175 90 L188 90" stroke="#1f2937" stroke-width="3"/><path d="M180 84 L190 90 L180 96" fill="#1f2937"/>
+  <text x="222" y="86" font-size="16" class="hand" fill="#c92a2a">10 kΩ</text><text x="222" y="106" font-size="16" class="hand" fill="#c92a2a">cursore → A0</text>
+  <text x="150" y="160" text-anchor="middle" font-size="16" class="hand" fill="#c92a2a">legge da 0 a 1023</text>
+</svg>
+</div>
+</div>
+<h3>Valori utili</h3>
+<table>
+  <tr><th>Componente</th><th>Collegamento consigliato</th></tr>
+  <tr><td>LED</td><td>resistenza da 470 Ω – 1 kΩ in serie (va bene per entrambe le schede)</td></tr>
+  <tr><td>Pulsante, interruttore, finecorsa</td><td>fra pin e GND, modo "Ingresso pull-up" con Inverti; gli arresti con contatto NC</td></tr>
+  <tr><td>Cicalino attivo (suona da solo)</td><td>come un LED, su un'uscita digitale (se assorbe poco) o tramite transistor/relè</td></tr>
+  <tr><td>Cicalino passivo</td><td>blocco "Suono", resistenza da 100 Ω</td></tr>
+  <tr><td>Motore in corrente continua</td><td>mai diretto: relè o driver per motori, alimentazione separata</td></tr>
+  <tr><td>Alimentazione della scheda</td><td>cavo USB, alimentatore sul connettore della scheda, oppure PoE (solo Mega con la shield)</td></tr>
+</table>
+
+<!-- ======================= 15 SALVARE ======================= -->
+<h1 class="cap"><span class="n">15</span>Salvare e organizzare i programmi</h1>
+<p class="capsub">Il programma in esecuzione, i programmi salvati sulla scheda, i file sul PC e gli esempi.</p>
+
+<div class="figwrap"><div class="fig" data-f="projects"></div><div class="cap-f">La scheda "Progetti".</div></div>
+<ol class="legend" style="columns:1">
+  <li><span class="n">1</span><b>Progetto corrente</b>: il nome (si cambia anche cliccando il titolo nell'editor), <span class="btn">Nuovo</span>, <span class="btn">Scarica file</span> (salva un file <code>.plcb</code> sul PC), <span class="btn">Apri file…</span>. Sotto: blocchi, pin usati e spazio occupato ("572 byte su 7680 disponibili").</li>
+  <li><span class="n">2</span><b>Programma nella memoria della scheda</b>: quello che la scheda esegue, anche dopo lo spegnimento. <span class="btn">Apri nell'editor</span> lo riporta nell'editor; <span class="btn">Elimina</span> lo cancella (la scheda si ferma).</li>
+  <li><span class="n">3</span><b>Programmi salvati sulla scheda</b>: fino a <b>99 posti</b> (slot). Per ogni slot: Apri nell'editor, Carica sulla scheda, <b>Rinomina</b>, Sovrascrivi, Elimina. In fondo si salva il progetto dell'editor nello slot scelto.</li>
+</ol>
+<div class="postit">Un'idea: assegna a ogni classe un gruppo di slot (1–20 la 3ªA, 21–40 la 4ªB...). Oppure fai scaricare a ogni studente il proprio file: è il modo più sicuro di conservare i lavori.</div>
+<ul>
+  <li>Salvare in uno slot, rinominarlo ed eliminarlo richiede il PIN del docente; aprire uno slot nell'editor no.</li>
+  <li><span class="btn">🧹 Svuota…</span> cancella definitivamente tutti gli slot e la bozza condivisa.</li>
+  <li>Sulla Mega gli slot sono sulla microSD: senza microSD non ci sono slot. Si può anche fare una <b>copia di riserva</b> del programma nella memoria interna (EEPROM), usata se la microSD manca.</li>
+  <li>I file <code>.plcb</code> si aprono su qualsiasi scheda ArduLearn. Un progetto scritto per la Mega aperto sulla UNO R4 viene adattato ai pin disponibili (la pagina avvisa di controllarli).</li>
+</ul>
+<div class="clear"></div>
+<h2>Gli esempi</h2>
+<p>In fondo alla scheda Progetti ci sono esempi pronti in tutti i linguaggi: <b>Primo programma</b>, <b>Marcia / arresto</b>, <b>Luce delle scale</b>, <b>Termostato</b>, <b>Contapezzi</b>, <b>Dimmer PWM</b>, <b>Semaforo a passi</b>, <b>Somma con ciclo FOR</b> (ST), <b>Media e allarme</b> (C), <b>Carrello avanti e indietro</b> e <b>Semaforo con tempi di tappa</b> (GRAFCET), e le versioni LADDER di marcia/arresto, luce delle scale, lampeggio con due timer, contapezzi con display. Si aprono con <span class="btn">Apri nell'editor</span>; poi basta "Carica sulla scheda". Molti funzionano anche senza collegare nulla, con i pulsanti virtuali.</p>
+
+<!-- ======================= 16 AGGIORNAMENTI ======================= -->
+<h1 class="cap"><span class="n">16</span>Aggiornamenti</h1>
+<p class="capsub">ArduLearn migliora nel tempo: ecco come portare le schede all'ultima versione.</p>
+<h2>UNO R4 WiFi: dalla pagina</h2>
+<div class="two w">
+  <div>
+    <p>Quando esce una nuova versione, nella barra in alto compare la pastiglia lampeggiante <span class="btn" style="color:#f08c00">⬆ Aggiornamento disponibile</span>. È il <b>PC</b> a controllare su Internet (ogni 6 ore): la scheda non ha bisogno di uscire in Internet.</p>
+    <div class="step"><span class="n">1</span><div>Clicca la pastiglia (o <b>Impostazioni → Aggiornamento del firmware</b>).</div></div>
+    <div class="step"><span class="n">2</span><div>Leggi le <b>Novità</b>: l'elenco dei miglioramenti della nuova versione.</div></div>
+    <div class="step"><span class="n">3</span><div>Premi <span class="btn pri">Aggiorna</span> e inserisci il PIN. Non spegnere la scheda e non chiudere la pagina: il programma si ferma per qualche secondo (fino a un minuto) e riparte da solo.</div></div>
+    <p>Programmi salvati, rete Wi-Fi e impostazioni restano. Alla fine la pagina si ricarica e mostra le versioni installate.</p>
+  </div>
+  <div class="figwrap" style="margin:0"><div class="fig" data-f="dlg_update" data-w="78"></div></div>
+</div>
+<div class="box info">Senza Internet sul PC l'aggiornamento risulta "non verificabile". Si può anche aggiornare da file (<span class="btn">Aggiorna da file…</span>) oppure con l'app via USB.</div>
+<h2>Mega 2560: con l'app</h2>
+<p>La Mega si aggiorna con l'app: scarica l'ultima versione di <b>ArduLearn.exe</b> da GitHub, collega la scheda via USB e usa <b>Carica il firmware</b>; poi <b>Trova le schede → Prepara la microSD / Aggiorna la pagina</b> per la pagina. Anche la UNO R4 WiFi si può aggiornare così. I programmi salvati restano.</p>

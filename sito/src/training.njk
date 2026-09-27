@@ -1,0 +1,47 @@
+---
+layout: base.njk
+title: Training
+permalink: /training/
+---
+{%- set video = [] -%}
+{%- for v in collections.video -%}{%- if not v.data.bozza and (v.data.youtube | youtube_id) -%}{%- set video = (video.push(v), video) -%}{%- endif -%}{%- endfor -%}
+<div class="testata"><div class="wrap">
+  <h1>Training</h1>
+  <p>{{ testi.training.intro }}</p>
+</div></div>
+<div class="contenuto"><div class="wrap">
+  {% if video.length %}
+  <div class="filtri" id="filtri">
+    <button class="on" data-cat="">Tutti</button>
+    {% for c in video | categorie %}<button data-cat="{{ c }}">{{ c }}</button>{% endfor %}
+  </div>
+  <div class="griglia3" id="video">
+    {% for v in video %}{% set id = v.data.youtube | youtube_id %}
+    <div class="carta" data-cat="{{ v.data.categoria or 'Altri video' }}">
+      <button class="video" data-yt="{{ id }}" style="background-image:url('https://i.ytimg.com/vi/{{ id }}/hqdefault.jpg')" aria-label="Guarda: {{ v.data.title }}"></button>
+      <div class="dentro"><span class="tag">{{ v.data.categoria or 'Altri video' }}</span><h3>{{ v.data.title }}</h3><p>{{ v.data.descrizione }}</p></div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="nota-video" style="margin-top:18px">I video sono su YouTube: il lettore si carica solo quando premi ▶, in modalità senza cookie di profilazione (youtube-nocookie.com).</p>
+  {% else %}
+  <div class="postit" style="max-width:420px">I primi video arrivano presto!
+Intanto prova il simulatore
+o leggi il manuale.</div>
+  {% endif %}
+</div></div>
+<script>
+// anteprima del video: YouTube si carica solo al clic (privacy nelle scuole)
+document.addEventListener("click", function (e) {
+  var b = e.target.closest(".video[data-yt]");
+  if (b && !b.classList.contains("attivo")) {
+    b.classList.add("attivo");
+    b.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + b.dataset.yt + '?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Video"></iframe>';
+  }
+  var f = e.target.closest("#filtri button");
+  if (f) {
+    document.querySelectorAll("#filtri button").forEach(function (x) { x.classList.toggle("on", x === f); });
+    document.querySelectorAll("#video .carta").forEach(function (c) { c.style.display = !f.dataset.cat || c.dataset.cat === f.dataset.cat ? "" : "none"; });
+  }
+});
+</script>

@@ -1,0 +1,12 @@
+{
+  "name": "ardulearn-sito",
+  "private": true,
+  "description": "Sito di ArduLearn (Eleventy): contenuti modificabili dal pannello /admin",
+  "scripts": {
+    "build": "eleventy",
+    "dev": "eleventy --serve"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.2"
+  }
+}

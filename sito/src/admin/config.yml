@@ -1,0 +1,146 @@
+# Pannello di amministrazione del sito (Sveltia CMS, compatibile Decap CMS).
+# Si entra con GitHub: ogni salvataggio diventa una modifica nel repository e il sito si aggiorna in 1-2 minuti.
+backend:
+  name: github
+  repo: danielemichelotti/ArduLearn
+  branch: main
+  commit_messages:
+    create: "Sito: nuovo {{collection}} {{slug}}"
+    update: "Sito: modificato {{collection}} {{slug}}"
+    delete: "Sito: eliminato {{collection}} {{slug}}"
+    uploadMedia: "Sito: caricata immagine {{path}}"
+    deleteMedia: "Sito: eliminata immagine {{path}}"
+media_folder: sito/src/img/caricate
+public_folder: /img/caricate
+site_url: https://ardulearn.org/
+display_url: https://ardulearn.org/
+
+collections:
+  - name: video
+    label: Video di training
+    label_singular: Video
+    folder: sito/src/video
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    sortable_fields: [ordine, date, title]
+    summary: "{{ordine}} · {{title}} ({{categoria}})"
+    fields:
+      - { name: title, label: Titolo, widget: string }
+      - { name: youtube, label: "Link del video su YouTube", widget: string, hint: "Incolla il link di YouTube (anche di un video non in elenco): www.youtube.com/watch?v=… oppure youtu.be/…" }
+      - { name: descrizione, label: Descrizione, widget: text, required: false }
+      - { name: categoria, label: Categoria, widget: string, default: "Primi passi", hint: "Es. Primi passi, FBD, LADDER, GRAFCET, Esercizi. Nel sito i video si filtrano per categoria." }
+      - { name: ordine, label: "Ordine (1 = primo)", widget: number, value_type: int, default: 10 }
+      - { name: date, label: Data, widget: datetime, format: "YYYY-MM-DD", time_format: false }
+      - { name: bozza, label: "Bozza (non pubblicare ancora)", widget: boolean, default: false, required: false }
+
+  - name: novita
+    label: Novità e avvisi
+    label_singular: Novità
+    folder: sito/src/novita
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    summary: "{{date}} · {{title}}"
+    fields:
+      - { name: title, label: Titolo, widget: string }
+      - { name: date, label: Data, widget: datetime, format: "YYYY-MM-DD", time_format: false }
+      - { name: body, label: Testo, widget: markdown }
+
+  - name: pagine
+    label: Sezioni nuove
+    label_singular: Sezione
+    folder: sito/src/pagine
+    create: true
+    slug: "{{slug}}"
+    summary: "{{ordine}} · {{title}}"
+    fields:
+      - { name: title, label: "Titolo (anche nel menu)", widget: string }
+      - { name: sottotitolo, label: Sottotitolo, widget: string, required: false }
+      - { name: menu, label: "Mostra nel menu in alto", widget: boolean, default: true }
+      - { name: ordine, label: "Ordine nel menu", widget: number, value_type: int, default: 10 }
+      - { name: body, label: Contenuto, widget: markdown, hint: "Titoli, elenchi, immagini e link." }
+
+  - name: testi
+    label: Testi delle pagine
+    files:
+      - name: home
+        label: Home
+        file: sito/src/_data/home.json
+        fields:
+          - { name: titolo, label: Titolo, widget: string }
+          - { name: titolo_evidenza, label: "Parte del titolo in giallo", widget: string }
+          - { name: sottotitolo, label: Sottotitolo, widget: text }
+          - { name: nota_mano, label: "Nota scritta a mano", widget: string }
+          - { name: postit, label: "Post-it (vai a capo con Invio)", widget: text }
+          - name: vantaggi
+            label: Vantaggi
+            widget: list
+            fields:
+              - { name: titolo, label: Titolo, widget: string }
+              - { name: testo, label: Testo, widget: text }
+          - { name: linguaggi_titolo, label: "Titolo della sezione linguaggi", widget: string }
+          - name: linguaggi
+            label: Linguaggi
+            widget: list
+            fields:
+              - { name: nome, label: Nome, widget: string }
+              - { name: testo, label: Testo, widget: text }
+              - { name: immagine, label: Immagine, widget: image }
+              - { name: esempio, label: "Esempio da aprire nel simulatore (numero)", widget: number, value_type: int }
+          - { name: classe_titolo, label: "Titolo della sezione laboratorio", widget: string }
+          - name: classe
+            label: "Punti della sezione laboratorio"
+            widget: list
+            fields:
+              - { name: titolo, label: Titolo, widget: string }
+              - { name: testo, label: Testo, widget: text }
+      - name: altre
+        label: "Prova online, Scarica, Training"
+        file: sito/src/_data/testi.json
+        fields:
+          - name: prova
+            label: Prova online
+            widget: object
+            fields:
+              - { name: intro, label: Introduzione, widget: text }
+              - { name: postit, label: "Post-it", widget: text }
+              - name: esempi
+                label: "Esempi proposti"
+                widget: list
+                fields:
+                  - { name: numero, label: "Numero dell'esempio (1 = Primo programma, come in Progetti → Esempi)", widget: number, value_type: int }
+                  - { name: nome, label: Nome, widget: string }
+                  - { name: linguaggio, label: Linguaggio, widget: select, options: [Blocchi, LADDER, GRAFCET, Script] }
+                  - { name: testo, label: Descrizione, widget: text }
+          - name: scarica
+            label: Scarica
+            widget: object
+            fields:
+              - { name: intro, label: Introduzione, widget: text }
+          - name: training
+            label: Training
+            widget: object
+            fields:
+              - { name: intro, label: Introduzione, widget: text }
+      - name: chi-sono
+        label: Chi sono
+        file: sito/src/chi-sono.md
+        fields:
+          - { name: layout, label: Layout, widget: hidden, default: pagina.njk }
+          - { name: permalink, label: Indirizzo, widget: hidden, default: /chi-sono/ }
+          - { name: title, label: Titolo, widget: string }
+          - { name: sottotitolo, label: Sottotitolo, widget: string, required: false }
+          - { name: body, label: Testo, widget: markdown }
+      - name: impostazioni
+        label: "Impostazioni del sito"
+        file: sito/src/_data/sito.json
+        fields:
+          - { name: nome, label: Nome, widget: string }
+          - { name: descrizione, label: "Descrizione (per i motori di ricerca)", widget: text }
+          - { name: autore, label: Autore, widget: string }
+          - { name: email, label: E-mail, widget: string }
+          - { name: github, label: "Progetto su GitHub", widget: string }
+          - { name: donazione, label: "Link per le donazioni", widget: string }
+          - { name: scarica_zip, label: "Link del pacchetto .zip", widget: string }
+          - { name: scarica_exe, label: "Link dell'app .exe", widget: string }
+          - { name: domini_contatore, label: "Domini su cui contare le visite", widget: list }
+          - { name: contatore, label: "Indirizzo del contatore delle visite", widget: string }

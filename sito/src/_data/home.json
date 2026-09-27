@@ -1,0 +1,27 @@
+{
+  "titolo": "Il PLC da laboratorio che si programma",
+  "titolo_evidenza": "dal browser.",
+  "sottotitolo": "Una scheda Arduino diventa un vero controllore per l'automazione. Gli studenti programmano in FBD, LADDER e GRAFCET, come in azienda, e vedono il loro programma prendere vita.",
+  "nota_mano": "gratuito e libero, fatto da un docente ✎",
+  "vantaggi": [
+    { "titolo": "Solo il browser", "testo": "Gli studenti non installano nulla: aprono una pagina e iniziano a programmare." },
+    { "titolo": "Costa quanto un Arduino", "testo": "Una scheda comune al posto di un PLC industriale: si attrezza tutta l'aula." },
+    { "titolo": "Pensato per la scuola", "testo": "Parole semplici, guida su ogni blocco, esempi pronti e un manuale per il docente." }
+  ],
+  "postit": "Per iniziare:\n1. scarica l'app\n2. collega la scheda\n3. apri il browser!",
+  "linguaggi_titolo": "Tre linguaggi, un solo strumento",
+  "linguaggi": [
+    { "nome": "Blocchi · FBD", "testo": "Si collegano dei blocchi con dei fili: il modo più intuitivo per cominciare.", "immagine": "/img/sito/fbd.webp", "esempio": 2 },
+    { "nome": "LADDER", "testo": "Contatti e bobine come negli schemi elettrici, nello stile dei software professionali.", "immagine": "/img/sito/ladder.webp", "esempio": 12 },
+    { "nome": "GRAFCET", "testo": "Per le macchine che lavorano a passi: la fase attiva si illumina mentre lavora.", "immagine": "/img/sito/grafcet.webp", "esempio": 10 }
+  ],
+  "classe_titolo": "In laboratorio, tutta la classe davanti al programma",
+  "classe": [
+    { "titolo": "Si vede tutto dal vivo", "testo": "I collegamenti accesi diventano verdi e i valori si aggiornano mentre la scheda lavora." },
+    { "titolo": "Pulsanti sullo schermo", "testo": "Interruttori, cursori e indicatori nella pagina: si prova prima di cablare." },
+    { "titolo": "Il docente ha il controllo", "testo": "Tutti modificano e provano; solo con il PIN del docente si carica sulla scheda." },
+    { "titolo": "Segui il docente", "testo": "Gli studenti vedono in tempo reale le modifiche del docente alla lavagna." },
+    { "titolo": "99 programmi salvati", "testo": "Ogni classe ritrova il suo lavoro alla lezione successiva." },
+    { "titolo": "Display, sensori, motori", "testo": "OLED, LCD, matrice LED, temperatura, distanza, servo, LED colorati." }
+  ]
+}

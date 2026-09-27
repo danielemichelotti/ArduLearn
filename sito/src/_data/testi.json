@@ -1,0 +1,20 @@
+{
+  "prova": {
+    "intro": "Il simulatore fa girare ArduLearn nel browser: i tre linguaggi, i comandi virtuali, il display e la matrice LED, come sulla scheda.",
+    "postit": "Consiglio:\nprova \"Semaforo a passi\"\ne poi rifallo\nin GRAFCET!",
+    "esempi": [
+      { "numero": 1, "nome": "Primo programma", "linguaggio": "Blocchi", "testo": "Un interruttore nella pagina fa lampeggiare il LED della scheda." },
+      { "numero": 2, "nome": "Marcia / arresto", "linguaggio": "Blocchi", "testo": "L'autoritenuta con la memoria SR: un pulsante accende, l'altro spegne." },
+      { "numero": 7, "nome": "Semaforo a passi", "linguaggio": "Blocchi", "testo": "Tre passi in catena: verde, giallo, rosso, con la scritta sul display." },
+      { "numero": 4, "nome": "Termostato", "linguaggio": "Blocchi", "testo": "Temperatura da un potenziometro, ventola con isteresi, valore sul display." },
+      { "numero": 12, "nome": "Marcia / arresto", "linguaggio": "LADDER", "testo": "Il circuito classico con contatti e bobine." },
+      { "numero": 10, "nome": "Carrello avanti e indietro", "linguaggio": "GRAFCET", "testo": "Il classico esercizio con finecorsa, marcia ed emergenza." }
+    ]
+  },
+  "scarica": {
+    "intro": "Tutto quello che serve per usare ArduLearn in laboratorio: l'app per Windows che prepara le schede, il manuale del docente e la brochure di presentazione."
+  },
+  "training": {
+    "intro": "Video brevi per imparare a usare ArduLearn e per preparare le lezioni."
+  }
+}

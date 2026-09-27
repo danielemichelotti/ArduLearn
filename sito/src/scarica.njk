@@ -1,0 +1,33 @@
+---
+layout: base.njk
+title: Scarica
+permalink: /scarica/
+---
+<div class="testata"><div class="wrap">
+  <h1>Scarica ArduLearn</h1>
+  <p>{{ testi.scarica.intro }}</p>
+</div></div>
+<div class="contenuto"><div class="wrap">
+  <div class="griglia2">
+    <div class="carta"><div class="dentro">
+      <span class="tag">Consigliato</span><h3>Pacchetto completo</h3>
+      <p>App per Windows, manuale del docente e brochure in un unico file .zip. Versione attuale: PLC {{ versione.plc }}, modulo Wi-Fi {{ versione.bridge }}.</p>
+      <a class="btn blu" href="{{ sito.scarica_zip }}">Scarica ArduLearn.zip</a>
+    </div></div>
+    <div class="postit verde" style="justify-self:center">Dopo il download:
+1. apri ArduLearn.exe
+2. collega la scheda
+3. "Carica il firmware"</div>
+  </div>
+  <div class="griglia3" style="margin-top:26px">
+    <div class="carta"><div class="dentro"><h3>Solo l'app</h3><p>ArduLearn.exe per Windows: trova le schede e ci installa ArduLearn.</p><a class="btn bordo" href="{{ sito.scarica_exe }}">ArduLearn.exe</a></div></div>
+    <div class="carta"><div class="dentro"><h3>Manuale del docente</h3><p>Dalla prima configurazione agli esercizi, con i limiti del prodotto. PDF da stampare.</p><a class="btn bordo" href="/scarica/ArduLearn_manuale_docente.pdf">Manuale (PDF)</a></div></div>
+    <div class="carta"><div class="dentro"><h3>Brochure</h3><p>Quattro pagine per presentare ArduLearn ai colleghi e alla scuola.</p><a class="btn bordo" href="/scarica/ArduLearn_brochure.pdf">Brochure (PDF)</a></div></div>
+  </div>
+  <div class="avviso" style="margin-top:30px"><b>Windows ha protetto il PC?</b> Al primo avvio Windows può avvisare che l'app non è firmata: clicca <b>Ulteriori informazioni</b> e poi <b>Esegui comunque</b>. Sui PC gestiti dalla scuola potrebbe servire il tecnico.</div>
+  <h2 style="margin-top:40px">Novità delle ultime versioni</h2>
+  <ul class="novita">
+    {% for n in versione.novita %}<li><div class="data">{{ n.data }}</div>{% for v in n.voci %}{{ v }}<br>{% endfor %}</li>{% endfor %}
+  </ul>
+  <p style="margin-top:18px">Tutte le versioni sono su <a href="{{ sito.github }}/releases">GitHub</a>. Le schede UNO R4 WiFi si aggiornano anche dalla loro pagina, con la pastiglia "Aggiornamento disponibile".</p>
+</div></div>

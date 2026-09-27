@@ -1,0 +1,105 @@
+---
+layout: base.njk
+title: ArduLearn
+---
+<section class="eroe">
+  <div class="wrap">
+    <div>
+      <h1>{{ home.titolo }} <span>{{ home.titolo_evidenza }}</span></h1>
+      <p>{{ home.sottotitolo }}</p>
+      <a class="btn oro" href="/scarica/">Scarica gratis</a>
+      <a class="btn vuoto" href="/prova/">Provalo online</a><br>
+      <span class="mano">{{ home.nota_mano }}</span>
+    </div>
+    <div class="portatile">
+      <div class="schermo"><img src="/img/sito/editor.webp" alt="L'editor di ArduLearn con un programma in esecuzione" width="1440" height="860"></div>
+      <div class="base"></div>
+      <img class="scheda" src="/img/sito/uno-r4.webp" alt="Arduino UNO R4 WiFi">
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Perché ArduLearn</div>
+    <div style="display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <h2>L'automazione industriale, <em>alla portata di ogni laboratorio.</em></h2>
+        <p class="lead">Un PLC vero costa molto e se ne comprano pochi. ArduLearn trasforma una scheda Arduino in un controllore programmabile con gli stessi linguaggi che i ragazzi troveranno in azienda: ogni banco può avere il suo.</p>
+      </div>
+      <div class="postit">{{ home.postit }}</div>
+    </div>
+    <div class="griglia3" style="margin-top:28px">
+      {% for v in home.vantaggi %}<div class="vantaggio"><b>{{ v.titolo }}</b>{{ v.testo }}</div>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="grigio">
+  <div class="wrap">
+    <div class="kicker">I linguaggi</div>
+    <h2>{{ home.linguaggi_titolo }}</h2>
+    <div class="griglia3" style="margin-top:22px">
+      {% for l in home.linguaggi %}
+      <div class="carta">
+        <div class="foto" style="background-image:url('{{ l.immagine | url }}')"></div>
+        <div class="dentro"><span class="tag">{{ l.nome }}</span><p>{{ l.testo }}</p>
+          <a class="btn bordo" href="/prova/app/?demo&amp;sito&amp;r4&amp;esempio={{ l.esempio }}" target="_blank" rel="noopener">Prova un esempio</a></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">In laboratorio</div>
+    <h2>{{ home.classe_titolo }}</h2>
+    <div class="punti">
+      {% for c in home.classe %}<div><b>{{ c.titolo }}</b>{{ c.testo }}</div>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="grigio">
+  <div class="wrap">
+    <div class="kicker">Le schede</div>
+    <h2>Due schede Arduino, <em>lo stesso modo di lavorare.</em></h2>
+    <div class="schede">
+      <div class="carta"><img src="/img/sito/uno-r4.webp" alt="Arduino UNO R4 WiFi">
+        <div class="dentro"><span class="tag">Senza fili</span><h3>Arduino UNO R4 WiFi</h3><p>Si collega al Wi-Fi della scuola, ha una matrice luminosa a bordo e si aggiorna da Internet con un clic.</p></div></div>
+      <div class="carta"><img src="/img/sito/mega-shield.webp" alt="Arduino Mega 2560 con la shield Ethernet PoE">
+        <div class="dentro"><span class="tag">Con il cavo di rete</span><h3>Arduino Mega 2560 + shield Ethernet PoE</h3><p>Collegamento via cavo, tanti ingressi e uscite, programmi salvati sulla microSD.</p></div></div>
+    </div>
+  </div>
+</section>
+
+{% if collections.novita.length or versione.novita.length %}
+<section>
+  <div class="wrap griglia2">
+    <div>
+      <div class="kicker">Novità</div>
+      <h2>Dal laboratorio</h2>
+      <ul class="novita">
+        {% for n in collections.novita | head(4) %}<li><div class="data">{{ n.date | data_it }}</div><b>{{ n.data.title }}</b>{{ n.content | safe }}</li>{% endfor %}
+      </ul>
+    </div>
+    <div>
+      <div class="kicker">Ultima versione</div>
+      <h2>ArduLearn {{ versione.plc }}</h2>
+      <ul class="novita">
+        {% for n in versione.novita | head(3) %}<li><div class="data">{{ n.data }}</div>{% for v in n.voci %}{{ v }}<br>{% endfor %}</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="banda">
+  <div class="wrap">
+    <h2>Pronto a provarlo in classe?</h2>
+    <p>Scarica l'app, il manuale del docente e la brochure. È tutto gratuito.</p>
+    <a class="btn oro" href="/scarica/">Scarica ArduLearn</a>
+    <a class="btn vuoto" href="/prova/">Prova online, senza scheda</a>
+  </div>
+</section>

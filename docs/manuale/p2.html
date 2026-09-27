@@ -1,0 +1,214 @@
+
+<!-- ======================= 4 ======================= -->
+<h1 class="cap"><span class="n">4</span>Prima configurazione, passo passo</h1>
+<p class="capsub">Da scheda nuova a scheda pronta per la lezione: circa dieci minuti, una volta sola.</p>
+
+<h2>4.1 Installare ArduLearn sulla scheda</h2>
+<div class="step"><span class="n">1</span><div>Collega la scheda al PC con il cavo USB. Se è la prima volta, Windows installa da solo il driver (qualche secondo).</div></div>
+<div class="step"><span class="n">2</span><div>Avvia <b>ArduLearn.exe</b> e apri la scheda <b>Carica il firmware</b>. Controlla che in <b>Porta USB</b> compaia la tua scheda (es. "COM3 - Arduino UNO R4 WiFi").</div></div>
+<div class="step"><span class="n">3</span><div>Chiudi ogni altro programma che usa la scheda (per esempio l'IDE di Arduino), poi premi <span class="btn">Carica il firmware</span> e conferma.</div></div>
+<div class="step"><span class="n">4</span><div>Aspetta il messaggio <b>"Firmware caricato correttamente. La scheda si riavvia da sola."</b> Con la UNO R4 WiFi la prima volta ci vuole un po' di più, perché l'app prepara anche il modulo Wi-Fi.</div></div>
+<div class="box att"><span class="t">Se il caricamento non riesce</span>L'app scrive sotto il motivo e un suggerimento. I casi più comuni: la porta è occupata da un altro programma (chiudilo); la UNO R4 non risponde (premi <b>due volte velocemente</b> il tasto RESET della scheda e riprova); il cavo USB è solo di ricarica (cambialo).</div>
+
+<h2>4.2 UNO R4 WiFi: collegarla al Wi-Fi della scuola</h2>
+<p>Una scheda appena installata non conosce ancora nessuna rete Wi-Fi. Allora crea <b>una sua rete</b>, chiamata <b>ArduLearn-xxxx</b> (le ultime quattro lettere cambiano da scheda a scheda), con password <b>ardulearn</b>. La si usa solo per la configurazione.</p>
+<div class="figwrap">
+<svg viewBox="0 0 760 200" style="width:168mm" font-family="Segoe UI, Arial">
+  <g transform="translate(10,20)">
+    <rect width="220" height="150" rx="12" fill="#fff5f5" stroke="#ffa8a8"/><text x="110" y="26" text-anchor="middle" font-weight="700" font-size="14">① Rete della scheda</text>
+    <image href="foto/r4_t.webp" x="20" y="38" width="90" height="68"/><g stroke="#e03131" stroke-width="3" fill="none"><path d="M122 70 q8 10 0 20"/><path d="M132 64 q14 16 0 32"/></g>
+    <rect x="148" y="52" width="58" height="40" rx="4" fill="#1f2937"/><rect x="152" y="56" width="50" height="30" fill="#fff"/>
+    <text x="110" y="126" text-anchor="middle" font-size="12">PC → Wi-Fi "ArduLearn-xxxx"</text><text x="110" y="142" text-anchor="middle" font-size="12">password: ardulearn</text>
+  </g>
+  <path d="M240 95 H280" stroke="#c92a2a" stroke-width="3" marker-end="url(#fr)"/>
+  <g transform="translate(290,20)">
+    <rect width="200" height="150" rx="12" fill="#fff9db" stroke="#ffe066"/><text x="100" y="26" text-anchor="middle" font-weight="700" font-size="14">② Impostazioni</text>
+    <rect x="30" y="42" width="140" height="70" rx="5" fill="#fff" stroke="#adb5bd"/><text x="100" y="62" text-anchor="middle" font-size="11">Rete Wi-Fi</text><rect x="42" y="70" width="116" height="12" rx="2" fill="#e9ecef"/><rect x="42" y="88" width="60" height="14" rx="3" fill="#2563eb"/>
+    <text x="100" y="134" text-anchor="middle" font-size="12">scegli la rete della scuola</text>
+  </g>
+  <path d="M500 95 H540" stroke="#c92a2a" stroke-width="3" marker-end="url(#fr)"/>
+  <g transform="translate(550,20)">
+    <rect width="200" height="150" rx="12" fill="#ebfbee" stroke="#8ce99a"/><text x="100" y="26" text-anchor="middle" font-weight="700" font-size="14">③ Rete della scuola</text>
+    <rect x="30" y="45" width="140" height="44" rx="6" fill="#111"/><text x="100" y="74" text-anchor="middle" font-size="15" fill="#ff6b6b" font-family="Consolas">192.168.1.57</text>
+    <text x="100" y="112" text-anchor="middle" font-size="12">l'indirizzo scorre</text><text x="100" y="128" text-anchor="middle" font-size="12">sulla matrice LED</text>
+  </g>
+  <defs><marker id="fr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#c92a2a"/></marker></defs>
+</svg>
+</div>
+<div class="step"><span class="n">1</span><div>Con la scheda accesa, sul PC (o su un portatile) apri l'elenco delle reti Wi-Fi e collegati a <b>ArduLearn-xxxx</b>, password <b>ardulearn</b>. La pagina di ArduLearn di solito si apre da sola; se non succede, apri il browser e scrivi <b>http://192.168.4.1</b>. Sulla matrice LED scorre la scritta <b>AP 192.168.4.1</b>.</div></div>
+<div class="step"><span class="n">2</span><div>Nella pagina compare un avviso giallo: premi <span class="btn">Imposta il Wi-Fi</span> (oppure vai in <b>Impostazioni → Rete Wi-Fi</b>).</div></div>
+<div class="figwrap"><div class="fig" data-f="ap_banner" data-w="168"></div><div class="cap-f">L'avviso che compare finché la scheda è sulla sua rete.</div></div>
+<div class="step"><span class="n">3</span><div>Premi <span class="btn">Cerca reti</span> e scegli il Wi-Fi della scuola (1), scrivi la password (2) e premi <span class="btn pri">Salva e collega</span> (3). Ti verrà chiesto il PIN del docente: all'inizio è <b>1234</b>.</div></div>
+<div class="figwrap"><div class="fig" data-f="settings_ap"></div><div class="cap-f">Impostazioni → Rete Wi-Fi.</div></div>
+<div class="step"><span class="n">4</span><div>La scheda si collega alla rete della scuola e sulla matrice LED fa <b>scorrere il suo nuovo indirizzo</b> (per esempio 192.168.1.57). Ricollega il PC al Wi-Fi della scuola e apri quell'indirizzo, oppure trova la scheda con l'app (<b>Trova le schede</b>).</div></div>
+<div class="box info"><span class="t">E se la password è sbagliata?</span>Dopo 3 tentativi non riusciti la scheda <b>torna da sola sulla sua rete</b> ArduLearn-xxxx: ricollegati e riprova. Se la rete della scuola cade, la scheda si ricollega da sola quando torna. Per far dimenticare la rete: <span class="btn">Dimentica la rete</span> nelle Impostazioni, oppure il comando <code>wifi clear</code> dal monitor seriale dell'app.</div>
+<div class="postit l">La matrice LED ripete l'indirizzo ogni volta che la rete cambia e, se il programma non la usa, ogni 2 minuti. Un display OLED o LCD collegato mostra sempre l'indirizzo.</div>
+<p>Il nome in rete della scheda è del tipo <b>ardulearn-2b28</b>: sui PC che lo supportano la pagina si apre anche con <b>http://ardulearn-2b28.local</b>, comodo perché non cambia anche se cambia l'indirizzo numerico.</p>
+<div class="clear"></div>
+
+<h2>4.3 Mega: rete via cavo e microSD</h2>
+<div class="step"><span class="n">1</span><div>Monta la shield DFR0850 sulla Mega e inserisci una <b>microSD formattata FAT32</b> (non exFAT: le schede da 64 GB o più vanno riformattate). La microSD serve per conservare i programmi; senza, la Mega funziona ma tiene un solo programma, più piccolo.</div></div>
+<div class="step"><span class="n">2</span><div>Collega il <b>cavo di rete</b> a una presa della rete del laboratorio. La scheda chiede un indirizzo alla rete (DHCP) e lo mostra sull'eventuale display OLED/LCD.</div></div>
+<div class="step"><span class="n">3</span><div>Con l'app, <b>Trova le schede</b> → seleziona la Mega → <span class="btn">Prepara la microSD / Aggiorna la pagina</span> (PIN 1234). Così la pagina sulla microSD è sempre la più recente.</div></div>
+<div class="step"><span class="n">4</span><div>Apri la pagina con <span class="btn">Apri nel browser</span>.</div></div>
+<div class="box info"><span class="t">Senza rete? Cavo diretto al PC</span>Collegando la Mega direttamente alla presa di rete del PC, senza router, la scheda si dà da sola un indirizzo del tipo <b>169.254.x.y</b> dopo circa 10 secondi. L'app la trova lo stesso. Con uno switch o un iniettore <b>PoE</b> la shield alimenta anche la scheda dal cavo di rete.</div>
+<div class="figwrap"><div class="fig" data-f="settings_mega"></div><div class="cap-f">Impostazioni → Scheda, sulla Mega: indirizzo, stato della rete, microSD, nome in rete.</div></div>
+
+<div class="postit" style="margin-top:4mm">Checklist prima della lezione:<br>☐ scheda accesa e in rete<br>☐ indirizzo alla lavagna<br>☐ PIN cambiato (e ricordato!)<br>☐ programma di prova caricato</div>
+<div class="clear"></div>
+<h2>4.4 Le prime impostazioni (da fare subito)</h2>
+<div class="figwrap"><div class="fig" data-f="settings_r4"></div><div class="cap-f">La scheda "Impostazioni" della pagina (UNO R4 WiFi).</div></div>
+<ol class="legend" style="columns:1">
+  <li><span class="n">1</span><b>Accesso docente</b>: premi <span class="btn">Accedi</span>, scrivi 1234 e poi <b>cambia il PIN</b> (da 4 a 8 caratteri). Finché resta 1234 la pagina te lo ricorda.</li>
+  <li><span class="n">2</span><b>Scheda</b>: indirizzo, rete, versione. In <b>Nome in rete</b> puoi dare un nome facile, diverso per ogni scheda (es. <b>banco1</b>, <b>banco2</b>): la pagina diventa http://banco1.local.</li>
+  <li><span class="n">3</span><b>Rete Wi-Fi</b> (solo UNO R4): rete collegata e intensità del segnale; si cambia qui.</li>
+  <li><span class="n">4</span><b>Aggiornamento del firmware</b> (solo UNO R4): versioni installate e aggiornamenti disponibili (capitolo 16).</li>
+  <li><span class="n">5</span><b>Display OLED</b> e <b>LCD</b>: tipo e indirizzo del display, pulsante per cercarli. Più sotto: <b>Orologio</b> (modulo RTC), <b>Aspetto</b> (tema chiaro/scuro).</li>
+</ol>
+<div class="clear"></div>
+
+<!-- ======================= 5 ======================= -->
+<h1 class="cap"><span class="n">5</span>La pagina di ArduLearn</h1>
+<p class="capsub">Un giro guidato dell'editor: cosa c'è, cosa fa il docente, cosa possono fare gli studenti.</p>
+
+<div class="figwrap"><div class="fig" data-f="tour"></div><div class="cap-f">L'editor con l'esempio "Marcia / arresto" in esecuzione.</div></div>
+<ol class="legend">
+  <li><span class="n">1</span><b>Indirizzo</b> della scheda. Il pallino a sinistra è verde se la scheda risponde.</li>
+  <li><span class="n">2</span><b>Schede</b>: Programma, Pin e variabili, Immagini, Progetti, Impostazioni.</li>
+  <li><span class="n">3</span><b>Stato</b>: ● RUN (in esecuzione), ■ STOP, nessun programma. Accanto il pulsante <span class="btn">■ Ferma</span> / <span class="btn">▶ Avvia</span>.</li>
+  <li><span class="n">4</span><span class="btn pri">Carica sulla scheda</span>: invia il programma. <b>Lampeggia</b> quando il disegno è diverso da quello sulla scheda.</li>
+  <li><span class="n">5</span><span class="btn">🔒 Docente</span>: accesso con il PIN (lucchetto aperto = accesso attivo; un clic lo chiude).</li>
+  <li><span class="n">6</span><b>Colonna dei blocchi</b> (o degli elementi LADDER) con la casella di ricerca.</li>
+  <li><span class="n">7</span><b>Barra degli strumenti</b>: nuovo progetto, variabili, annulla/ripeti, duplica, elimina, nota, zoom, "valori in tempo reale".</li>
+  <li><span class="n">8</span><b>Foglio di lavoro</b> con il programma.</li>
+  <li><span class="n">9</span><b>Pannello delle proprietà</b>: nome del progetto (cliccalo per cambiarlo) o proprietà dell'oggetto selezionato; se non selezioni nulla, un promemoria "Come si usa".</li>
+  <li><span class="n">10</span><b>Barra di stato</b>: blocchi usati su 96, "✓ uguale alla scheda" o "● modifiche non ancora caricate", durata del ciclo, memoria libera, display collegati.</li>
+  <li><span class="n">11</span><b>Anteprima della matrice LED</b> (solo UNO R4 WiFi).</li>
+</ol>
+
+<h2>Docente e studenti</h2>
+<p>Chiunque apra la pagina può <b>guardare, modificare e provare</b>. Alcune operazioni però cambiano la scheda per tutti e richiedono il <b>PIN del docente</b>:</p>
+<table>
+  <tr><th>Senza PIN (studenti)</th><th>Con il PIN (docente)</th></tr>
+  <tr><td>Modificare il programma nell'editor, aprire esempi, slot e file, scaricare il progetto come file.<br>Usare interruttori e cursori virtuali, provare le uscite a mano.<br>Vedere tutto dal vivo.</td><td>Caricare un programma sulla scheda, avviarlo e fermarlo.<br>Salvare, rinominare ed eliminare i programmi salvati.<br>Cambiare le impostazioni (rete, nome, display, PIN).<br>Aggiornare la scheda.</td></tr>
+</table>
+<div class="two w">
+  <div>
+    <p>Il PIN si inserisce premendo <span class="btn">Docente</span>, oppure viene chiesto al momento del bisogno. Resta valido finché non chiudi la scheda del browser. Se lo dimentichi: app → <b>Monitor seriale</b> → <code>pin reset</code> (torna a 1234).</p>
+    <div class="box att"><span class="t">Attenzione</span>Non lasciare l'accesso docente aperto su un PC usato dagli studenti: premi il lucchetto per chiuderlo.</div>
+  </div>
+  <div class="figwrap" style="margin:0"><div class="fig" data-f="dlg_pin" data-w="75"></div></div>
+</div>
+
+<h2>"Segui il docente"</h2>
+<p>Quando il docente ha fatto l'accesso, ogni sua modifica al progetto viene salvata sulla scheda come <b>bozza condivisa</b> (circa un secondo dopo). Gli studenti con la casella <b>👁 Segui il docente</b> attiva (lo è di serie) vedono comparire le modifiche in tempo reale sul proprio schermo: la lezione alla lavagna diventa condivisa. Se uno studente ha fatto anche lui delle modifiche, la pagina chiede se <b>mostrare quello del docente</b> o <b>tenere il proprio</b>.</p>
+<div class="postit b">Per un compito individuale fai togliere la spunta a "Segui il docente": ognuno lavora sul suo progetto senza essere sovrascritto.</div>
+<p>Sulla Mega la bozza condivisa richiede la microSD.</p>
+
+<h2>Il lavoro non si perde</h2>
+<ul>
+  <li>Il browser ricorda le modifiche non ancora caricate: riaprendo la pagina compare "<i>Ho ripreso le modifiche che non avevi ancora caricato sulla scheda</i>".</li>
+  <li>Se qualcun altro carica un programma diverso, la pagina avvisa e fa scegliere se aprire quello della scheda o tenere il proprio.</li>
+  <li>Per conservare un lavoro a lungo: <b>Progetti → Scarica file</b> (un file sul PC) oppure salvalo in uno <b>slot</b> della scheda (capitolo 15).</li>
+</ul>
+<div class="clear"></div>
+
+<h2>Caricare, avviare, fermare</h2>
+<div class="step"><span class="n">1</span><div>Premi <span class="btn pri">Carica sulla scheda</span>. La pagina controlla prima che non ci siano errori (i blocchi con problemi sono segnalati in rosso, con l'elenco nel pannello a destra).</div></div>
+<div class="step"><span class="n">2</span><div>Il programma parte subito: lo stato diventa <b>● RUN</b> e la barra di stato dice "✓ uguale alla scheda".</div></div>
+<div class="step"><span class="n">3</span><div>Con <span class="btn">■ Ferma</span> il programma si ferma e le uscite si spengono; <span class="btn">▶ Avvia</span> lo fa ripartire. Lo stato RUN/STOP viene ricordato anche dopo lo spegnimento.</div></div>
+<div class="box info">Durante il caricamento il programma precedente si ferma per qualche secondo. Sulla UNO R4 WiFi il nuovo programma arriva prima nella memoria del modulo Wi-Fi e solo dopo nel PLC: se la rete cade a metà, il programma in esecuzione non si rovina.</div>
+
+<!-- ======================= 6 ======================= -->
+<h1 class="cap"><span class="n">6</span>Come ragiona un PLC</h1>
+<p class="capsub">Quattro idee da spiegare prima di qualsiasi linguaggio.</p>
+
+<h2>Il ciclo di scansione</h2>
+<div class="figwrap">
+<svg viewBox="0 0 700 260" style="width:150mm" font-family="Segoe UI, Arial">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker></defs>
+  <circle cx="350" cy="130" r="92" fill="none" stroke="#2563eb" stroke-width="5" stroke-dasharray="14 8"/>
+  <path d="M430 88 A92 92 0 0 1 440 150" fill="none" stroke="#2563eb" stroke-width="5" marker-end="url(#ar)"/>
+  <path d="M290 205 A92 92 0 0 1 262 110" fill="none" stroke="#2563eb" stroke-width="5" marker-end="url(#ar)"/>
+  <g font-weight="700" font-size="16" text-anchor="middle">
+    <rect x="270" y="10" width="160" height="44" rx="10" fill="#ebfbee" stroke="#2f9e44"/><text x="350" y="38">① legge gli ingressi</text>
+    <rect x="470" y="110" width="200" height="44" rx="10" fill="#fff9db" stroke="#f59f00"/><text x="570" y="138">② esegue il programma</text>
+    <rect x="270" y="206" width="160" height="44" rx="10" fill="#fff5f5" stroke="#e03131"/><text x="350" y="234">③ scrive le uscite</text>
+  </g>
+  <text x="350" y="125" text-anchor="middle" font-size="26" class="hand" fill="#c92a2a">e ricomincia</text>
+  <text x="350" y="150" text-anchor="middle" font-size="20" class="hand" fill="#c92a2a">migliaia di volte al secondo</text>
+  <text x="120" y="120" text-anchor="middle" font-size="13" fill="#495057">pulsanti, sensori,</text><text x="120" y="138" text-anchor="middle" font-size="13" fill="#495057">cursori virtuali</text>
+</svg>
+</div>
+<p>Il PLC non "aspetta" gli eventi: ripete in continuazione lo stesso giro. <b>Legge</b> tutti gli ingressi, <b>calcola</b> il programma dall'inizio alla fine, <b>aggiorna</b> le uscite e ricomincia. Un giro si chiama <b>ciclo</b> e la sua durata compare nella barra di stato ("ciclo 0.18 ms"): in un programma normale meno di un millisecondo.</p>
+
+<h2>Segnali: 0 e 1, e i numeri</h2>
+<ul>
+  <li>Un segnale <b>digitale</b> vale <b>1</b> (acceso, vero, 5 volt) oppure <b>0</b> (spento, falso). Nella pagina i fili che valgono 1 diventano <b>verdi</b>.</li>
+  <li>Un valore <b>analogico</b> è un numero: un ingresso analogico va da <b>0</b> (0 V) a <b>1023</b> (5 V); un'uscita PWM da <b>0</b> a <b>255</b>.</li>
+  <li>ArduLearn lavora con <b>numeri interi</b>. Per i decimali si usano i <b>decimi</b>: 235 significa 23,5 °C (e sui display si scrive <code>{1.1}</code> per vedere "23.5").</li>
+  <li>Ogni numero diverso da 0 vale "vero" quando entra in un blocco logico.</li>
+</ul>
+
+<h2>Il tempo si conta in millisecondi</h2>
+<p>Tutti i tempi sono in <b>millisecondi</b>: 1000 = 1 secondo, 5000 = 5 secondi, 60000 = 1 minuto. In LADDER e GRAFCET si può scrivere anche nel formato dei PLC industriali: <code>T#5S</code>, <code>T#500MS</code>, <code>T#1M30S</code>.</p>
+
+<h2>Il fronte: un attimo lungo un ciclo</h2>
+
+<p>Molte cose devono succedere <b>nell'istante in cui</b> un segnale cambia, non per tutto il tempo in cui resta acceso: contare una pressione, far avanzare una sequenza. Il <b>fronte di salita</b> è un impulso che dura <b>un solo ciclo</b> quando il segnale passa da 0 a 1 (quello di discesa, da 1 a 0). È troppo breve per vederlo a occhio, ma è quello che fa contare 1 anche se il pulsante resta premuto a lungo.</p>
+<p class="note">✎ Esperimento da fare in classe: collega un pulsante a un contatore, prima direttamente e poi attraverso un fronte. Tenendo premuto... cosa cambia?</p>
+<div class="clear"></div>
+
+<!-- ======================= 7 ======================= -->
+<h1 class="cap"><span class="n">7</span>Pin e variabili</h1>
+<p class="capsub">Dire alla scheda cosa è collegato a ogni pin, e dare un nome a ingressi, uscite e memorie.</p>
+
+<div class="figwrap"><div class="fig" data-f="pins"></div><div class="cap-f">La scheda "Pin e variabili" con l'esempio "Marcia / arresto" (UNO R4 WiFi).</div></div>
+<p>La configurazione dei pin <b>fa parte del progetto</b> e viene inviata con "Carica sulla scheda". Di solito non serve toccarla: quando in un blocco scegli un pin libero, la pagina lo configura da sola (e te lo dice con un messaggio).</p>
+
+<h2>I modi di un pin</h2>
+<table>
+  <tr><th style="width:26%">Modo</th><th>Quando si usa</th></tr>
+  <tr><td><b>Non usato</b></td><td>Pin libero.</td></tr>
+  <tr><td><b>Ingresso</b></td><td>Sensori che danno già 0 V / 5 V (moduli con uscita digitale).</td></tr>
+  <tr><td><b>Ingresso pull-up</b></td><td>Pulsanti, interruttori e finecorsa collegati tra il pin e GND: è il modo consigliato, non servono resistenze.</td></tr>
+  <tr><td><b>Uscita</b></td><td>LED, moduli relè, cicalini attivi.</td></tr>
+  <tr><td><b>Analogico</b></td><td>Solo pin A: potenziometri, fotoresistenze, sensori analogici.</td></tr>
+  <tr><td><b>Modulo</b></td><td>Impostato da solo quando un blocco modulo (sensore, servo...) usa il pin.</td></tr>
+</table>
+
+<h2>Il pull-up e "Inverti"</h2>
+<div class="two w">
+  <div>
+    <p>Con l'ingresso <b>pull-up</b> il pin vale <b>1 a riposo</b> e <b>0 quando il pulsante è premuto</b> (perché lo collega a GND). È il contrario di quello che ci si aspetta! Per questo il blocco "Ingresso digitale" ha l'opzione <b>Inverti</b> (in LADDER e GRAFCET: la casella <b>logica inversa</b> nella scheda Pin): così <b>premuto = 1</b>. Quando la pagina configura un pulsante da sola, attiva già Inverti.</p>
+    <div class="box info">Un pulsante <b>normalmente chiuso</b> (come un arresto di emergenza) collegato a GND con pull-up vale 0 a riposo e 1 quando viene premuto o se il filo si rompe: è il collegamento più sicuro per gli arresti.</div>
+  </div>
+  <svg viewBox="0 0 260 200" style="width:62mm" font-family="Segoe UI, Arial">
+    <rect x="10" y="20" width="90" height="160" rx="8" fill="#0e7c86"/><text x="55" y="45" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">Arduino</text>
+    <circle cx="100" cy="80" r="5" fill="#f5d06f"/><text x="60" y="84" fill="#fff" font-size="12">D2</text>
+    <circle cx="100" cy="150" r="5" fill="#f5d06f"/><text x="60" y="154" fill="#fff" font-size="12">GND</text>
+    <path d="M105 80 H170 V95" stroke="#1f2937" stroke-width="3" fill="none"/><path d="M105 150 H170 V135" stroke="#1f2937" stroke-width="3" fill="none"/>
+    <path d="M160 112 L182 100" stroke="#1f2937" stroke-width="3"/><circle cx="170" cy="96" r="3.5" fill="#1f2937"/><circle cx="170" cy="134" r="3.5" fill="#1f2937"/><path d="M170 134 V124" stroke="#1f2937" stroke-width="3"/>
+    <path d="M183 98 H200 M191 98 V90" stroke="#1f2937" stroke-width="3"/>
+    <text x="205" y="118" font-size="20" class="hand" fill="#c92a2a">pulsante</text>
+    <text x="120" y="190" font-size="17" class="hand" fill="#c92a2a">niente resistenze!</text>
+  </svg>
+</div>
+
+<h2>Nomi e indirizzi</h2>
+<p>Ogni pin usato può avere un <b>nome</b> (es. <i>Marcia</i>, <i>Motore</i>): solo lettere, cifre e "_", senza spazi, iniziando con una lettera. I nomi compaiono nei blocchi e sono gli operandi del LADDER.</p>
+<p>Nei progetti LADDER e GRAFCET ogni pin riceve anche un <b>indirizzo</b> in stile industriale, assegnato in ordine di pin:</p>
+<table>
+  <tr><th>Indirizzo</th><th>Cosa indica</th><th>Esempio</th></tr>
+  <tr><td><code>%I0.0</code>, <code>%I0.1</code>…</td><td>ingressi digitali</td><td>il primo pulsante configurato</td></tr>
+  <tr><td><code>%Q0.0</code>, <code>%Q0.1</code>…</td><td>uscite digitali</td><td>la prima lampada</td></tr>
+  <tr><td><code>%IW64</code>, <code>%IW66</code>…</td><td>ingressi analogici (numero 0–1023)</td><td>un potenziometro</td></tr>
+  <tr><td><code>%QW64</code>…</td><td>uscite PWM (numero 0–255)</td><td>un LED regolabile</td></tr>
+  <tr><td><code>%M0.0</code> … <code>%M7.7</code></td><td>merker: memorie di un bit (vero/falso)</td><td>"ciclo avviato"</td></tr>
+  <tr><td><code>%MW0</code> … <code>%MW30</code></td><td>memorie numeriche (interi)</td><td>"pezzi prodotti"</td></tr>
+</table>
+<p>La <b>Tabella degli ingressi, delle uscite e delle variabili</b> (come la tabella dei tag di TIA Portal) riassume nome, tipo, indirizzo, pin e <b>valore dal vivo</b>. Nei progetti LADDER e GRAFCET, sotto, si aggiungono i merker con <span class="btn">+ Bool (%M)</span> e <span class="btn">+ Int (%MW)</span>. Scrivendo in LADDER un nome nuovo, il merker viene creato da solo.</p>
+
+<h2>Provare le uscite a mano</h2>
+<p>Il pulsante <span class="btn">Prova uscita</span> sotto un'uscita accende e spegne il pin a mano: utilissimo per controllare i collegamenti prima di scrivere il programma. Funziona solo se la configurazione dei pin è già sulla scheda e se quell'uscita non è comandata dal programma in esecuzione (altrimenti prima premi <b>Ferma</b>).</p>
+<p>Sulla Mega i pin riservati (rete, microSD, display) compaiono bloccati, con il motivo scritto accanto.</p>

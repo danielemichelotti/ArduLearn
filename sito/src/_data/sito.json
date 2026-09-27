@@ -1,0 +1,15 @@
+{
+  "nome": "ArduLearn",
+  "descrizione": "Il PLC da laboratorio che si programma dal browser: FBD, LADDER e GRAFCET su Arduino, per tutta la classe. Gratuito e libero.",
+  "autore": "Daniele Michelotti",
+  "email": "daniele.michelotti@gmail.com",
+  "github": "https://github.com/danielemichelotti/ArduLearn",
+  "donazione": "https://www.paypal.com/paypalme/danistn",
+  "scarica_zip": "https://github.com/danielemichelotti/ArduLearn/releases/latest/download/ArduLearn.zip",
+  "scarica_exe": "https://github.com/danielemichelotti/ArduLearn/releases/latest/download/ArduLearn.exe",
+  "domini_contatore": [
+    "ardulearn.org",
+    "www.ardulearn.org"
+  ],
+  "contatore": "https://www.replaytechsolution.com/public/api.php?action=track_app&app=ardulearn"
+}

@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>ArduLearn — Manuale del docente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>@font-face { font-family: "Caveat"; src: url("Caveat.ttf") format("truetype"); font-weight: 400 700; }</style>
+<style>
+@page { size: A4; margin: 16mm 17mm 18mm; }
+@page :first { margin: 0; }
+:root { --blu: #2563eb; --blu2: #1d4ed8; --notte: #0b1530; --chiaro: #eff4ff; --testo: #1f2937; --mut: #6b7280; --bordo: #e5e7eb; --rosso: #c92a2a; --verde: #16a34a; --giallo: #fff3bf; }
+* { box-sizing: border-box; }
+html, body { margin: 0; color: var(--testo); font-family: "Segoe UI", Arial, sans-serif; font-size: 10.3pt; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.hand, .note, .postit, .hand-t { font-family: "Caveat", "Segoe Print", "Ink Free", cursive; }
+svg text.hand { font-family: "Caveat", "Segoe Print", cursive; font-weight: 700; }
+h1.cap { font-size: 24pt; line-height: 1.1; margin: 0 0 2mm; color: var(--notte); break-before: page; letter-spacing: -.3px; }
+h1.cap .n { display: inline-block; min-width: 13mm; color: var(--blu); }
+.capsub { color: var(--mut); font-size: 11pt; margin: 0 0 6mm; border-bottom: 2px solid var(--blu); padding-bottom: 3mm; }
+h2 { font-size: 14.5pt; margin: 7mm 0 2mm; color: var(--blu2); break-after: avoid; }
+h3 { font-size: 11.5pt; margin: 5mm 0 1.5mm; break-after: avoid; }
+p { margin: 0 0 2.6mm; orphans: 3; widows: 3; }
+.keep, .keep * { break-inside: avoid; }
+thead { display: table-header-group; }
+.legend li { display: block; break-inside: avoid; }
+.sol { break-after: avoid; }
+ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+li { margin-bottom: 1mm; }
+b, strong { color: #111827; }
+code, .k { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9.4pt; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 3px; padding: 0 1.2mm; }
+.btn { display: inline-block; font-size: 9pt; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 1.8mm; background: #fff; white-space: nowrap; font-weight: 600; }
+.btn.pri { background: var(--blu); color: #fff; border-color: var(--blu); }
+table { border-collapse: collapse; width: 100%; margin: 2mm 0 4mm; font-size: 9.4pt; break-inside: auto; }
+tr { break-inside: avoid; }
+th { background: var(--chiaro); color: var(--blu2); text-align: left; font-weight: 700; }
+th, td { border: 1px solid var(--bordo); padding: 1.3mm 2mm; vertical-align: top; }
+td.c { text-align: center; }
+.figwrap { margin: 3mm 0 4mm; text-align: center; break-inside: avoid; }
+.figwrap .fig { display: inline-block; }
+.cap-f { font-size: 8.8pt; color: var(--mut); margin-top: 1mm; text-align: center; }
+.legend { columns: 2; column-gap: 8mm; font-size: 9.4pt; margin: 1mm 0 4mm; padding-left: 0; list-style: none; }
+.legend li { break-inside: avoid; margin-bottom: 1.2mm; }
+.legend .n, .step .n { display: inline-flex; width: 5.4mm; height: 5.4mm; border-radius: 50%; background: #d6336c; color: #fff; font-weight: 700; font-size: 8.5pt; align-items: center; justify-content: center; margin-right: 1.5mm; vertical-align: 0; }
+.step { display: grid; grid-template-columns: 8mm 1fr; gap: 1mm 2mm; margin: 2mm 0; break-inside: avoid; }
+.step .n { width: 7mm; height: 7mm; font-size: 10pt; background: var(--blu); }
+.box { border-radius: 3mm; padding: 3mm 4mm; margin: 3mm 0; break-inside: avoid; font-size: 9.8pt; }
+.box p:last-child, .box ul:last-child { margin-bottom: 0; }
+.box.att { background: #fff5f5; border-left: 4px solid #e03131; }
+.box.info { background: var(--chiaro); border-left: 4px solid var(--blu); }
+.box.ok { background: #ebfbee; border-left: 4px solid #2f9e44; }
+.box .t { font-weight: 700; display: block; margin-bottom: 1mm; }
+.postit { float: right; width: 52mm; margin: 0 0 3mm 5mm; background: #fff3a8; padding: 3mm 4mm 4mm; transform: rotate(1.6deg); box-shadow: 0 1.5mm 3mm rgba(0,0,0,.18); font-size: 13.5pt; line-height: 1.2; color: #3b2f00; break-inside: avoid; }
+.postit.l { float: left; margin: 0 5mm 3mm 0; transform: rotate(-1.8deg); }
+.postit.b { background: #d0ebff; color: #0b2a4a; }
+.postit.g { background: #d3f9d8; color: #0b3d16; }
+.postit::before { content: ""; display: block; width: 16mm; height: 4mm; margin: -5mm auto 1.5mm; background: rgba(255,255,255,.55); transform: rotate(-2deg); }
+.note { color: var(--rosso); font-size: 14pt; line-height: 1.15; }
+.hl { background: linear-gradient(transparent 45%, #ffe066 45%, #ffe066 90%, transparent 90%); padding: 0 .5mm; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; align-items: start; break-inside: avoid; }
+.two.w { grid-template-columns: 1.3fr 1fr; }
+.clear { clear: both; }
+.ex { border-top: 2px solid #cbd5e1; padding: 4mm 1mm 1mm; margin: 6mm 0 2mm; break-inside: auto; }
+.ex h3 { margin-top: 0; color: var(--blu2); font-size: 13pt; }
+.ex .lab { font-weight: 700; color: var(--blu2); font-size: 9pt; text-transform: uppercase; letter-spacing: 1px; margin-top: 3mm; display: block; }
+.sol { font-size: 8.5pt; font-weight: 700; letter-spacing: 1px; background: var(--blu); color: #fff; border-radius: 2mm; padding: .4mm 2mm; display: inline-block; margin: 2mm 0 1mm; }
+.keep { break-inside: avoid; }
+.pb { break-before: page; }
+.toc { list-style: none; padding: 0; columns: 1; font-size: 11pt; }
+.toc li { display: flex; gap: 3mm; padding: 1.4mm 0; border-bottom: 1px dotted #cbd5e1; }
+.toc .n { color: var(--blu); font-weight: 700; width: 9mm; }
+.toc .d { color: var(--mut); font-size: 9.2pt; margin-left: auto; text-align: right; max-width: 95mm; }
+/* copertina */
+.cover { height: 297mm; width: 210mm; position: relative; overflow: hidden; color: #fff; background: radial-gradient(120% 80% at 80% 10%, #1e3a8a 0%, #13224a 45%, var(--notte) 100%); }
+.cover .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 5mm 5mm; }
+.cover .in { position: absolute; left: 18mm; right: 18mm; top: 22mm; }
+.cover h1 { font-size: 44pt; margin: 10mm 0 0; line-height: 1; letter-spacing: -1px; }
+.cover .sub { font-size: 17pt; color: #c7d2fe; margin-top: 3mm; }
+.cover .hand-t { font-size: 25pt; color: #ffd43b; transform: rotate(-3deg); display: inline-block; margin-top: 8mm; }
+.cover .foot { position: absolute; left: 18mm; right: 18mm; bottom: 16mm; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid rgba(255,255,255,.25); padding-top: 4mm; font-size: 10pt; color: #c7d2fe; }
+.cover b { color: #fff; }
+.cover .foot b { color: #fff; font-size: 12pt; }
+.cover .imgs { position: absolute; left: 0; right: 0; top: 118mm; height: 120mm; }
+</style>
+</head>
+<body>
+
+<!-- ======================= COPERTINA ======================= -->
+<section class="cover">
+  <div class="grid"></div>
+  <div class="in">
+    <div style="display:flex;align-items:center;gap:4mm">
+      <svg viewBox="0 0 64 64" style="width:15mm;height:15mm"><g fill="#fff"><path d="M32 3L58 12L32 21L6 12Z"/><path d="M19 18.1L32 22.6L45 18.1V23Q32 27 19 23Z"/><path fill-rule="evenodd" d="M57.2 12H58.8V28H57.2ZM54.5 19H61.5V21H54.5ZM55.2 28H60.8Q62 28 62 29.2V33.8Q62 35 60.8 35H55.2Q54 35 54 33.8V29.2Q54 28 55.2 28ZM56.7 30.2H59.3Q59.8 30.2 59.8 30.7V32.3Q59.8 32.8 59.3 32.8H56.7Q56.2 32.8 56.2 32.3V30.7Q56.2 30.2 56.7 30.2Z"/><path fill-rule="evenodd" d="M19 27H45Q52 27 52 34V36.5A4.5 4.5 0 1 1 52 45.5V49Q52 56 45 56H19Q12 56 12 49V34Q12 27 19 27ZM20.5 31H25.5Q28.5 31 28.5 34V39Q28.5 42 25.5 42H20.5Q17.5 42 17.5 39V34Q17.5 31 20.5 31ZM38.5 31H43.5Q46.5 31 46.5 34V39Q46.5 42 43.5 42H38.5Q35.5 42 35.5 39V34Q35.5 31 38.5 31ZM23.7 33.2H25.9Q27.3 33.2 27.3 34.6V36.8Q27.3 38.2 25.9 38.2H23.7Q22.3 38.2 22.3 36.8V34.6Q22.3 33.2 23.7 33.2ZM41.7 33.2H43.9Q45.3 33.2 45.3 34.6V36.8Q45.3 38.2 43.9 38.2H41.7Q40.3 38.2 40.3 36.8V34.6Q40.3 33.2 41.7 33.2ZM21 45Q26.5 49.5 29.6 50.1V47.6Q26 47 22.6 43.6ZM34.4 50.1Q37.5 49.5 43 45L41.4 43.6Q38 47 34.4 47.6ZM29.6 45.6H31.2V52.2H29.6ZM32.8 45.6H34.4V52.2H32.8Z"/><path d="M7.5 33H12V40H7.5Q6.5 40 6.5 39V34Q6.5 33 7.5 33Z"/></g></svg>
+      <b style="font-size:20pt;color:#fff">ArduLearn</b>
+    </div>
+    <h1>Manuale<br>del docente</h1>
+    <div class="sub">Dalla prima accensione alla lezione in laboratorio:<br>configurazione, linguaggi, esercizi e limiti</div>
+    <div class="hand-t">appunti pratici per chi insegna automazione ✎</div>
+  </div>
+  <div class="imgs">
+    <img src="foto/mega_t.webp" style="position:absolute;left:14mm;top:34mm;width:92mm;transform:rotate(-6deg);filter:drop-shadow(0 4mm 6mm rgba(0,0,0,.5))">
+    <img src="foto/shield_t.webp" style="position:absolute;left:78mm;top:60mm;width:52mm;transform:rotate(4deg);filter:drop-shadow(0 4mm 6mm rgba(0,0,0,.5))">
+    <img src="foto/r4_t.webp" style="position:absolute;right:14mm;top:6mm;width:78mm;transform:rotate(7deg);filter:drop-shadow(0 4mm 6mm rgba(0,0,0,.5))">
+  </div>
+  <div class="foot">
+    <div>Ideato e realizzato da<br><b>Daniele Michelotti</b> · daniele.michelotti@gmail.com</div>
+    <div style="text-align:right">github.com/danielemichelotti/ArduLearn<br>versione 2.2 · settembre 2026</div>
+  </div>
+</section>
+
+<!-- ======================= INDICE ======================= -->
+<section style="break-before:page">
+  <h1 class="cap" style="break-before:auto">Indice</h1>
+  <ul class="toc">
+    <li><span class="n">1</span>Che cos'è ArduLearn<span class="d">l'idea, cosa serve, come è fatto</span></li>
+    <li><span class="n">2</span>Le due schede<span class="d">UNO R4 WiFi e Mega 2560: differenze e pin</span></li>
+    <li><span class="n">3</span>L'app ArduLearn per Windows<span class="d">le quattro schede dell'app</span></li>
+    <li><span class="n">4</span>Prima configurazione, passo passo<span class="d">firmware, rete, prima apertura, PIN</span></li>
+    <li><span class="n">5</span>La pagina di ArduLearn<span class="d">giro guidato, docente e studenti</span></li>
+    <li><span class="n">6</span>Come ragiona un PLC<span class="d">il ciclo, i segnali, i numeri, il tempo</span></li>
+    <li><span class="n">7</span>Pin e variabili<span class="d">ingressi, uscite, pull-up, indirizzi</span></li>
+    <li><span class="n">8</span>Programmare a blocchi (FBD)<span class="d">logica, uso dell'editor, catalogo dei blocchi</span></li>
+    <li><span class="n">9</span>Programmare in LADDER<span class="d">contatti, bobine, box, rami</span></li>
+    <li><span class="n">10</span>Programmare in GRAFCET<span class="d">tappe, transizioni, azioni, sicurezze</span></li>
+    <li><span class="n">11</span>Script ST e funzioni C<span class="d">quando il disegno non basta</span></li>
+    <li><span class="n">12</span>Display, matrice LED e immagini<span class="d">OLED, LCD, pagine, animazioni</span></li>
+    <li><span class="n">13</span>Moduli: sensori e attuatori<span class="d">temperatura, distanza, servo, LED...</span></li>
+    <li><span class="n">14</span>Collegamenti elettrici<span class="d">schemi e regole di sicurezza</span></li>
+    <li><span class="n">15</span>Salvare e organizzare i programmi<span class="d">file, slot, esempi, bozza</span></li>
+    <li><span class="n">16</span>Aggiornamenti<span class="d">UNO R4 WiFi dalla rete, Mega con l'app</span></li>
+    <li><span class="n">17</span>Esercizi guidati<span class="d">sette esercitazioni con soluzioni</span></li>
+    <li><span class="n">18</span>Limiti del prodotto<span class="d">cosa non fa e perché</span></li>
+    <li><span class="n">19</span>Problemi e soluzioni<span class="d">le domande più frequenti</span></li>
+    <li><span class="n">A</span>Appendice<span class="d">comandi del monitor seriale, glossario, contatti</span></li>
+  </ul>
+  <div class="postit b" style="float:none;width:auto;margin:10mm 12mm 0;transform:rotate(-.8deg)">Come leggere questo manuale: i riquadri <b>rossi</b> sono attenzioni, quelli <b>blu</b> informazioni utili, i foglietti gialli sono consigli "da collega". Sulle schermate le frecce e le scritte a mano indicano dove cliccare.</div>
+</section>
+
+<!-- ======================= 1 ======================= -->
+<h1 class="cap"><span class="n">1</span>Che cos'è ArduLearn</h1>
+<p class="capsub">Un PLC da laboratorio, costruito su una scheda Arduino, che si programma dal browser.</p>
+
+<p>Un <b>PLC</b> (controllore logico programmabile) è il "cervello" delle macchine automatiche: legge pulsanti e sensori, decide cosa fare secondo un programma e comanda lampade, motori, valvole. In azienda si programma con software dedicati e linguaggi standard.</p>
+<p><b>ArduLearn</b> trasforma una scheda Arduino in un piccolo PLC didattico: gli studenti scrivono il programma in una pagina web, con gli stessi linguaggi dell'industria, lo caricano sulla scheda e lo vedono funzionare <b>dal vivo</b>, con i collegamenti che si colorano quando sono attivi.</p>
+
+<div class="postit">Per gli studenti non c'è niente da installare: serve solo un browser (Chrome, Edge, Firefox) su un PC della stessa rete della scheda.</div>
+
+<h2>Cosa si può insegnare</h2>
+<ul>
+  <li><b>Logica combinatoria</b>: AND, OR, NOT, XOR con pulsanti e lampade.</li>
+  <li><b>Memorie e autoritenuta</b>: il classico marcia/arresto di un motore.</li>
+  <li><b>Temporizzatori e contatori</b>: luce delle scale, contapezzi, lampeggi.</li>
+  <li><b>Sequenze</b>: semafori, carrelli, macchine a fasi con il GRAFCET.</li>
+  <li><b>Grandezze analogiche</b>: potenziometri, temperature, soglie con isteresi, regolazione PWM.</li>
+  <li><b>Programmazione testuale</b> (facoltativa): testo strutturato ST e piccole funzioni in C.</li>
+</ul>
+
+<h2>Cosa serve</h2>
+<table>
+  <tr><th style="width:32%">Oggetto</th><th>A cosa serve</th></tr>
+  <tr><td><b>Una scheda</b>: Arduino UNO R4 WiFi <i>oppure</i> Arduino Mega 2560 con la shield DFRobot Ethernet &amp; PoE (DFR0850)</td><td>È il PLC: esegue il programma e comanda ingressi e uscite.</td></tr>
+  <tr><td><b>Un PC Windows</b> con l'app <b>ArduLearn.exe</b></td><td>Solo per installare ArduLearn sulla scheda (e ogni tanto per aggiornarla o diagnosticarla). Poi non serve più.</td></tr>
+  <tr><td><b>Un cavo USB</b> (USB-C per la UNO R4, USB-B per la Mega)</td><td>Per la prima installazione e per alimentare la scheda.</td></tr>
+  <tr><td><b>La rete</b>: Wi-Fi della scuola (UNO R4) o cavo di rete (Mega)</td><td>I PC degli studenti aprono la pagina della scheda attraverso la rete.</td></tr>
+  <tr><td>Facoltativi: pulsanti, LED, relè, sensori, display OLED o LCD</td><td>Per costruire impianti veri sul banco. Si può anche iniziare senza nulla, con i pulsanti virtuali della pagina.</td></tr>
+</table>
+
+<h2>Come è fatto il sistema</h2>
+<div class="figwrap">
+<svg viewBox="0 0 760 250" style="width:170mm" font-family="Segoe UI, Arial">
+  <rect x="10" y="40" width="200" height="170" rx="14" fill="#eff4ff" stroke="#93b4f5"/>
+  <image href="foto/r4_t.webp" x="30" y="55" width="160" height="120"/>
+  <text x="110" y="198" text-anchor="middle" font-size="14" font-weight="700" fill="#1f2937">Scheda ArduLearn</text>
+  <text x="110" y="28" text-anchor="middle" font-size="22" class="hand" fill="#c92a2a">esegue il programma</text>
+  <g stroke="#2563eb" stroke-width="4" fill="none" stroke-linecap="round"><path d="M232 110 q12 16 0 32"/><path d="M248 100 q22 26 0 52"/><path d="M264 90 q32 36 0 72"/></g>
+  <text x="258" y="192" text-anchor="middle" font-size="12" fill="#6b7280">rete della scuola</text>
+  <g font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">
+    <g transform="translate(320,60)"><rect width="120" height="78" rx="5" fill="#1f2937"/><rect x="5" y="5" width="110" height="68" fill="#fff"/><rect x="14" y="16" width="30" height="16" rx="2" fill="#2f9e44"/><rect x="66" y="40" width="30" height="16" rx="2" fill="#2563eb"/><path d="M44 24 C55 24 55 48 66 48" stroke="#2f9e44" stroke-width="2.5" fill="none"/><path d="M-8 86 H128 L120 78 H0 Z" fill="#64748b"/><text x="60" y="112">Docente</text></g>
+    <g transform="translate(470,60)"><rect width="120" height="78" rx="5" fill="#1f2937"/><rect x="5" y="5" width="110" height="68" fill="#fff"/><rect x="14" y="16" width="30" height="16" rx="2" fill="#2f9e44"/><rect x="66" y="40" width="30" height="16" rx="2" fill="#2563eb"/><path d="M44 24 C55 24 55 48 66 48" stroke="#2f9e44" stroke-width="2.5" fill="none"/><path d="M-8 86 H128 L120 78 H0 Z" fill="#64748b"/><text x="60" y="112">Studente</text></g>
+    <g transform="translate(620,60)"><rect width="120" height="78" rx="5" fill="#1f2937"/><rect x="5" y="5" width="110" height="68" fill="#fff"/><rect x="14" y="16" width="30" height="16" rx="2" fill="#2f9e44"/><rect x="66" y="40" width="30" height="16" rx="2" fill="#2563eb"/><path d="M44 24 C55 24 55 48 66 48" stroke="#2f9e44" stroke-width="2.5" fill="none"/><path d="M-8 86 H128 L120 78 H0 Z" fill="#64748b"/><text x="60" y="112">Studente</text></g>
+  </g>
+  <text x="530" y="215" text-anchor="middle" font-size="22" class="hand" fill="#c92a2a">tutti aprono la stessa pagina nel browser</text>
+  <text x="530" y="240" text-anchor="middle" font-size="12" fill="#6b7280">indirizzo tipo  http://ardulearn-2b28.local</text>
+</svg>
+</div>
+<p>La scheda contiene sia il PLC sia un piccolo <b>sito web</b>: la pagina di ArduLearn. Chi apre l'indirizzo della scheda trova l'editor, scrive o modifica il programma e, se ha il <b>PIN del docente</b>, lo carica. Da quel momento la scheda lavora da sola: anche se si chiude il browser o si spegne il PC, il programma continua a girare, e resta in memoria anche togliendo l'alimentazione.</p>
+
+<div class="box info"><span class="t">Tre linguaggi, uno per volta</span>Ogni progetto si scrive in <b>uno</b> dei tre linguaggi: <b>Blocchi (FBD)</b>, <b>LADDER</b> (a contatti, stile Siemens TIA Portal) o <b>GRAFCET</b> (sequenze a tappe, con segmenti LADDER). Un programma non si converte da un linguaggio all'altro: si sceglie all'inizio, con <span class="btn">Nuovo…</span>.</div>
+
+<!-- ======================= 2 ======================= -->
+<h1 class="cap"><span class="n">2</span>Le due schede</h1>
+<p class="capsub">Il programma e la pagina sono gli stessi: cambiano il collegamento alla rete e il numero di pin.</p>
+
+<div class="two">
+  <div class="keep" style="text-align:center">
+    <img src="foto/r4_t.webp" style="width:62mm;filter:drop-shadow(0 2mm 3mm rgba(0,0,0,.2))">
+    <h3>Arduino UNO R4 WiFi</h3>
+    <p style="text-align:left">Si collega al <b>Wi-Fi</b> della scuola, senza schede aggiuntive. Ha a bordo una <b>matrice di 12×8 LED rossi</b> che mostra l'indirizzo della scheda e, se il programma lo chiede, numeri, scritte e icone. Si aggiorna <b>dalla pagina</b>, anche da Internet.</p>
+  </div>
+  <div class="keep" style="text-align:center">
+    <div style="position:relative;height:47mm">
+      <img src="foto/mega_t.webp" style="position:absolute;left:4mm;top:0;width:58mm;filter:drop-shadow(0 2mm 3mm rgba(0,0,0,.2))">
+      <img src="foto/shield_t.webp" style="position:absolute;right:2mm;bottom:0;width:32mm;filter:drop-shadow(0 2mm 3mm rgba(0,0,0,.2))">
+    </div>
+    <h3>Arduino Mega 2560 + shield Ethernet PoE</h3>
+    <p style="text-align:left">Si collega con il <b>cavo di rete</b> (e, con uno switch PoE, prende anche l'alimentazione dal cavo). Ha <b>molti più pin</b>, adatti a impianti grandi. I programmi si conservano sulla <b>microSD</b> della shield.</p>
+  </div>
+</div>
+
+<h2>Confronto rapido</h2>
+<table>
+  <tr><th></th><th>UNO R4 WiFi</th><th>Mega 2560 + shield DFR0850</th></tr>
+  <tr><td><b>Rete</b></td><td>Wi-Fi 2,4 GHz (rete della scuola o rete propria "ArduLearn-xxxx")</td><td>Cavo Ethernet (DHCP, oppure indirizzo automatico 169.254.x.y con cavo diretto al PC)</td></tr>
+  <tr><td><b>Pin digitali</b></td><td>D0–D13</td><td>D0–D53 (alcuni riservati, vedi sotto)</td></tr>
+  <tr><td><b>Ingressi analogici</b></td><td>A0–A5 (A4 e A5 riservati se si usano display o orologio)</td><td>A0–A15</td></tr>
+  <tr><td><b>Uscite PWM (~)</b></td><td>3, 5, 6, 9, 10, 11</td><td>2–13, 44–46</td></tr>
+  <tr><td><b>Programma attivo</b></td><td>fino a 7.680 byte, nella memoria interna</td><td>fino a 8.192 byte sulla microSD (3.072 byte senza microSD)</td></tr>
+  <tr><td><b>Programmi salvati</b></td><td>99 posti nella memoria del modulo Wi-Fi</td><td>99 posti sulla microSD (senza microSD: nessuno)</td></tr>
+  <tr><td><b>Matrice LED</b></td><td>sì (12×8)</td><td>no</td></tr>
+  <tr><td><b>Aggiornamenti</b></td><td>dalla pagina, anche da Internet, oppure con l'app</td><td>solo con l'app, via USB</td></tr>
+  <tr><td><b>Studenti collegati insieme</b></td><td>fino a circa 7 collegamenti contemporanei</td><td>una richiesta alla volta: con molti PC la pagina può rallentare</td></tr>
+</table>
+
+<h2>Pin riservati</h2>
+<p>Alcuni pin sono già usati dalla scheda stessa e nella pagina compaiono bloccati, con il motivo scritto accanto:</p>
+<ul>
+  <li><b>Mega</b>: D0 e D1 (collegamento USB), D4 (microSD), D10 (rete), D20 e D21 (display e orologio), D50–D53 (rete e microSD).</li>
+  <li><b>UNO R4 WiFi</b>: solo A4 e A5 (display e orologio). D13 è collegato al LED "L" della scheda: comodo per le prime prove.</li>
+  <li>Un <b>display LCD collegato in parallelo</b> occupa altri 6 pin (quelli scelti nelle Impostazioni).</li>
+</ul>
+<div class="postit g">Quale scegliere? Per iniziare e per le aule con buon Wi-Fi: <b>UNO R4 WiFi</b>. Per banchi con molti ingressi/uscite o reti Wi-Fi difficili: <b>Mega con cavo di rete</b>.</div>
+<div class="box att"><span class="t">Reti Wi-Fi che non funzionano</span>La UNO R4 WiFi non si collega alle reti che chiedono <b>nome utente e password personali</b> (per esempio eduroam o reti "WPA2-Enterprise") né alle reti a 5 GHz. Alcune reti scolastiche inoltre <b>isolano i dispositivi</b> fra loro: i PC non riescono a vedere la scheda. In questi casi chiedi al tecnico una rete dedicata al laboratorio (anche un semplice router), oppure usa la Mega con il cavo.</div>
+<div class="clear"></div>
+<div class="box att"><span class="t">Tornare a usare la scheda come un Arduino normale</span>
+<b>UNO R4 WiFi</b>: ArduLearn sostituisce anche il firmware del <b>modulo Wi-Fi</b> della scheda. Gli sketch normali si caricano ancora dall'IDE di Arduino, ma le librerie Wi-Fi di Arduino (e gli esempi che usano la rete) funzionano solo dopo aver <b>riscritto il firmware originale del modulo Wi-Fi</b>: nell'IDE Arduino apri <b>Strumenti → Aggiornamento firmware</b> (Firmware Updater), scegli la UNO R4 WiFi e installa la versione proposta. Per rimettere ArduLearn basta di nuovo l'app.<br>
+<b>Mega 2560</b>: basta caricare un qualsiasi sketch dall'IDE; per tornare ad ArduLearn si ricarica il firmware con l'app.</div>
+
+<!-- ======================= 3 ======================= -->
+<h1 class="cap"><span class="n">3</span>L'app ArduLearn per Windows</h1>
+<p class="capsub">Il programma da installare una sola volta sul PC del docente: prepara le schede, le trova in rete, fa diagnosi.</p>
+
+<p>L'app si scarica da GitHub ed è un singolo file, <b>ArduLearn.exe</b>, che non richiede installazione: basta avviarlo.</p>
+<p style="text-align:center"><span class="btn pri">github.com/danielemichelotti/ArduLearn/releases/latest/download/ArduLearn.exe</span></p>
+<div class="box info"><span class="t">Avviso di Windows</span>Al primo avvio Windows può mostrare "Windows ha protetto il PC", perché l'app non è firmata da un'azienda. Clicca <b>Ulteriori informazioni</b> e poi <b>Esegui comunque</b>. Se il PC è gestito dalla scuola, potrebbe servire il tecnico.</div>
+<p>L'app ha quattro schede in alto: <b>Trova le schede</b>, <b>Carica il firmware</b>, <b>Monitor seriale</b> e <b>Guida</b>.</p>
+
+<h2>Carica il firmware</h2>
+<div class="figwrap"><div class="fig" data-f="app_firmware" data-w="150"></div><div class="cap-f">La scheda "Carica il firmware" con una UNO R4 WiFi collegata.</div></div>
+<ol class="legend">
+  <li><span class="n">1</span><b>Porta USB</b>: la porta a cui è collegata la scheda (la lista si aggiorna da sola).</li>
+  <li><span class="n">2</span><b>Scheda</b>: si imposta da sola riconoscendo la scheda; va scelta a mano solo per le schede compatibili non originali.</li>
+  <li><span class="n">3</span><b>Firmware incluso</b>: le versioni che l'app installerà.</li>
+  <li><span class="n">4</span><span class="btn">Carica il firmware</span>: installa ArduLearn. Per la UNO R4 WiFi prepara prima anche il modulo Wi-Fi (fino a un minuto).</li>
+</ol>
+<p>I programmi salvati sulla scheda <b>non vengono cancellati</b> da un nuovo caricamento del firmware. Durante il caricamento non scollegare il cavo e non chiudere l'app.</p>
+
+<h2>Trova le schede</h2>
+<div class="figwrap"><div class="fig" data-f="app_trova" data-w="150"></div><div class="cap-f">Le schede ArduLearn accese nella stessa rete del PC compaiono da sole.</div></div>
+<ol class="legend">
+  <li><span class="n">1</span><span class="btn">Apri nel browser</span>: apre la pagina della scheda selezionata (anche con doppio clic).</li>
+  <li><span class="n">2</span><span class="btn">Prepara la microSD / Aggiorna la pagina</span>: copia la pagina web sulla microSD della Mega (o nella memoria della UNO R4). Chiede il PIN del docente.</li>
+  <li><span class="n">3</span><span class="btn">Cerca di nuovo</span>: ripete subito la ricerca.</li>
+</ol>
+<p>Le colonne mostrano nome, indirizzo, tipo di scheda, rete, stato (RUN/STOP), nome del programma e se la pagina è <i>aggiornata</i> o <i>da aggiornare</i>. Se non compare nulla, l'app stessa elenca le cause più probabili (stessa rete, firewall, reti che isolano i dispositivi).</p>
+<div class="postit">Scrivi il nome di ogni scheda su un'etichetta attaccata alla scheda stessa: <b>ardulearn-2b28</b>, <b>banco3</b>... Così in classe nessuno sbaglia indirizzo.</div>
+
+<h2>Monitor seriale</h2>
+<div class="figwrap"><div class="fig" data-f="app_monitor" data-w="150"></div><div class="cap-f">Il monitor seriale, per parlare con la scheda attraverso il cavo USB.</div></div>
+<p>Serve per la <b>diagnosi</b>: scegli la porta (1), premi <span class="btn">Connetti</span> (2) e usa i pulsanti a destra. I più utili sono <code>info</code> (nome, indirizzo, programma), <code>run</code> / <code>stop</code> e soprattutto <code>pin reset</code>, che riporta il PIN del docente a <b>1234</b>. Per la Mega ci sono anche le impostazioni di <b>IP fisso</b> e <b>indirizzo MAC</b>; per la UNO R4 i comandi <code>wifi</code> (stato della rete) e <code>wifi clear</code> (dimentica la rete Wi-Fi salvata). L'elenco completo è in Appendice.</p>
+<div class="box info">Aprendo il monitor seriale la <b>Mega si riavvia</b>: è normale, il programma riparte da capo dopo pochi secondi.</div>
+
+<h2>Guida</h2>
+<p>La quarta scheda contiene un riassunto di queste istruzioni, sempre a portata di mano anche senza il manuale.</p>

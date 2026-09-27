@@ -1,0 +1,299 @@
+
+<!-- ======================= 8 FBD ======================= -->
+<h1 class="cap"><span class="n">8</span>Programmare a blocchi (FBD)</h1>
+<p class="capsub">Blocchi collegati da fili, come uno schema funzionale: il modo più intuitivo per cominciare.</p>
+
+<h2>La logica</h2>
+<div class="two w">
+  <div>
+    <p>Ogni blocco fa <b>una cosa sola</b>: legge un pulsante, fa un AND, aspetta, conta, accende un'uscita. Ha gli <b>ingressi a sinistra</b> e le <b>uscite a destra</b>. Un <b>filo</b> porta il valore di un'uscita nell'ingresso di un altro blocco: il segnale scorre da sinistra verso destra.</p>
+    <p>La scheda esegue i blocchi <b>nell'ordine giusto da sola</b>: prima quelli che forniscono i dati, poi quelli che li usano. Non importa dove li metti sul foglio.</p>
+    <p>Un ingresso <b>non collegato</b> vale 0, oppure il <b>valore fisso</b> scritto nelle proprietà (per esempio il tempo PT di un temporizzatore).</p>
+  </div>
+  <svg viewBox="0 0 300 170" style="width:68mm" font-family="Segoe UI, Arial">
+    <rect x="10" y="20" width="80" height="44" rx="6" fill="#fff" stroke="#2f9e44" stroke-width="2"/><rect x="10" y="20" width="80" height="14" rx="6" fill="#2f9e44"/><text x="50" y="31" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">Ingresso</text><text x="50" y="54" text-anchor="middle" font-size="10">Pulsante</text>
+    <rect x="10" y="100" width="80" height="44" rx="6" fill="#fff" stroke="#2f9e44" stroke-width="2"/><rect x="10" y="100" width="80" height="14" rx="6" fill="#2f9e44"/><text x="50" y="111" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">Ingresso</text><text x="50" y="134" text-anchor="middle" font-size="10">Porta chiusa</text>
+    <rect x="130" y="55" width="60" height="54" rx="6" fill="#fff" stroke="#1971c2" stroke-width="2"/><rect x="130" y="55" width="60" height="14" rx="6" fill="#1971c2"/><text x="160" y="66" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">AND</text>
+    <rect x="220" y="62" width="70" height="44" rx="6" fill="#fff" stroke="#2f9e44" stroke-width="2"/><rect x="220" y="62" width="70" height="14" rx="6" fill="#2f9e44"/><text x="255" y="73" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">Uscita</text><text x="255" y="96" text-anchor="middle" font-size="10">Motore</text>
+    <path d="M90 50 C110 50 110 75 130 75" stroke="#2f9e44" stroke-width="3" fill="none"/><path d="M90 128 C110 128 110 92 130 92" stroke="#adb5bd" stroke-width="3" fill="none"/><path d="M190 84 H220" stroke="#adb5bd" stroke-width="3"/>
+    <text x="150" y="160" text-anchor="middle" font-size="17" class="hand" fill="#c92a2a">verde = 1, grigio = 0</text>
+  </svg>
+</div>
+
+<h2>Usare l'editor</h2>
+<div class="step"><span class="n">1</span><div><b>Aggiungere un blocco</b>: trascinalo dalla colonna di sinistra sul foglio, oppure cliccalo (compare al centro). La casella <b>Cerca blocco…</b> trova i blocchi per nome.</div></div>
+<div class="step"><span class="n">2</span><div><b>Collegare</b>: trascina dal pallino di un'uscita (a destra del blocco) al pallino di un ingresso (a sinistra). I pallini compatibili si evidenziano. Per staccare un filo trascinalo via dal suo ingresso.</div></div>
+<div class="step"><span class="n">3</span><div><b>Impostare</b>: clicca il blocco e compila le proprietà nel pannello a destra (pin, tempi, valori, etichetta).</div></div>
+<div class="step"><span class="n">4</span><div><b>Caricare</b> con <span class="btn pri">Carica sulla scheda</span> e osservare i fili che si colorano.</div></div>
+<div class="figwrap"><div class="fig" data-f="props"></div><div class="cap-f">Il blocco selezionato ha il bordo blu; a destra le sue proprietà.</div></div>
+<div class="two">
+  <div>
+    <h3>Il tasto destro</h3>
+    <p>Sul blocco apre un menu con: <b>Guida del blocco</b>, proprietà, etichetta, <b>Cambia in</b> (per esempio da AND a OR o da TON a TOF senza rifare i fili), valori degli ingressi, scollega fili, duplica, copia, elimina. Sul foglio vuoto: incolla, aggiungi nota, seleziona tutto. Trascinando con il tasto destro si seleziona un'area.</p>
+    <h3>Scorciatoie</h3>
+    <p><code>Ctrl+Z</code>/<code>Ctrl+Y</code> annulla/ripeti · <code>Ctrl+C</code>/<code>Ctrl+V</code> copia/incolla · <code>Ctrl+D</code> duplica · <code>Canc</code> elimina · <code>Ctrl+A</code> tutto · rotellina = zoom · trascina lo sfondo per spostarti.</p>
+  </div>
+  <div class="figwrap" style="margin:0"><div class="fig" data-f="menu" data-w="80"></div></div>
+</div>
+<div class="figwrap"><div class="fig" data-f="help" data-w="120"></div><div class="cap-f">La "Guida del blocco": a cosa serve, un esempio, ingressi, uscite e parametri, con i valori attuali.</div></div>
+<div class="postit">Le <b>note</b> gialle (<span class="btn">✎ Nota</span>) sono perfette per scrivere la consegna dell'esercizio direttamente sul foglio.</div>
+
+<h2>Il pannello virtuale</h2>
+<p>Tre blocchi esistono solo nella pagina e permettono di provare un programma <b>senza cablare niente</b>:</p>
+<ul>
+  <li><b>Interruttore virtuale</b>: si clicca sul blocco. Tipo "Interruttore (resta)" oppure "Pulsante (finché premuto)".</li>
+  <li><b>Cursore virtuale</b>: si trascina; dà un numero fra Minimo e Massimo.</li>
+  <li><b>Indicatore</b>: mostra un valore come numero, lampada o barra.</li>
+</ul>
+<p>Funzionano quando il programma è caricato e non ci sono modifiche in sospeso. Anche gli studenti senza PIN possono usarli: <b>attenzione</b>, agiscono davvero sulla scheda.</p>
+<div class="clear"></div>
+
+<h2>Catalogo dei blocchi</h2>
+<p>Numeri fra parentesi = valori proposti. Tutti i blocchi hanno una guida completa con il tasto destro.</p>
+<h3>Ingressi e uscite</h3>
+<table>
+  <tr><th style="width:24%">Blocco</th><th>Cosa fa</th><th style="width:30%">Esempio</th></tr>
+  <tr><td><b>Ingresso digitale</b> (IN)</td><td>Legge un pin: 1 o 0. Opzione <b>Inverti</b> per i pulsanti con pull-up.</td><td>pulsante di marcia su D2</td></tr>
+  <tr><td><b>Uscita digitale</b> (OUT)</td><td>Accende il pin se l'ingresso è diverso da 0.</td><td>LED o relè su D13</td></tr>
+  <tr><td><b>Ingresso analogico</b> (ADC)</td><td>Legge un pin A: numero da 0 a 1023.</td><td>potenziometro su A0</td></tr>
+  <tr><td><b>Uscita PWM</b> (PWM)</td><td>Uscita "regolabile" da 0 a 255, solo pin con ~.</td><td>luminosità di un LED su D9</td></tr>
+</table>
+<h3>Pannello (nella pagina)</h3>
+<table>
+  <tr><td style="width:24%"><b>Interruttore virtuale</b> (SW)</td><td>Interruttore o pulsante cliccabile nella pagina.</td><td style="width:30%">marcia per le prove</td></tr>
+  <tr><td><b>Cursore virtuale</b> (SLD)</td><td>Numero regolabile (0…100).</td><td>soglia o tempo da provare</td></tr>
+  <tr><td><b>Indicatore</b> (VIEW)</td><td>Mostra un valore: numero, lampada o barra.</td><td>tempo che passa in un TON</td></tr>
+</table>
+<h3>Logica</h3>
+<table>
+  <tr><td style="width:24%"><b>AND · OR · XOR · NAND · NOR</b></td><td>Porte logiche da 2 a 8 ingressi. AND: tutti veri; OR: almeno uno; XOR: diversi; NAND e NOR: il contrario di AND e OR.</td><td style="width:30%">luce delle scale con due interruttori (XOR)</td></tr>
+  <tr><td><b>NOT</b></td><td>Inverte: 1 diventa 0 e viceversa.</td><td>spia "porta chiusa"</td></tr>
+  <tr><td><b>Memoria SR</b></td><td>S accende e ricorda, R spegne. Se S e R sono insieme prevale il RESET (scelta consigliata per sicurezza) o il SET.</td><td>marcia/arresto del motore</td></tr>
+  <tr><td><b>Fronte</b> (EDGE)</td><td>Impulso di un ciclo quando l'ingresso sale, scende o entrambi.</td><td>contare le pressioni</td></tr>
+  <tr><td><b>Passo-passo</b> (TOGGLE)</td><td>Ogni pressione su T cambia stato; R spegne.</td><td>un solo pulsante accende e spegne</td></tr>
+</table>
+<h3>Tempo e conteggio</h3>
+<table>
+  <tr><td style="width:24%"><b>Ritardo all'accensione (TON)</b></td><td>Q si accende quando IN è rimasto a 1 per PT ms (1000). ET = tempo trascorso.</td><td style="width:30%">luce che si accende dopo 5 s</td></tr>
+  <tr><td><b>Ritardo allo spegnimento (TOF)</b></td><td>Q resta acceso ancora PT ms dopo che IN torna a 0.</td><td>ventola del bagno che gira ancora 60 s</td></tr>
+  <tr><td><b>Impulso (TP)</b></td><td>A ogni fronte di IN, Q resta acceso esattamente PT ms.</td><td>luce delle scale 30 s</td></tr>
+  <tr><td><b>Lampeggiatore</b> (BLINK)</td><td>Con EN a 1 lampeggia: ON ms acceso, OFF ms spento (500/500).</td><td>spia di allarme</td></tr>
+  <tr><td><b>Contatore</b> (CTUD)</td><td>CU conta +1, CD −1, R azzera; Q si accende a CV ≥ PV (10). Può contare anche all'indietro.</td><td>6 bottiglie per cassa</td></tr>
+</table>
+<h3>Numeri e confronti</h3>
+<table>
+  <tr><td style="width:24%"><b>Costante</b> (K)</td><td>Un numero fisso da usare in più blocchi.</td><td style="width:30%">lo stesso tempo per tre timer</td></tr>
+  <tr><td><b>Operazione</b> (MATH)</td><td>A+B, A−B, A×B, A÷B (intera), resto, minimo, massimo. Diviso 0 dà 0.</td><td>235 ÷ 10 = 23</td></tr>
+  <tr><td><b>Confronto</b> (CMP)</td><td>Q = 1 se A &gt;, ≥, &lt;, ≤, =, ≠ B.</td><td>è buio se luce &lt; 300</td></tr>
+  <tr><td><b>Scala</b> (MAP)</td><td>Converte un intervallo in un altro (0…1023 → 0…100).</td><td>percentuale di un potenziometro</td></tr>
+  <tr><td><b>Soglia con isteresi</b> (HYST)</td><td>Si accende sopra una soglia e si spegne solo sotto un'altra, più bassa.</td><td>termostato: 28 °C / 26 °C</td></tr>
+  <tr><td><b>Selettore</b> (SEL)</td><td>Passa A se SEL = 0, altrimenti B.</td><td>manuale/automatico</td></tr>
+  <tr><td><b>Limita</b> (LIM)</td><td>Tiene un valore fra un minimo e un massimo.</td><td>0…255 prima di un PWM</td></tr>
+</table>
+<h3>Display, sequenze e script</h3>
+<table>
+  <tr><td style="width:24%"><b>Scritta su OLED / LCD</b></td><td>Scrive un testo con valori ({1}, {2}) in una riga e colonna; può lampeggiare o scorrere.</td><td style="width:30%">"Temp: {1.1} C"</td></tr>
+  <tr><td><b>Immagine su OLED</b></td><td>Mostra un'immagine o un'animazione disegnata nella scheda Immagini.</td><td>icona della ventola</td></tr>
+  <tr><td><b>Pagine display</b></td><td>Più schermate sullo stesso display, sfogliabili con pulsanti.</td><td>temperatura / umidità / ora</td></tr>
+  <tr><td><b>Immagine / Testo su matrice LED</b></td><td>Solo UNO R4 WiFi: icone 12×8 e testi che scorrono.</td><td>"23C" che scorre</td></tr>
+  <tr><td><b>Passo (sequenza)</b></td><td>Un passo di una sequenza: si attiva con IN, passa al successivo quando T è vero ed è trascorso almeno MIN ms. Uno solo è "passo iniziale".</td><td>semaforo a passi</td></tr>
+  <tr><td><b>Ripeti N volte</b></td><td>Con START dà N impulsi (ON/OFF ms).</td><td>cicalino che suona 3 volte</td></tr>
+  <tr><td><b>Script ST / Script C</b></td><td>Un piccolo programma scritto a testo dentro un blocco (capitolo 11).</td><td>somma con un ciclo FOR</td></tr>
+</table>
+<p>I blocchi dei <b>moduli</b> (sensori e attuatori) sono nel capitolo 13.</p>
+<div class="box info"><span class="t">Limite: 96 blocchi</span>Un programma può avere al massimo 96 blocchi. Le porte con più di 4 ingressi e alcuni script usano blocchi "d'appoggio" invisibili che contano anch'essi: il conteggio è sempre nella barra di stato.</div>
+
+<!-- ======================= 9 LADDER ======================= -->
+<h1 class="cap"><span class="n">9</span>Programmare in LADDER</h1>
+<p class="capsub">Il linguaggio a contatti, nello stile di Siemens TIA Portal: il programma si disegna come uno schema elettrico.</p>
+
+<h2>La logica: la corrente scorre da sinistra a destra</h2>
+<div class="two w">
+  <div>
+    <p>Un programma LADDER è fatto di <b>segmenti</b> (righe di schema). A sinistra c'è la <b>barra di alimentazione</b>, sempre "in tensione". La corrente scorre verso destra attraversando i <b>contatti</b> e arriva alle <b>bobine</b>.</p>
+    <ul>
+      <li><b>Contatto NA</b> (normalmente aperto) <code>─┤ ├─</code>: fa passare la corrente se il suo operando vale 1.</li>
+      <li><b>Contatto NC</b> (normalmente chiuso) <code>─┤/├─</code>: fa passare la corrente se l'operando vale 0.</li>
+      <li><b>Bobina</b> <code>─( )─</code>: il suo operando diventa 1 se arriva corrente, 0 se non arriva.</li>
+      <li>Contatti <b>in serie</b> = AND; rami <b>in parallelo</b> = OR.</li>
+    </ul>
+  </div>
+  <svg viewBox="0 0 300 230" style="width:70mm" font-family="Consolas, monospace">
+    <text x="150" y="16" text-anchor="middle" font-size="20" font-family="Caveat, cursive" font-weight="700" fill="#c92a2a">serie = AND</text>
+    <path d="M10 25 V75" stroke="#1f2937" stroke-width="4"/><path d="M10 50 H60 M76 50 H130 M146 50 H215" stroke="#1f2937" stroke-width="2.5"/>
+    <path d="M60 38 V62 M76 38 V62 M130 38 V62 M146 38 V62" stroke="#1f2937" stroke-width="2.5"/>
+    <path d="M215 38 A12 12 0 0 0 215 62 M235 38 A12 12 0 0 1 235 62" stroke="#1f2937" stroke-width="2.5" fill="none"/><path d="M235 50 H270" stroke="#1f2937" stroke-width="2.5"/>
+    <text x="68" y="32" text-anchor="middle" font-size="10">A</text><text x="138" y="32" text-anchor="middle" font-size="10">B</text><text x="225" y="32" text-anchor="middle" font-size="10">Q</text>
+    <text x="150" y="112" text-anchor="middle" font-size="20" font-family="Caveat, cursive" font-weight="700" fill="#c92a2a">parallelo = OR</text>
+    <path d="M10 120 V210" stroke="#1f2937" stroke-width="4"/><path d="M10 140 H60 M76 140 H120 M10 190 H60 M76 190 H120 V140 M120 140 H215" stroke="#1f2937" stroke-width="2.5" fill="none"/>
+    <path d="M60 128 V152 M76 128 V152 M60 178 V202 M76 178 V202" stroke="#1f2937" stroke-width="2.5"/>
+    <path d="M215 128 A12 12 0 0 0 215 152 M235 128 A12 12 0 0 1 235 152" stroke="#1f2937" stroke-width="2.5" fill="none"/><path d="M235 140 H270" stroke="#1f2937" stroke-width="2.5"/>
+    <text x="68" y="124" text-anchor="middle" font-size="10">A</text><text x="68" y="174" text-anchor="middle" font-size="10">B</text><text x="225" y="122" text-anchor="middle" font-size="10">Q</text>
+  </svg>
+</div>
+<h3>L'autoritenuta: il circuito da conoscere</h3>
+<div class="two w">
+  <div><p>Il pulsante di <b>Marcia</b> accende il <b>Motore</b>; un contatto dello stesso <b>Motore</b>, in parallelo alla Marcia, lo "tiene" acceso quando si rilascia il pulsante. Il contatto NC di <b>Arresto</b> in serie interrompe tutto. È l'esempio "Marcia / arresto (LADDER)".</p></div>
+  <div class="figwrap" style="margin:0"><div class="fig" data-f="lad_marcia" data-w="80"></div></div>
+</div>
+
+<h2>L'editor LADDER</h2>
+<div class="figwrap"><div class="fig" data-f="lad"></div><div class="cap-f">L'esempio "Luce delle scale (LADDER)" con il box TP selezionato.</div></div>
+<ol class="legend">
+  <li><span class="n">1</span><b>Elementi</b>: contatti NA, NC, fronti P e N, NOT, bobine normale, negata, S e R.</li>
+  <li><span class="n">2</span><b>Box…</b>: temporizzatori, contatori, confronti, calcoli, display, moduli.</li>
+  <li style="padding-left:7mm">Più a destra: <span class="btn">↳ Apri ramo</span> e <span class="btn">↰ Chiudi ramo</span> per i collegamenti in parallelo.</li>
+  <li><span class="n">4</span>Righe, colonne e segmenti: aggiungi, togli, sposta.</li>
+  <li style="padding-left:7mm">A destra, <b>controllo online</b>: colori dal vivo (verde pieno = passa corrente; blu tratteggiato = non passa).</li>
+</ol>
+<div class="postit">Anche il LADDER diventa blocchi dentro la scheda: il limite è di <b>96 blocchi interni</b>, indicato nel pannello ("5/96 blocchi interni").</div>
+<div class="step"><span class="n">1</span><div>Clicca una <b>cella</b> del segmento, poi l'elemento nella barra (o trascinalo dall'albero "Istruzioni" a destra).</div></div>
+<div class="step"><span class="n">2</span><div>Scrivi l'<b>operando</b>: il nome (es. <i>Pulsante</i>), l'indirizzo (<code>%I0.0</code>) o un numero. Si può cliccare direttamente <code>&lt;??.?&gt;</code> sul disegno. Un nome nuovo diventa un merker.</div></div>
+<div class="step"><span class="n">3</span><div>Per un <b>parallelo</b>: vai sulla riga sotto, <span class="btn">↳ Apri ramo</span>, inserisci i contatti e chiudi con <span class="btn">↰ Chiudi ramo</span> nel punto in cui il ramo si ricongiunge.</div></div>
+<div class="step"><span class="n">4</span><div>Dai un titolo al segmento e un commento: aiuta a leggere il programma.</div></div>
+
+<h2>Elementi e box</h2>
+<table>
+  <tr><th style="width:20%">Elemento</th><th>Cosa fa</th></tr>
+  <tr><td><code>─┤P├─</code> / <code>─┤N├─</code></td><td>Fronte di salita / discesa: passa corrente per un solo ciclo quando l'operando cambia.</td></tr>
+  <tr><td><code>─┤NOT├─</code></td><td>Inverte la corrente che arriva da sinistra.</td></tr>
+  <tr><td><code>─(/)─</code></td><td>Bobina negata: l'operando è il contrario della corrente.</td></tr>
+  <tr><td><code>─(S)─</code> / <code>─(R)─</code></td><td>Imposta a 1 (e resta 1) / riporta a 0. Coppia tipica per memorizzare.</td></tr>
+  <tr><td><b>TON · TOF · TP</b></td><td>Ritardo all'inserzione, alla disinserzione, impulso. PT = tempo (es. <code>T#5S</code>), ET = tempo trascorso (facoltativo). Nomi automatici "IEC_Timer_0"...</td></tr>
+  <tr><td><b>CTU · CTD · CTUD</b></td><td>Contatori avanti, indietro, avanti/indietro, con PV (valore da raggiungere) e CV (valore attuale).</td></tr>
+  <tr><td><b>CMP</b></td><td>Contatto di confronto: ==, &lt;&gt;, &gt;, &gt;=, &lt;, &lt;= fra due valori.</td></tr>
+  <tr><td><b>MOVE · ADD · SUB · MUL · DIV · MOD · SCALE</b></td><td>Copiano o calcolano valori quando arriva corrente (divisione intera).</td></tr>
+  <tr><td><b>SR · RS</b></td><td>Flip-flop con reset prevalente / set prevalente.</td></tr>
+  <tr><td><b>OLED · LCD · IMG · PAGE · MTX · MTXT</b></td><td>Scritte, immagini e pagine sui display e sulla matrice (con corrente).</td></tr>
+  <tr><td><b>SCL</b></td><td>Script ST eseguito solo quando arriva corrente.</td></tr>
+</table>
+<h3>Operandi</h3>
+<table>
+  <tr><th style="width:30%">Si può scrivere</th><th>Esempio</th></tr>
+  <tr><td>nome della tabella variabili o etichetta del pin</td><td><code>Marcia</code>, <code>"Motore"</code></td></tr>
+  <tr><td>indirizzo</td><td><code>%I0.0</code>, <code>%Q0.1</code>, <code>%IW64</code>, <code>%M1.3</code>, <code>%MW4</code></td></tr>
+  <tr><td>costante o tempo</td><td><code>100</code>, <code>TRUE</code>, <code>T#2S</code>, <code>T#1M30S</code></td></tr>
+  <tr><td>pin diretto</td><td><code>D22</code>, <code>A0</code></td></tr>
+</table>
+<div class="box info">Le uscite vengono scritte sui pin alla <b>fine</b> di ogni ciclo, come nei PLC veri: se due segmenti comandano la stessa bobina, vince l'ultimo (la pagina lo segnala).</div>
+<div class="clear"></div>
+
+<!-- ======================= 10 GRAFCET ======================= -->
+<h1 class="cap"><span class="n">10</span>Programmare in GRAFCET</h1>
+<p class="capsub">Per le macchine che lavorano a fasi: una tappa dopo l'altra, si avanza quando succede qualcosa.</p>
+
+<h2>La logica</h2>
+<div class="two w">
+  <div>
+    <ul>
+      <li>Il grafico si legge <b>dall'alto verso il basso</b>: tappa, transizione, tappa…</li>
+      <li>Una <b>tappa</b> (quadrato numerato) è una fase del lavoro; quando è <b>attiva</b> esegue le sue <b>azioni</b> (accendere un motore, scrivere un messaggio).</li>
+      <li>La <b>tappa iniziale</b> ha il doppio quadrato: è attiva all'accensione.</li>
+      <li>Fra due tappe c'è una <b>transizione</b> (trattino orizzontale) con la sua <b>recettività</b>: la condizione per andare avanti (es. <code>FC_dx</code>, il finecorsa di destra).</li>
+      <li>Una transizione <b>scatta</b> quando la tappa sopra è attiva <b>e</b> la recettività è vera: la tappa sopra si spegne, quella sotto si accende.</li>
+      <li>L'ultima tappa di solito <b>torna alla prima</b> con una linea di rinvio.</li>
+    </ul>
+  </div>
+  <div class="figwrap" style="margin:0"><div class="fig" data-f="graf_carrello" data-w="62"></div><div class="cap-f">Carrello avanti e indietro.</div></div>
+</div>
+
+<h2>L'editor GRAFCET</h2>
+<div class="figwrap"><div class="fig" data-f="graf_tr"></div><div class="cap-f">A sinistra il grafico; a destra le proprietà della transizione selezionata.</div></div>
+<div class="step"><span class="n">1</span><div>Con <b>SFC</b> / <b>LADDER</b> in alto si passa dal grafico ai segmenti LADDER del progetto.</div></div>
+<div class="step"><span class="n">2</span><div><span class="btn">+ Tappa</span> (o doppio clic sul foglio) aggiunge una tappa. Passando sopra una tappa compare un <b>pallino blu</b>: trascinalo su un'altra tappa per collegarle (lasciato sul foglio vuoto crea una tappa nuova già collegata).</div></div>
+<div class="step"><span class="n">3</span><div>Sulla nuova linea c'è un <b>+</b>: cliccalo per mettere la transizione e scrivere la recettività (doppio clic su una transizione per cambiarla).</div></div>
+<div class="step"><span class="n">4</span><div>Seleziona una tappa per aggiungere le <b>azioni</b> nel pannello a destra. I pulsanti <b>↓ Tappa successiva</b> e <b>↺ Torna all'iniziale</b> costruiscono la sequenza più in fretta.</div></div>
+<div class="step"><span class="n">5</span><div>Con il programma in esecuzione e <b>controllo online</b> attivo, la tappa attiva diventa <b>verde</b> con il "gettone" e le recettività vere si colorano.</div></div>
+
+<h2>Scrivere la recettività</h2>
+<table>
+  <tr><th style="width:32%">Scrivi</th><th>Significa</th></tr>
+  <tr><td><code>Marcia AND FC_sx</code> (anche <code>·</code> o <code>*</code>)</td><td>entrambe vere</td></tr>
+  <tr><td><code>A OR B</code> (anche <code>+</code>)</td><td>almeno una vera</td></tr>
+  <tr><td><code>NOT FC1</code> oppure <code>/FC1</code></td><td>FC1 falso</td></tr>
+  <tr><td><code>RE(Pulsante)</code> / <code>FE(Pulsante)</code></td><td>fronte di salita / discesa del pulsante</td></tr>
+  <tr><td><code>X3</code></td><td>la tappa 3 è attiva</td></tr>
+  <tr><td><code>X2.T &gt; T#5S</code></td><td>la tappa 2 è attiva da più di 5 secondi (tappa a tempo)</td></tr>
+  <tr><td><code>Livello &gt;= 500</code></td><td>confronto fra una variabile e un numero (= &lt;&gt; &lt; &lt;= &gt; &gt;=)</td></tr>
+  <tr><td><code>1</code> oppure <code>TRUE</code></td><td>sempre vera (si passa subito)</td></tr>
+  <tr><td>parentesi</td><td><code>(A OR B) AND NOT C</code></td></tr>
+</table>
+<p>In alternativa, in <b>Recettività scritta come</b> si può scegliere <b>Segmento LADDER</b>: la condizione è vera quando la corrente arriva in fondo a destra del segmento.</p>
+
+<h2>Le azioni delle tappe</h2>
+<table>
+  <tr><th style="width:12%">Tipo</th><th>Cosa fa</th><th style="width:30%">Esempio</th></tr>
+  <tr><td><b>N</b></td><td>uscita accesa finché la tappa è attiva (la più usata)</td><td>N Avanti</td></tr>
+  <tr><td><b>S</b> / <b>R</b></td><td>accende e lascia acceso / spegne</td><td>S Allarme … R Allarme</td></tr>
+  <tr><td><b>D</b></td><td>accesa dopo un ritardo dall'attivazione della tappa</td><td>D Sirena T#2S</td></tr>
+  <tr><td><b>L</b></td><td>accesa solo per un tempo limitato</td><td>L Cicalino T#1S</td></tr>
+  <tr><td><b>V</b></td><td>scrive un numero in una variabile finché la tappa è attiva</td><td>Angolo := 45</td></tr>
+  <tr><td><b>P1</b></td><td>un calcolo eseguito una volta, all'attivazione</td><td>Pezzi := Pezzi + 1</td></tr>
+  <tr><td><b>MSG</b></td><td>messaggio su OLED o LCD</td><td>"Carrello in avanti"</td></tr>
+</table>
+
+<h2>Scelte e rami simultanei</h2>
+<div class="two w">
+  <div>
+    <ul>
+      <li><b>Scelta (OR)</b>: più transizioni che partono dalla stessa tappa. Si prende il ramo la cui recettività diventa vera: conviene scriverle in modo che non possano essere vere insieme.</li>
+      <li><b>Rami simultanei (AND)</b>: una transizione che attiva più tappe insieme (doppia linea). Si riuniscono con una transizione che aspetta che tutte le tappe siano finite.</li>
+      <li>Si impostano con il tasto destro sulla transizione → <b>Divergenza / Convergenza</b>, oppure con i pulsanti <b>OR scelta / AND simultanea</b> nel pannello.</li>
+    </ul>
+  </div>
+  <svg viewBox="0 0 260 200" style="width:62mm" font-family="Segoe UI, Arial" font-size="12">
+    <rect x="110" y="8" width="36" height="30" fill="#fff" stroke="#1f2937" stroke-width="2"/><text x="128" y="28" text-anchor="middle" font-weight="700">1</text>
+    <path d="M128 38 V60" stroke="#1f2937" stroke-width="2"/><path d="M110 60 H146" stroke="#1f2937" stroke-width="4"/>
+    <path d="M60 78 H196 M60 84 H196" stroke="#1f2937" stroke-width="2"/><path d="M128 60 V78" stroke="#1f2937" stroke-width="2"/>
+    <path d="M78 84 V110 M178 84 V110" stroke="#1f2937" stroke-width="2"/>
+    <rect x="60" y="110" width="36" height="30" fill="#fff" stroke="#1f2937" stroke-width="2"/><text x="78" y="130" text-anchor="middle" font-weight="700">2</text>
+    <rect x="160" y="110" width="36" height="30" fill="#fff" stroke="#1f2937" stroke-width="2"/><text x="178" y="130" text-anchor="middle" font-weight="700">3</text>
+    <text x="200" y="74" font-size="17" font-family="Caveat, cursive" font-weight="700" fill="#c92a2a">doppia linea</text>
+    <text x="130" y="185" text-anchor="middle" font-size="17" font-family="Caveat, cursive" font-weight="700" fill="#c92a2a">2 e 3 partono insieme (AND)</text>
+  </svg>
+</div>
+
+<h2>Sicurezze ed emergenza</h2>
+<p>Nel pannello del grafico (senza nulla selezionato) c'è la <b>Condizione di reinizializzazione</b>: quando è vera (es. <code>Emergenza</code>) tutte le tappe si spengono e si torna alla situazione iniziale. Nella vista <b>LADDER</b> del progetto si possono aggiungere <b>segmenti di sicurezza</b> che leggono lo stato delle tappe (<code>X1</code>, <code>X2</code>…) e, per esempio, resettano le uscite con l'emergenza: così fa l'esempio "Carrello avanti e indietro (GRAFCET)".</p>
+<div class="postit b">Il GRAFCET è ideale per insegnare a <b>scomporre</b> un problema: prima si disegnano le fasi alla lavagna, poi si programmano. Funziona benissimo in coppia: uno disegna le tappe, l'altro scrive le recettività.</div>
+<div class="clear"></div>
+
+<!-- ======================= 11 SCRIPT ======================= -->
+<h1 class="cap"><span class="n">11</span>Script ST e funzioni C</h1>
+<p class="capsub">Per calcoli, cicli e scelte fra molti casi: un piccolo programma a testo dentro un blocco.</p>
+<p>Gli script sono un'estensione facoltativa, utile nelle classi che studiano già la programmazione. Il blocco <b>Script ST</b> (testo strutturato, il linguaggio testuale dei PLC) e il blocco <b>Script C</b> (una funzione nello stile di Arduino) si usano nei progetti a blocchi; in LADDER c'è il box <b>SCL</b>.</p>
+<div class="box info"><span class="t">Più spazio per scrivere</span>Accanto al codice c'è il pulsante <span class="btn">⤢ Ingrandisci</span>: apre il codice in un riquadro grande, con i <b>numeri di riga</b>, il controllo degli <b>errori mentre scrivi</b> (con il numero di riga) e la <b>guida del linguaggio</b> a lato. Si chiude con <span class="btn">Chiudi</span> o con Esc; quello che scrivi è già nel blocco. Vale anche per il box SCL del LADDER.</div>
+
+<h2>Script ST</h2>
+<div class="figwrap"><div class="fig" data-f="st"></div><div class="cap-f">Esempio "Somma con ciclo FOR (script)": il codice si scrive nel pannello a destra.</div></div>
+<div class="two">
+  <div>
+    <ul>
+      <li><b>Ingressi</b> <code>IN1</code>…<code>IN4</code> (solo lettura), <b>uscite</b> <code>OUT1</code>, <code>OUT2</code>: il blocco mostra solo quelli usati.</li>
+      <li>Le altre variabili nascono assegnandole (<code>x := 5;</code>) e <b>ricordano il valore</b> da un ciclo all'altro (massimo 16 per script).</li>
+      <li>Istruzioni: <code>IF … THEN … ELSIF … ELSE … END_IF;</code>, <code>FOR … TO … DO … END_FOR;</code>, <code>WHILE</code>, <code>REPEAT … UNTIL</code>, <code>EXIT</code>.</li>
+      <li>Operatori: <code>+ - * / MOD</code>, confronti, <code>AND OR XOR NOT</code>. Funzioni: <code>ABS MIN MAX LIMIT MILLIS</code>.</li>
+      <li>Commenti <code>(* … *)</code> o <code>//</code>. Solo numeri interi; niente <code>CASE</code>.</li>
+    </ul>
+  </div>
+  <div class="keep">
+<pre style="background:#0f172a;color:#e2e8f0;border-radius:3mm;padding:3mm 4mm;font-size:9pt;margin:0">(* somma da 1 a N *)
+somma := 0;
+FOR i := 1 TO IN1 DO
+  somma := somma + i;
+END_FOR;
+OUT1 := somma;
+OUT2 := IN1;</pre>
+  </div>
+</div>
+
+<h2>Funzioni C</h2>
+<div class="figwrap"><div class="fig" data-f="c"></div><div class="cap-f">Esempio "Media e allarme (funzione C)".</div></div>
+<ul>
+  <li>Si scrive <b>una funzione</b>: i parametri normali sono gli <b>ingressi</b> (fino a 8), il valore restituito e i parametri con <code>&amp;</code> sono le <b>uscite</b> (fino a 4).</li>
+  <li>Le variabili normali ripartono a ogni ciclo; quelle <code>static</code> ricordano il valore.</li>
+  <li>Si possono usare <code>if/else</code>, <code>switch</code>, <code>for</code>, <code>while</code>, e funzioni come <code>min max abs constrain map millis</code>.</li>
+  <li><b>Non</b> si possono usare <code>digitalRead</code>, <code>delay</code>, <code>Serial</code>, numeri con la virgola, array o stringhe: ingressi e uscite passano sempre dai fili del blocco. La pagina spiega l'errore se li si scrive.</li>
+  <li>Le funzioni del progetto compaiono nella colonna "Funzioni C del progetto" e si possono riusare in più blocchi.</li>
+</ul>
+<div class="box att"><span class="t">Niente cicli infiniti</span>Uno script che supera 4000 istruzioni in un ciclo viene interrotto (il resto del PLC continua a funzionare) e la barra di stato mostra "ciclo infinito?". Il PLC non deve mai "aspettare" dentro uno script: per i tempi si usano i temporizzatori.</div>
