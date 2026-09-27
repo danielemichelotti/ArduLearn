@@ -6,27 +6,27 @@ permalink: /chi-sono/
 ---
 Sono **Daniele Michelotti**, tecnico e progettista con una formazione e un'esperienza professionale nei settori dell'elettronica, dell'automazione, dell'informatica applicata e dei sistemi di controllo.
 
-Nel corso della mia esperienza professionale ho lavorato con Arduino, sistemi embedded, PLC Siemens, sistemi di controllo e automazione industriale, confrontandomi sia con la progettazione e l'integrazione dei sistemi, sia con la loro applicazione pratica.
+Nel mio lavoro ho utilizzato Arduino, sistemi embedded, PLC Siemens e soluzioni di controllo per l'industria, occupandomi sia della progettazione e dell'integrazione degli impianti, sia della loro messa in opera.
 
-Per diversi anni ho lavorato anche nel mondo della formazione professionale, insegnando materie tecniche a studenti di diversi indirizzi. È proprio dall'esperienza maturata in aula che è nata l'idea di creare una piattaforma che permettesse di avvicinarsi alla programmazione e all'automazione in modo semplice, concreto e graduale.
+Per diversi anni sono stato anche formatore nel mondo della formazione professionale, insegnando materie tecniche a studenti di diversi indirizzi: dall'elettrico all'elettronico, fino alla meccatronica e all'automazione industriale. È proprio in aula che è nata l'idea di creare una piattaforma per avvicinarsi alla programmazione e all'automazione in modo semplice, concreto e graduale.
 
-Nel mondo industriale esistono strumenti molto potenti e completi, come i PLC Siemens, che permettono di affrontare la programmazione secondo logiche e metodologie professionali. Tuttavia, questi sistemi possono avere costi e complessità difficili da sostenere in un contesto didattico, soprattutto quando si vuole permettere a ogni studente di avere a disposizione il proprio sistema con cui sperimentare liberamente.
+Nel mondo industriale esistono strumenti molto potenti e completi, come i PLC Siemens, che permettono di affrontare la programmazione secondo logiche e metodologie professionali. Tuttavia, possono avere costi e complessità difficili da sostenere in un contesto didattico, soprattutto quando si vuole che ogni studente abbia il proprio sistema con cui sperimentare liberamente.
 
-Da qui nasce l'idea di utilizzare Arduino come base di una piattaforma trasversale, economica e accessibile, capace di portare alcuni concetti dell'automazione e della programmazione professionale in un ambiente alla portata di tutti.
+Da qui la scelta di Arduino come base di una piattaforma economica e accessibile, capace di portare alcuni concetti dell'automazione e della programmazione professionale in un ambiente alla portata di tutti.
 
-L'obiettivo non è semplicemente imparare a programmare Arduino, ma creare un percorso trasversale che permetta di partire dai concetti più semplici e intuitivi e arrivare progressivamente a metodologie utilizzate anche nell'automazione industriale.
+L'obiettivo non è soltanto imparare a programmare Arduino, ma costruire un percorso trasversale che parta dai concetti più intuitivi e arrivi, un passo alla volta, alle metodologie usate nelle fabbriche.
 
-La piattaforma integra quindi diversi approcci alla programmazione: programmazione a blocchi, programmazione testuale, Ladder e SFC/GRAFCET, permettendo di affrontare lo stesso problema attraverso linguaggi e logiche differenti.
+Per questo la piattaforma integra diversi approcci: programmazione a blocchi, programmazione testuale, Ladder e SFC/GRAFCET, così che lo stesso problema si possa affrontare con linguaggi e logiche differenti.
 
-In questo modo Arduino diventa qualcosa di più di una semplice scheda elettronica: diventa un laboratorio con cui sperimentare logica, elettronica, programmazione, automazione e sistemi di controllo utilizzando hardware economico e facilmente reperibile.
+Arduino diventa così qualcosa di più di una scheda elettronica: un laboratorio in cui provare logica, elettronica, programmazione e controllo dei processi con hardware economico e facile da reperire.
 
-L'idea alla base del progetto è semplice:
+L'idea alla base del progetto è questa:
 
-> **portare la logica dell'automazione a scuola** attraverso uno strumento che sia abbastanza semplice per chi inizia, ma abbastanza completo da accompagnare lo studente verso concetti più avanzati.
+> **portare la logica dell'automazione a scuola** con uno strumento abbastanza semplice per chi inizia, ma abbastanza completo da accompagnare lo studente verso i concetti più avanzati.
 
-Il progetto nasce quindi dall'incontro tra la mia esperienza tecnica e quella maturata direttamente nell'insegnamento, con l'obiettivo di realizzare uno strumento che sia realmente utilizzabile da studenti, insegnanti e scuole, senza richiedere investimenti elevati per iniziare a sperimentare.
+ArduLearn unisce quindi la mia esperienza tecnica e quella maturata nell'insegnamento, con l'obiettivo di offrire uno strumento davvero utilizzabile da studenti, insegnanti e scuole, senza investimenti elevati per cominciare.
 
-Perché credo che per imparare davvero una materia tecnica non basti studiarla: bisogna poterla provare, modificarla, sbagliare e vedere immediatamente cosa succede.
+Perché credo che per imparare davvero una materia tecnica non basti studiarla: bisogna poterla provare, modificarla, sbagliare e vedere subito cosa succede.
 
 ## Contatti
 
