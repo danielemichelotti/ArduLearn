@@ -82,7 +82,18 @@ section.tab.on{display:flex}
 #ghost{position:fixed;pointer-events:none;z-index:50;padding:6px 10px;border-radius:8px;color:#fff;font-weight:600;box-shadow:var(--shadow);opacity:.9}
 
 #canvasWrap{flex:1;min-width:0;position:relative;display:flex;flex-direction:column}
-#mtxView{position:absolute;right:12px;bottom:40px;background:#111;border:1px solid var(--line2);border-radius:8px;padding:5px 8px 7px;z-index:5}
+#simViews{position:absolute;right:12px;bottom:40px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:5;max-height:calc(100% - 60px);overflow:auto}
+#mtxView,#oledView,#lcdView{background:#111;border:1px solid var(--line2);border-radius:8px;padding:5px 8px 7px}
+#oledView .cap,#lcdView .cap{font-size:10px;color:#aaa;margin-bottom:3px}
+#oledView canvas{display:block;width:256px;height:128px;image-rendering:pixelated}
+#lcdView pre{margin:0;font:15px/1.15 var(--mono);color:#10240f;background:#9bc53d;padding:4px 6px;border-radius:3px;letter-spacing:1px}
+#simIO{background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:6px 10px 8px;width:260px;font-size:12px;box-shadow:var(--shadow)}
+#simIO h4{margin:0 0 4px;font-size:12px}#simIO .row{margin:3px 0}#simIO input[type=range]{flex:1;min-width:0}
+#simIO .sv{min-width:62px;text-align:right;font-family:var(--mono)}#simIO .leds{display:flex;flex-wrap:wrap;gap:3px}#simIO .leds i{width:10px;height:10px;border-radius:50%;background:#222;border:1px solid #444}
+.sitooff>*:not(.sitonote):not(h2){opacity:.45;pointer-events:none;filter:grayscale(.4)}
+.sitonote{font-size:12px;background:#fff3a8;color:#3b2f00;border-radius:6px;padding:6px 10px;margin:0 0 8px}
+.sito #followLbl{display:flex!important;opacity:.5}
+#sitoBoard{font-size:12px;padding:2px 6px;border-radius:6px}
 #mtxView .cap{font-size:10px;color:#aaa;margin-bottom:3px}
 #mtxView svg{display:block;width:120px;height:80px}
 #toolbar{display:flex;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--panel);align-items:center;flex-wrap:wrap}
@@ -360,7 +371,7 @@ dialog.hlp{padding:0;width:min(620px,94vw);max-width:94vw;max-height:88vh;overfl
       <div id="palList"></div>
     </aside>
     <div id="canvasWrap">
-      <div id="mtxView" class="hide" title="Matrice LED della scheda, in tempo reale"></div>
+      <div id="simViews"><div id="simIO" class="hide"></div><div id="oledView" class="hide" title="Display OLED, come sulla scheda"></div><div id="lcdView" class="hide" title="Display LCD, come sulla scheda"></div><div id="mtxView" class="hide" title="Matrice LED della scheda, in tempo reale"></div></div>
       <div id="toolbar">
         <button id="palToggle" class="ico" title="Aggiungi blocco">＋ Blocco</button>
         <button class="ico newProj" title="Nuovo progetto: scegli blocchi (FBD), LADDER o GRAFCET">🗋 Nuovo…</button>
@@ -568,6 +579,9 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const clone = o => JSON.parse(JSON.stringify(o));
 const params = new URLSearchParams(location.search);
 const DEMO = /*@DEMO*/location.protocol === 'file:' || params.has('demo')/*@/DEMO*/;
+// ?demo&sito: il simulatore sul sito di ArduLearn (niente PIN; le parti che esistono solo sulla scheda si vedono ma sono spente)
+const SITO = DEMO && params.has('sito');
+if (SITO) document.documentElement.classList.add('sito');
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -1002,7 +1016,7 @@ let live = null, liveAt = 0, online = false;
 let sel = null;                  // { kind: 'block'|'wire'|'note', id, i }
 let view = { x: 40, y: 40, s: 1 };
 let undoStack = [], redoStack = [];
-let auth = sessionStorage.getItem('plcb-pin') || '';
+let auth = (SITO ? '1234' : sessionStorage.getItem('plcb-pin')) || '';
 // bozza condivisa: il docente la invia mentre modifica, gli altri la seguono
 let knownDr = null, myDr = -1, lastPublished = '', followBase = '', publishTimer = 0;
 let authed = false;
@@ -1506,6 +1520,104 @@ function mtxRender(P, inp, con, page, now) {
   }
   return any ? f.map(v => v.toString(16).padStart(2, '0')).join('') : '';
 }
+// OLED 128x64 e LCD a caratteri: stesso disegno di displays.cpp (righe di testo, lampeggio, scorrimento, immagini)
+function dispText(P, type, cols, rows, page, now, inp) {
+  const g = Array.from({ length: rows }, () => Array(cols).fill(' '));
+  for (const b of P.blocks) {
+    if (b.t !== type) continue;
+    const r = b.k[0] & 0xFF, c = (b.k[0] >> 8) & 0xFF, eff = (b.k[0] >> 16) & 0xFF;
+    if (inp(b, 3) !== page || r >= rows || c >= cols || !inp(b, 2)) continue;
+    if (eff === 1 && Math.floor(now / 500) & 1) continue;
+    const msg = [...mtxFormat(b.k[1] >= 0 ? P.cstr(b.k[1]) : '', [inp(b, 0), inp(b, 1)])];
+    const w = cols - c, row = g[r];
+    if (eff === 2 && msg.length > w) {
+      const len = msg.length + 3, off = Math.floor(now / 300) % len;
+      for (let j = 0; j < w; j++) { const kk = (off + j) % len; row[c + j] = kk < msg.length ? msg[kk] : ' '; }
+    } else for (let j = 0; j < msg.length && c + j < cols; j++) row[c + j] = msg[j];
+  }
+  return g;
+}
+function oledRender(P, inp, con, page, now) {
+  const px = new Uint8Array(128 * 8), g = dispText(P, 40, 21, 8, page, now, inp);
+  g.forEach((row, r) => row.forEach((ch, c) => { const gi = mtxGlyphIndex(ch) * 5; for (let j = 0; j < 5; j++) px[r * 128 + c * 6 + j] = MTX_FONT[gi + j]; }));
+  for (const b of P.blocks) {
+    if (b.t !== 42 || !inp(b, 0) || inp(b, 2) !== page) continue;
+    const off = b.k[3] & 0xFFFF, x = (b.k[3] >> 16) & 0x7F, top = (b.k[3] >> 23) & 7;
+    const w = P.imgs[off], pages = (P.imgs[off + 1] || 0) >> 3, frames = P.imgs[off + 2];
+    if (!w || !frames) continue;
+    let f = inp(b, 1);
+    if (!con(b, 1) && f < 0) { const step = ((b.k[3] >>> 26) & 63) * 25; f = step ? Math.floor(now / step) : 0; }
+    f = ((f % frames) + frames) % frames;
+    for (let pg = 0; pg < pages && top + pg < 8; pg++)
+      for (let j = 0; j < w && x + j < 128; j++) px[(top + pg) * 128 + x + j] |= P.imgs[off + 4 + (f * pages + pg) * w + j] || 0;
+  }
+  return px;
+}
+function renderSimDisplays() {
+  const ok = DEMO && online && live && $('#liveChk').checked;
+  const ov = $('#oledView'), lv = $('#lcdView');
+  if (!ov || !lv) return;
+  const o = ok && live.op, l = ok && live.lt;
+  ov.classList.toggle('hide', !o); lv.classList.toggle('hide', !l);
+  if (o && ov.dataset.k !== o) {
+    ov.dataset.k = o;
+    if (!ov.firstChild) ov.innerHTML = '<div class="cap">Display OLED</div><canvas width="128" height="64"></canvas>';
+    const cx = $('canvas', ov).getContext('2d'), im = cx.createImageData(128, 64);
+    for (let pg = 0; pg < 8; pg++) for (let x = 0; x < 128; x++) {
+      const v = parseInt(o.substr((pg * 128 + x) * 2, 2), 16);
+      for (let bit = 0; bit < 8; bit++) { const i = ((pg * 8 + bit) * 128 + x) * 4, on = (v >> bit) & 1; im.data[i] = on ? 130 : 8; im.data[i + 1] = on ? 220 : 12; im.data[i + 2] = on ? 255 : 20; im.data[i + 3] = 255; }
+    }
+    cx.putImageData(im, 0, 0);
+  }
+  if (l && lv.dataset.k !== l) { lv.dataset.k = l; lv.innerHTML = `<div class="cap">Display LCD</div><pre>${esc(l)}</pre>`; }
+}
+// Simulatore: cursori per i sensori, stato degli attuatori (solo nella pagina, la scheda non c'entra)
+const SENS = {
+  71: i => [{ l: 'Temperatura', min: -100, max: 500, v: 235, u: '°C', dec: 1, o: 0 }, { l: 'Umidità', min: 0, max: 1000, v: 482, u: '%', dec: 1, o: 1 }],
+  72: i => [{ l: 'Temperatura', min: -200, max: 1000, v: 215, u: '°C', dec: 1, o: 0 }],
+  73: i => [{ l: 'Distanza', min: 20, max: 4000, v: 350, u: 'cm', dec: 1, o: 0, step: 10 }],
+};
+let simIOKey = '';
+function renderSimIO() {
+  const el = $('#simIO');
+  if (!el || typeof sim === 'undefined') return;
+  const P = sim.prog, list = P ? P.blocks.map((b, i) => [b, i]).filter(([b]) => b.t >= 70 && b.t <= 79) : [];
+  const show = online && live?.ld && list.length && $('#liveChk').checked;
+  el.classList.toggle('hide', !show);
+  if (!show) { simIOKey = ''; return; }
+  const key = sim.rev + ':' + list.map(([b, i]) => b.t + '@' + i).join(',');
+  if (key !== simIOKey) {                                  // struttura: solo quando cambia il programma (i cursori non si ricreano mentre li trascini)
+    simIOKey = key;
+    let h = '<h4>Sensori e attuatori simulati</h4>';
+    for (const [b, i] of list) {
+      const name = DEFS[b.t]?.name || 'Modulo';
+      if (SENS[b.t]) for (const f of SENS[b.t](i)) {
+        sim.modIn[i] ||= SENS[b.t](i).map(x => x.v);
+        h += `<div class="row" title="${esc(name)}"><span style="width:74px">${esc(f.l)}</span><input type="range" min="${f.min}" max="${f.max}" step="${f.step || 1}" value="${sim.modIn[i][f.o]}" data-sio="${i}:${f.o}:${f.dec}:${esc(f.u)}"><span class="sv" id="sv${i}_${f.o}"></span></div>`;
+      }
+      else if (b.t === 74) { sim.modIn[i] ||= [0, 0]; h += `<div class="row"><span style="width:74px">Encoder</span><button class="small" data-enc="${i}:-1">◀ gira</button><button class="small" data-enc="${i}:1">gira ▶</button></div>`; }
+      else if (b.t === 79) h += `<div class="row"><span style="width:74px">Orologio</span><span class="mut">ora del computer</span></div>`;
+      else h += `<div class="row"><span style="width:74px">${esc({ 70: 'Suono', 75: 'Servo', 76: 'Passo-passo', 77: 'Striscia LED', 78: 'Colore LED' }[b.t] || name)}</span><span class="sv" style="flex:1;text-align:left" id="ac${i}"></span></div>`;
+    }
+    el.innerHTML = h;
+  }
+  const fmt = (v, d, u) => (d ? (v / 10 ** d).toFixed(d) : v) + ' ' + u;
+  for (const r of $$('[data-sio]', el)) { const [i, o, d, u] = r.dataset.sio.split(':'); const out = $(`#sv${i}_${o}`); if (out) out.textContent = fmt(+r.value, +d, u); }
+  for (const [b, i] of list) {
+    const out = $('#ac' + i), v = sim.vals[i] || [0, 0], a = sim.act[i];
+    if (!out) continue;
+    if (b.t === 70) out.textContent = a?.on ? `♪ suona a ${a.f} Hz` : 'in silenzio';
+    if (b.t === 75) out.textContent = `angolo ${v[0]}°`;
+    if (b.t === 76) out.textContent = `posizione ${v[0]} passi${v[1] ? ' (fermo)' : ''}`;
+    if (b.t === 78) out.textContent = 'dà il colore ai LED della striscia';
+    if (b.t === 77) {
+      const lum = (Object.values(sim.act).find(x => x && x.lum !== undefined)?.lum ?? 255) / 255;
+      out.innerHTML = `<span class="leds">${(sim.leds.length ? sim.leds : [[0, 0, 0]]).slice(0, 30).map(([r, g, bb]) => `<i style="background:rgb(${Math.round(r * lum)},${Math.round(g * lum)},${Math.round(bb * lum)})"></i>`).join('')}</span>`;
+    }
+  }
+}
+document.addEventListener('input', e => { const r = e.target.closest?.('[data-sio]'); if (!r) return; const [i, o] = r.dataset.sio.split(':').map(Number); (sim.modIn[i] ||= [0, 0])[o] = +r.value; renderSimIO(); });
+document.addEventListener('click', e => { const b = e.target.closest?.('[data-enc]'); if (!b) return; const [i, d] = b.dataset.enc.split(':').map(Number); (sim.modIn[i] ||= [0, 0])[1] += d; });
 function renderMtxView() {
   const el = $('#mtxView');
   if (!el) return;
@@ -1786,6 +1898,10 @@ async function loadInfo() {
   info = { ...info, ...await getJson('/api/info') };
   applyBoard(info);
   $('#hostLbl').textContent = info.host ? info.host + '.local' + (DEMO ? '' : ' · ' + info.ip) : '';
+  if (SITO) {                                    // sul sito: si sceglie la scheda da simulare
+    $('#hostLbl').innerHTML = `<select id="sitoBoard" title="Scheda da simulare"><option value="r4"${SIM_R4 ? ' selected' : ''}>Simula: UNO R4 WiFi</option><option value="mega"${SIM_R4 ? '' : ' selected'}>Simula: Mega 2560</option></select>`;
+    $('#sitoBoard').onchange = e => { location.search = '?demo&sito' + (e.target.value === 'r4' ? '&r4' : ''); };
+  }
   document.title = 'ArduLearn — ' + (info.host || '');
   renderSettings();
 }
@@ -2155,6 +2271,8 @@ function pinState(p) {
 }
 function applyLive() {
   renderMtxView();
+  renderSimDisplays();
+  if (DEMO) renderSimIO();
   const show = $('#liveChk').checked && live && online && live.ld;
   for (const t of $$('[data-lv]')) {
     const [id, o] = t.dataset.lv.split(':').map(Number);
@@ -3240,6 +3358,7 @@ function openProject(pr, msg) {
 }
 
 async function renderSlots() {
+  setTimeout(applySito, 0);
   const el = $('#slots');
   let j;
   try { j = await getJson('/api/slots'); } catch { el.innerHTML = '<p class="mut">Scheda non raggiungibile.</p>'; return; }
@@ -3376,13 +3495,13 @@ const EXAMPLES = [
     [[54, PM.ANALOG, 'Sensore'], [13, PM.OUT, 'Ventola (LED)']],
     [['s', 3, 40, 60, { 0: 54 }], ['map', 32, 270, 60, { 0: 0, 1: 1023, 2: 0, 3: 500 }, { label: 'Temperatura ×10' }],
      ['h', 33, 520, 60, { 0: 280, 1: 260 }], ['v', 2, 760, 60, { 0: 13 }],
-     ['o1', 40, 520, 200, { 4: 0, 5: 0, 3: 1 }, { text: 'Temp: ' }], ['o2', 40, 760, 200, { 4: 2, 5: 0 }, { text: 'Ventola: ' }]],
+     ['o1', 40, 520, 200, { 4: 0, 5: 0 }, { text: 'Temp: {1.1} C' }], ['o2', 40, 760, 200, { 4: 2, 5: 0 }, { text: 'Ventola: {1}' }]],
     [['s', 0, 'map', 0], ['map', 0, 'h', 0], ['h', 0, 'v', 0], ['map', 0, 'o1', 0], ['h', 0, 'o2', 0]]),
   mk('Contapezzi', 'Conta i pezzi che passano davanti a un sensore; a 10 pezzi accende la spia "scatola piena". Reset con un secondo pulsante.',
     [[22, PM.PULLUP, 'Sensore pezzo'], [23, PM.PULLUP, 'Reset'], [13, PM.OUT, 'Scatola piena']],
     [['s', 1, 40, 40, { 0: 22, 1: 1 }], ['vs', 6, 40, 130, { 0: 1 }, { label: 'Pezzo (web)' }], ['or', 11, 270, 50],
      ['r', 1, 40, 250, { 0: 23, 1: 1 }], ['c', 24, 500, 80, { 3: 10 }], ['l', 2, 740, 110, { 0: 13 }],
-     ['lcd', 41, 740, 220, { 4: 0, 5: 0 }, { text: 'Pezzi: ' }], ['ol', 40, 740, 350, { 4: 0, 5: 0 }, { text: 'Pezzi: ' }]],
+     ['lcd', 41, 740, 220, { 4: 0, 5: 0 }, { text: 'Pezzi: {1}' }], ['ol', 40, 740, 350, { 4: 0, 5: 0 }, { text: 'Pezzi: {1}' }]],
     [['s', 0, 'or', 0], ['vs', 0, 'or', 1], ['or', 0, 'c', 0], ['r', 0, 'c', 2], ['c', 1, 'l', 0], ['c', 0, 'lcd', 0], ['c', 0, 'ol', 0]]),
   mk('Dimmer PWM', 'Un cursore nella pagina regola la luminosità di un LED su D9 (uscita PWM) e un indicatore mostra il valore.',
     [[9, PM.OUT, 'LED']],
@@ -3454,6 +3573,25 @@ $('#examples').addEventListener('click', async e => {
 // =====================================================================
 function openUpdate() { switchTab('settings'); $('#setUpdCard')?.scrollIntoView({ block: 'center' }); if (updNeeded(updManifest).length) updateOnline(); }
 
+// Sul sito: le parti che esistono solo con la scheda vera restano visibili ma spente, con il perché
+function sitoOff(el, why) {
+  if (!el) return;
+  el.classList.add('sitooff');
+  if (!el.querySelector(':scope > .sitonote')) {
+    const n = document.createElement('p'); n.className = 'sitonote'; n.textContent = '🔒 Nel simulatore non si usa: ' + why;
+    const h = el.querySelector(':scope > h2'); h ? h.after(n) : el.prepend(n);
+  }
+}
+function applySito() {
+  if (!SITO) return;
+  sitoOff($('#setTeacher'), 'con la scheda vera il PIN del docente protegge il caricamento dei programmi e le impostazioni. Qui puoi caricare e avviare liberamente.');
+  sitoOff($('#setWifiCard'), 'la UNO R4 WiFi si collega alla rete Wi-Fi della scuola da questa scheda.');
+  sitoOff($('#setUpdCard'), 'con la scheda vera qui compare l\'avviso delle nuove versioni e la scheda si aggiorna da Internet con un clic.');
+  sitoOff($('#setRtcCard'), 'serve il modulo orologio collegato alla scheda; nel simulatore l\'orologio usa l\'ora del tuo computer.');
+  sitoOff($('#slots')?.closest('.card'), 'la scheda conserva fino a 99 programmi nella sua memoria. Qui salva il lavoro con "Scarica file".');
+  const lb = $('#lockBtn'); if (lb) { lb.disabled = true; lb.textContent = '🔓 Docente'; lb.title = 'Nel simulatore non serve il PIN del docente'; }
+  const fc = $('#followChk'); if (fc) { fc.disabled = true; fc.checked = false; $('#followLbl').title = 'Con la scheda vera gli studenti vedono in tempo reale le modifiche del docente'; }
+}
 function renderSettings() {
   const lock = authed ? '' : 'disabled';
   $('#setTeacher').innerHTML = `<h2>Accesso docente</h2>` + (authed
@@ -3532,6 +3670,7 @@ function renderSettings() {
     const names = { 0x3C: 'OLED', 0x3D: 'OLED', 0x27: 'LCD', 0x3F: 'LCD', 0x20: 'LCD?' };
     $('#scanRes').textContent = j.found.length ? 'Trovati: ' + j.found.map(a => '0x' + a.toString(16).toUpperCase() + (names[a] ? ` (${names[a]})` : '')).join(', ') : 'Nessun dispositivo I²C trovato';
   };
+  applySito();
 }
 // ---- Rete Wi-Fi (UNO R4 WiFi) ----
 const wifiPct = rssi => clamp(2 * (rssi + 100), 0, 100);
@@ -7197,6 +7336,7 @@ async function start() {
   maybeWifiBanner();
   showUpdateResult();
   checkUpdates();
+  if (SITO) sitoStart();
   liveLoop();
 }
 
@@ -7207,7 +7347,7 @@ async function start() {
 /*@SIM*/
 const SIM_R4 = DEMO && new URLSearchParams(location.search).has('r4'), SIM_NSV = SIM_R4 ? 128 : 32;   // come SCRIPT_VARS del firmware
 const sim = {
-  image: null, prog: null, run: 1, rev: 1, overrun: 0, draft: null, dr: 0, mem: { mb: new Uint8Array(16), mw: new Int32Array(32), sv: new Int32Array(SIM_NSV), pg: [0, 0, 0] }, vals: [], st: [], pins: {}, inputs: {}, analog: new Array(16).fill(512), t0: Date.now(),
+  image: null, prog: null, run: 1, rev: 1, modIn: {}, act: {}, leds: [], op: '', lt: '', overrun: 0, draft: null, dr: 0, mem: { mb: new Uint8Array(16), mw: new Int32Array(32), sv: new Int32Array(SIM_NSV), pg: [0, 0, 0] }, vals: [], st: [], pins: {}, inputs: {}, analog: new Array(16).fill(512), t0: Date.now(),
   slots: store.get(SIM_R4 ? 'plcb-demo-slots-r4' : 'plcb-demo-slots', {}),
   // ?demo&r4&ap: scheda appena accesa, sulla sua rete (nessun Wi-Fi impostato)
   wifi: DEMO && new URLSearchParams(location.search).has('ap') ? { mode: 'ap', ssid: '', rssi: 0, ap: 'ArduLearn-6bb6', saved: 0, pass: '' }
@@ -7227,6 +7367,7 @@ const sim = {
     r.blocks.forEach((b, i) => { if (b.t === 7) this.vals[i][0] = b.k[0]; });
     this.pins = {};
     r.pins.forEach((m, p) => { if (m === PM.OUT) this.pins[p] = 0; });
+    this.modIn = {}; this.act = {}; this.leds = [];
   },
   wifiInfo() { const { pass, ...w } = this.wifi; return w; },
   toggleInput(p) { this.inputs[p] = this.readPin(p) ? 0 : 1; },
@@ -7303,13 +7444,24 @@ const sim = {
         default: {
           const md = DEFS[b.t]?.mod;
           if (md?.sim) { o[0] = md.sim[0] ?? 0; o[1] = md.sim[1] ?? 0; }
+          const u = this.modIn[i];                                  // valori dei cursori del pannello "Sensori"
+          if (u && b.t === 71) { o[0] = u[0]; o[1] = u[1]; }
+          if (u && b.t === 72) { o[0] = u[0]; o[1] = 1; }
+          if (u && b.t === 73) { if (inp(b, 0)) { o[0] = Math.min(u[0], (inp(b, 1) || 400) * 10); o[1] = u[0] <= (inp(b, 1) || 400) * 10 ? 1 : 0; } }
+          if (b.t === 79) { const d = new Date(), f = [d.getHours(), d.getMinutes(), d.getSeconds(), d.getDate(), d.getMonth() + 1, d.getFullYear(), (d.getDay() + 6) % 7 + 1, d.getHours() * 100 + d.getMinutes(), d.getHours() * 60 + d.getMinutes(), d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()]; o[0] = f[k[0] & 15] ?? 0; o[1] = f[k[1] & 15] ?? 0; }
+          if (b.t === 70) this.act[i] = { on: !!inp(b, 0) && inp(b, 1) >= 31, f: inp(b, 1) };
+          if (b.t === 77) this.act[i] = { lum: clamp(inp(b, 0), 0, 255) };
+          if (b.t === 78) { const n = inp(b, 0), rgb = [inp(b, 1), inp(b, 2), inp(b, 3)].map(v => clamp(v, 0, 255)); if (n < 0) { if (!this.leds.length) this.leds = Array.from({ length: 8 }, () => [0, 0, 0]); this.leds = this.leds.map(() => rgb); } else if (n < 60) { while (this.leds.length <= n) this.leds.push([0, 0, 0]); this.leds[n] = rgb; } }
           if (b.t === 75) o[0] = clamp(inp(b, 0), 0, 180);
           if (b.t === 76) { const tg = inp(b, 3), pm = (k[2] >> 29) & 1; if (inp(b, 2)) o[0] = 0; if (pm && inp(b, 0)) o[0] += Math.sign(tg - o[0]) * Math.min(Math.abs(tg - o[0]), Math.max(1, Math.round(Math.abs(inp(b, 1)) / 100))); else if (inp(b, 0)) o[0] += Math.round(inp(b, 1) / 100); o[1] = pm ? +(o[0] === tg) : +!(inp(b, 0) && inp(b, 1)); }
-          if (b.t === 74) { if (inp(b, 0) && !(s.f & 1)) o[0] = inp(b, 1); s.f = inp(b, 0) ? 1 : 0; o[0] = clamp(o[0], inp(b, 2), inp(b, 3)); }
+          if (b.t === 74) { if (inp(b, 0) && !(s.f & 1)) o[0] = inp(b, 1); s.f = inp(b, 0) ? 1 : 0; if (u && u[1]) { o[0] += u[1]; o[1] = Math.sign(u[1]); u[1] = 0; } o[0] = clamp(o[0], inp(b, 2), inp(b, 3)); }
         }
       }
     });
     if (SIM_R4) this.mx = mtxRender(P, inp, con, M.pg[2] || 0, now);
+    this.op = P.blocks.some(b => b.t === 40 || b.t === 42) ? [...oledRender(P, inp, con, M.pg[0] || 0, now)].map(v => v.toString(16).padStart(2, '0')).join('') : '';
+    const lc = info.lcd?.c || 16, lr = info.lcd?.r || 2;
+    this.lt = P.blocks.some(b => b.t === 41) ? dispText(P, 41, lc, lr, M.pg[1] || 0, now, inp).map(r => r.join('')).join('\n') : '';
   },
   live() {
     let d = '';
@@ -7318,7 +7470,7 @@ const sim = {
       for (let b = 0; b < 8 && base + b < NUM_PINS; b++) if (this.prog && this.prog.pins[base + b] && this.readPin(base + b)) byte |= 1 << b;
       d += byte.toString(16).padStart(2, '0');
     }
-    return { rev: this.rev, run: this.run, ld: this.prog ? 1 : 0, scan: 180, smax: 240, so: this.overrun, dr: this.dr, up: Math.round((Date.now() - this.t0) / 1000), mem: 1990, oled: 0, lcd: 0, err: '',
+    return { rev: this.rev, run: this.run, ld: this.prog ? 1 : 0, scan: 180, smax: 240, so: this.overrun, dr: this.dr, up: Math.round((Date.now() - this.t0) / 1000), mem: 1990, oled: this.op ? 1 : 0, lcd: this.lt ? 1 : 0, err: '', op: this.run ? this.op : '', lt: this.run ? this.lt : '',
       v: this.vals.flat(), d, mb: [...this.mem.mb].map(x => x.toString(16).padStart(2, '0')).join(''), mw: [...this.mem.mw], pg: this.mem.pg.slice(0, 2), a: this.analog.map((v, i) => this.prog?.pins[FIRST_A + i] === PM.ANALOG ? v : -1),
       ...(SIM_R4 ? { pm: this.mem.pg[2] || 0, mx: this.run && this.mx ? this.mx : '000000000000000000000000' } : {}) };
   },
@@ -7391,6 +7543,20 @@ const sim = {
 };
 /*@/SIM*/
 if (DEMO) { sim.init(); if (!auth) toast('Simulazione: il PIN docente è 1234'); }
+function sitoStart() {             // sul sito, dopo l'avvio: benvenuto ed esempio richiesto
+  applySito();
+  if (!sessionStorage.getItem('plcb-sito-benvenuto')) {
+    sessionStorage.setItem('plcb-sito-benvenuto', '1');
+    showBanner('info', 'Stai provando ArduLearn nel browser, senza scheda: apri un esempio da Progetti, premi "Carica sulla scheda" e usa i comandi virtuali. I sensori si regolano nel riquadro in basso a destra.', [['Ho capito', hideBanner]]);
+  }
+  const ex = +params.get('esempio');                // ?esempio=N: apre subito un esempio
+  if (ex > 0 && EXAMPLES[ex - 1]) {                 // aperto dal sito con un link: niente domanda, e il link non si ripete ricaricando
+    const before = JSON.stringify(project), pr = adaptToBoard(EXAMPLES[ex - 1].build());
+    project = JSON.parse(before);
+    openProject(pr, 'Esempio aperto: premi "Carica sulla scheda" per provarlo');
+    params.delete('esempio'); history.replaceState(null, '', '?' + params.toString());
+  }
+}
 start();
 </script>
 </body>
