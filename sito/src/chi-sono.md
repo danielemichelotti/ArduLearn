@@ -12,11 +12,11 @@ Per diversi anni ho anche insegnato materie tecniche nella formazione profession
 
 Nel mondo industriale esistono strumenti molto potenti e completi, come i PLC Siemens, che permettono di affrontare la programmazione secondo logiche e metodologie professionali. Tuttavia, possono avere costi e complessità difficili da sostenere in un contesto didattico, soprattutto quando si vuole che ogni studente abbia il proprio sistema con cui sperimentare liberamente.
 
-Da qui la scelta di Arduino come base di una piattaforma economica e accessibile, capace di portare alcuni concetti dell'automazione e della programmazione professionale in un ambiente alla portata di tutti.
+Da qui la scelta di Arduino come base di una piattaforma economica e accessibile, capace di portare alcuni principi dell'automazione e della programmazione industriale in un ambiente alla portata di tutti.
 
-L'obiettivo non è soltanto imparare a programmare Arduino, ma costruire un percorso trasversale che parta dai concetti più intuitivi e arrivi, un passo alla volta, alle metodologie usate nelle fabbriche.
+L'obiettivo non è soltanto imparare a programmare Arduino, ma costruire un percorso trasversale che parta dai concetti più intuitivi e arrivi, un passo alla volta, alle metodologie usate nelle aziende.
 
-Per questo la piattaforma integra diversi approcci: programmazione a blocchi, programmazione testuale, Ladder e SFC/GRAFCET, così che lo stesso problema si possa affrontare con linguaggi e logiche differenti.
+Per questo la piattaforma integra più approcci: programmazione a blocchi, programmazione testuale, Ladder e SFC/GRAFCET, così che lo stesso problema si possa affrontare con linguaggi e logiche differenti.
 
 Arduino diventa così qualcosa di più di una scheda elettronica: un laboratorio in cui provare logica, elettronica, programmazione e controllo dei processi con hardware economico e facile da reperire.
 
