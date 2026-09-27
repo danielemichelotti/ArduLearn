@@ -1,0 +1,10 @@
+{
+  "name": "ardulearn-video",
+  "private": true,
+  "description": "Script riproducibili per registrare i video tutorial di ArduLearn",
+  "type": "module",
+  "scripts": {},
+  "devDependencies": {
+    "playwright": "^1.63.0"
+  }
+}
