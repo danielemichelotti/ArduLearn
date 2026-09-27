@@ -1,7 +1,7 @@
 # Pubblica il sito ardulearn.org su GitHub Pages.
-# Parte a ogni modifica del sito (anche dal pannello /admin), del simulatore o dei PDF.
+# Parte a ogni modifica del sito (anche dal pannello /admin), del simulatore, del manuale o delle versioni.
 # Il dominio personalizzato si imposta nelle impostazioni di Pages: con la pubblicazione
-# tramite Actions il file CNAME non serve.
+# tramite Actions il file CNAME non serve e il sito sta nella radice (SITO_BASE non va impostato).
 name: Sito
 
 on:
@@ -11,7 +11,8 @@ on:
       - "sito/**"
       - "web/index.html"
       - "web/modules.js"
-      - "docs/*.pdf"
+      - "docs/**"
+      - "aggiornamenti/manifest.json"
       - ".github/workflows/sito.yml"
   workflow_dispatch:
 
