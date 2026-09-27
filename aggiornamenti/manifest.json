@@ -8,11 +8,21 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544555,
+  "ver": 3544687,
   "file": "INDEX.GZ"
  },
- "note": "In Impostazioni → Informazioni c'è il link per sostenere ArduLearn con una donazione su PayPal. · L'app per Windows ha un nuovo aspetto: menu a sinistra, passi guidati 1-2-3 e consigli su un foglietto giallo.",
+ "note": "LADDER online: anche il tratto verticale che unisce i rami diventa verde quando arriva corrente da una qualsiasi riga. · Esempi Termostato e Contapezzi: le scritte sul display mostrano di nuovo i valori.",
  "novita": [
+  {
+   "data": "27/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.2",
+   "page": 3544687,
+   "voci": [
+    "LADDER online: anche il tratto verticale che unisce i rami diventa verde quando arriva corrente da una qualsiasi riga.",
+    "Esempi Termostato e Contapezzi: le scritte sul display mostrano di nuovo i valori."
+   ]
+  },
   {
    "data": "27/09/2026",
    "fw": "2.2",

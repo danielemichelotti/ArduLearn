@@ -1,22 +1,22 @@
 // definizioni delle figure del manuale (coordinate in pixel delle schermate)
 const A = (s, at, dx = 0, dy = 0) => ({ s, at, dx, dy });
 const FIG = {
-  // ---------------- app per Windows (900x660) ----------------
-  app_firmware: { img: 'app_firmware', crop: [0, 0, 900, 640], notes: [
-    { t: 'num', n: 1, at: [20, 134] }, { t: 'num', n: 2, at: [20, 159] }, { t: 'num', n: 3, at: [20, 230] }, { t: 'num', n: 4, at: [20, 283] },
-    { t: 'arrow', from: [620, 215], to: [520, 162], text: 'la scheda si riconosce da sola', size: 5 },
-    { t: 'box', r: [24, 272, 106, 24], pad: 5 },
-    { t: 'arrow', from: [300, 350], to: [150, 290], text: 'un clic... e aspetta la fine', anchor: 'start', tdx: 2, tdy: 6 },
-    { t: 'text', at: [460, 470], text: 'qui compaiono i messaggi:\nalla fine "Firmware caricato correttamente"', anchor: 'middle', size: 4.6 } ] },
-  app_trova: { img: 'app_trova', crop: [0, 0, 900, 640], notes: [
-    { t: 'box', r: [24, 148, 834, 22], pad: 4 },
-    { t: 'arrow', from: [450, 280], to: [400, 175], text: 'la tua scheda: nome, indirizzo, stato', size: 5 },
-    { t: 'num', n: 1, at: [74, 540] }, { t: 'num', n: 2, at: [345, 540] }, { t: 'num', n: 3, at: [830, 540] },
-    { t: 'text', at: [450, 380], text: 'doppio clic sulla riga = apre la pagina', anchor: 'middle', size: 4.6 } ] },
-  app_monitor: { img: 'app_monitor', crop: [0, 0, 900, 640], notes: [
-    { t: 'num', n: 1, at: [345, 124] }, { t: 'num', n: 2, at: [823, 124] }, { t: 'box', r: [598, 160, 262, 290], pad: 4 },
-    { t: 'arrow', from: [300, 350], to: [590, 300], text: 'comandi pronti:\nbasta un clic', anchor: 'middle', tdy: -8 },
-    { t: 'box', r: [600, 424, 70, 22], pad: 3 }, { t: 'arrow', from: [500, 470], to: [598, 440], text: 'PIN dimenticato? → 1234', anchor: 'end', tdx: 0, tdy: 6 } ] },
+  // ---------------- app per Windows (980x680) ----------------
+  app_firmware: { img: 'app_firmware', crop: [0, 0, 980, 680], notes: [
+    { t: 'num', n: 1, at: [208, 170] }, { t: 'num', n: 2, at: [208, 197] }, { t: 'num', n: 3, at: [208, 335] }, { t: 'num', n: 4, at: [208, 396] },
+    { t: 'arrow', from: [760, 200], to: [700, 180], text: 'la scheda si riconosce da sola', size: 5, anchor: 'end', tdx: 0, tdy: 6 },
+    { t: 'box', r: [218, 382, 123, 29], pad: 5 },
+    { t: 'arrow', from: [470, 480], to: [345, 405], text: 'un clic... e aspetta la fine', anchor: 'start', tdx: 2, tdy: 6 },
+    { t: 'text', at: [590, 575], text: 'qui compaiono i messaggi:\nalla fine "Firmware caricato correttamente"', anchor: 'middle', size: 4.6 } ] },
+  app_trova: { img: 'app_trova', crop: [0, 0, 980, 680], notes: [
+    { t: 'box', r: [220, 152, 738, 22], pad: 4 },
+    { t: 'arrow', from: [590, 300], to: [540, 178], text: 'la tua scheda: nome, indirizzo, stato', size: 5 },
+    { t: 'num', n: 1, at: [277, 590] }, { t: 'num', n: 2, at: [580, 590] }, { t: 'num', n: 3, at: [906, 590] },
+    { t: 'text', at: [590, 410], text: 'doppio clic sulla riga = apre la pagina', anchor: 'middle', size: 4.6 } ] },
+  app_monitor: { img: 'app_monitor', crop: [0, 0, 980, 680], notes: [
+    { t: 'num', n: 1, at: [465, 116] }, { t: 'num', n: 2, at: [900, 116] }, { t: 'box', r: [671, 153, 275, 316], pad: 4 },
+    { t: 'arrow', from: [420, 360], to: [660, 320], text: 'comandi pronti:\nbasta un clic', anchor: 'middle', tdy: -8 },
+    { t: 'box', r: [671, 441, 86, 27], pad: 3 }, { t: 'arrow', from: [560, 510], to: [668, 462], text: 'PIN dimenticato? → 1234', anchor: 'end', tdx: 0, tdy: 6 } ] },
 
   // ---------------- pagina: giro completo ----------------
   tour: { img: 'tour', w: 172, notes: [
