@@ -12,7 +12,8 @@ display OLED/LCD facoltativi, moduli per sensori e attuatori, blocchi Script ST 
 **[ArduLearn.exe](https://github.com/danielemichelotti/ArduLearn/releases/latest/download/ArduLearn.exe)** —
 app per Windows: trova la scheda collegata via USB e ci installa ArduLearn (Mega 2560 o UNO R4 WiFi).
 Tutte le versioni sono nelle [Release](https://github.com/danielemichelotti/ArduLearn/releases).
-Presentazione: [brochure (PDF)](docs/ArduLearn_brochure.pdf).
+Presentazione: [brochure (PDF)](docs/ArduLearn_brochure.pdf) · [manuale del docente (PDF)](docs/ArduLearn_manuale_docente.pdf).
+Tutto insieme (app, brochure e manuale): **[ArduLearn.zip](https://github.com/danielemichelotti/ArduLearn/releases/latest/download/ArduLearn.zip)**.
 
 ## Schede
 
@@ -58,7 +59,7 @@ tools/prepara_aggiornamento.py   prepara aggiornamenti/ (manifest.json e firmwar
 aggiornamenti/     ultima versione per la UNO R4 WiFi, letta dalla pagina su raw.githubusercontent.com
 tools/app/         app Windows ArduLearn.exe (trova le schede, carica il firmware, monitor seriale)
 img/               logo (pagina, OLED, icona dell'app) e foto delle schede
-docs/              brochure di presentazione (PDF)
+docs/              brochure di presentazione e manuale del docente (PDF)
 ```
 
 ## Compilare
