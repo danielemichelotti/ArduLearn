@@ -8,18 +8,18 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544978,
+  "ver": 3544985,
   "file": "INDEX.GZ"
  },
- "note": "Indicatore in stile Lampada: con 0 e 1 resta spenta o accesa; con valori più grandi si illumina in proporzione al fondo scala (es. 512 su 1023 = metà luce).",
+ "note": "Indicatore in stile Lampada: con 0 e 1 resta spenta o accesa; con valori più grandi si illumina in proporzione, da 0 = spenta a 255 = piena luce (come un'uscita PWM).",
  "novita": [
   {
    "data": "27/09/2026",
    "fw": "2.2",
    "bridge": "0.3.2",
-   "page": 3544978,
+   "page": 3544985,
    "voci": [
-    "Indicatore in stile Lampada: con 0 e 1 resta spenta o accesa; con valori più grandi si illumina in proporzione al fondo scala (es. 512 su 1023 = metà luce)."
+    "Indicatore in stile Lampada: con 0 e 1 resta spenta o accesa; con valori più grandi si illumina in proporzione, da 0 = spenta a 255 = piena luce (come un'uscita PWM)."
    ]
   },
   {
