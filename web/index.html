@@ -4745,8 +4745,19 @@ function renderLad() {
     for (const v of nw.vl) {
       const [r, c] = v.split(',').map(Number);
       if (r + 1 >= nw.rows) continue;
-      const x = 10 + (c + 1) * CW, s = sigs?.[`${ni},${r},${c}`] || sigs?.[`${ni},${r + 1},${c}`];
-      g += `<line class="${col(on && s ? sigValue(s.out) : null)}" x1="${x}" y1="${wy(r)}" x2="${x}" y2="${wy(r + 1)}"/>`;
+      // il tratto verticale è un nodo: vale 1 se arriva corrente da una qualsiasi delle righe che unisce
+      // (tutte le righe collegate da tratti verticali consecutivi sulla stessa colonna; c = -1 è la barra di sinistra)
+      const x = 10 + (c + 1) * CW;
+      let nv = null;
+      if (on) {
+        const vs = new Set(nw.vl);
+        let top = r, bot = r + 1;
+        while (vs.has(`${top - 1},${c}`)) top--;
+        while (vs.has(`${bot},${c}`)) bot++;
+        if (c < 0) nv = 1;
+        else for (let rr = top; rr <= bot; rr++) { const s = sigs?.[`${ni},${rr},${c}`]; if (s) { const sv = sigValue(s.out); if (sv) { nv = 1; break; } if (sv != null) nv = 0; } }
+      }
+      g += `<line class="${col(nv)}" x1="${x}" y1="${wy(r)}" x2="${x}" y2="${wy(r + 1)}"/>`;
     }
     const title = nw.title ? esc(nw.title) : '<span class="mut">senza titolo</span>';
     const trn = nw.tr != null ? project.graph?.trans.find(t => t.id === nw.tr) : null;
