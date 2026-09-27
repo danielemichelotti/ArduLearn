@@ -1,0 +1,61 @@
+# Pubblica il sito ardulearn.org su GitHub Pages.
+# Parte a ogni modifica del sito (anche dal pannello /admin), del simulatore o dei PDF.
+# Il dominio personalizzato si imposta nelle impostazioni di Pages: con la pubblicazione
+# tramite Actions il file CNAME non serve.
+name: Sito
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sito/**"
+      - "web/index.html"
+      - "web/modules.js"
+      - "docs/*.pdf"
+      - ".github/workflows/sito.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      pronto: ${{ steps.controllo.outputs.pronto }}
+    steps:
+      - uses: actions/checkout@v4
+      # finché la cartella sito/ non è su main il workflow non fa nulla
+      - id: controllo
+        run: |
+          if [ -f sito/package.json ]; then echo "pronto=true" >> "$GITHUB_OUTPUT"; else echo "pronto=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.controllo.outputs.pronto == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: sito/package-lock.json
+      - if: steps.controllo.outputs.pronto == 'true'
+        working-directory: sito
+        run: npm ci && npm run build
+      - if: steps.controllo.outputs.pronto == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: sito/_site
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.pronto == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
