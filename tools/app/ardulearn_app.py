@@ -52,6 +52,16 @@ FIRMA = "ideato e realizzato da Daniele Michelotti"
 VERDE = "#1a7f37"
 ROSSO = "#c62828"
 ARANCIO = "#b26a00"
+# colori della brochure e del manuale
+NOTTE = "#1e3a8a"      # testata
+BLU = "#1d4ed8"        # pulsanti principali, voce scelta
+SFONDO = "#f5f7fb"     # pagine
+LATERALE = "#e8eefc"   # menu a sinistra
+ORO = "#ffd43b"        # scritta a mano nella testata
+POSTIT = "#fff3a8"     # foglietti dei consigli
+TESTO = "#1f2937"
+DONAZIONE = "https://www.paypal.com/paypalme/danistn"
+MANO = "Segoe Print"   # carattere "scritto a mano": Caveat incluso nel programma (vedi carica_font)
 
 # ---------------------------------------------------------------------------
 # Percorsi delle risorse
@@ -85,6 +95,24 @@ def trova_risorsa(*parti):
         if os.path.isfile(percorso):
             return percorso
     return None
+
+
+def carica_font():
+    """Rende disponibile il carattere a mano Caveat (font/Caveat.ttf) solo a questo programma.
+
+    Va chiamata prima di creare la finestra. Se non riesce resta un carattere di Windows.
+    """
+    global MANO
+    percorso = trova_risorsa("font", "Caveat.ttf")
+    if percorso and sys.platform == "win32":
+        try:
+            import ctypes
+            if ctypes.windll.gdi32.AddFontResourceExW(percorso, 0x10, 0):   # FR_PRIVATE
+                MANO = "Caveat"
+                return
+        except Exception:
+            pass
+    MANO = "Ink Free" if sys.platform == "win32" else "TkDefaultFont"
 
 
 def trova_firmware(nome_file):
@@ -1383,8 +1411,18 @@ class SchedaFirmware(ttk.Frame):
         self.monitor = None           # impostato dall'App
         self.da_riconnettere = None
 
+        self.stato_carica = None      # None | "corso" | "ok" | "errore"
         ttk.Label(self, text="Carica il firmware sulla scheda Arduino",
                   style="Titolo.TLabel").pack(anchor="w")
+
+        # passi guidati: si colorano man mano
+        fila = ttk.Frame(self)
+        fila.pack(anchor="w", pady=(4, 2))
+        self.passi = []
+        for i, testo in enumerate(("1 · collega la scheda", "2 · scegli il tipo", "3 · carica")):
+            etichetta = tk.Label(fila, text=testo, font=("Segoe UI", 9, "bold"), padx=12, pady=3)
+            etichetta.pack(side="left", padx=(0 if i == 0 else 6, 0))
+            self.passi.append(etichetta)
 
         griglia = ttk.Frame(self)
         griglia.pack(fill="x", pady=(8, 4))
@@ -1404,6 +1442,9 @@ class SchedaFirmware(ttk.Frame):
         self.info_porta = ttk.Label(self, style="Nota.TLabel", text="", wraplength=780,
                                     justify="left")
         self.info_porta.pack(anchor="w")
+        self.postit = tk.Label(self, bg=POSTIT, fg="#3b2f00", font=(MANO, 14), justify="left",
+                               anchor="w", wraplength=620, padx=12, pady=5)
+        self.postit.pack(anchor="w", pady=(8, 2))
         self.info_versioni = ttk.Label(self, style="Nota.TLabel", justify="left", text="")
         self.info_versioni.pack(anchor="w", pady=(4, 0))
 
@@ -1412,7 +1453,7 @@ class SchedaFirmware(ttk.Frame):
         self.pulsante = ttk.Button(riga, text="Carica il firmware", style="Accento.TButton",
                                    command=self.carica)
         self.pulsante.pack(side="left")
-        self.barra = ttk.Progressbar(riga, mode="indeterminate")
+        self.barra = ttk.Progressbar(riga, mode="determinate", value=0)   # vuota finché non si carica
         self.barra.pack(side="left", fill="x", expand=True, padx=(10, 0))
 
         self.esito = ttk.Label(self, text="", style="Esito.TLabel")
@@ -1421,9 +1462,50 @@ class SchedaFirmware(ttk.Frame):
         self.log.pack(fill="both", expand=True, pady=(4, 0))
 
         self._mostra_versioni()
+        self._aggiorna_passi()
+
+    def _aggiorna_passi(self):
+        """Colora i passi 1-2-3 e sceglie il consiglio del foglietto giallo."""
+        p = self.scegli.attuale()
+        scheda = self.var_scheda.get()
+        r4 = scheda == R4_WIFI
+        collegata = bool(p) and not p["non_supportata"]
+        scelta = collegata and scheda in FIRMWARE
+        fatto, attivo, grigio = (BLU, "#ffffff"), ("#dbe4ff", NOTTE), ("#e3e8f2", "#6b7280")
+        stati = [fatto if collegata else attivo, fatto if scelta else (attivo if collegata else grigio)]
+        stati.append({"corso": ("#ffe8a3", "#5c3d00"), "ok": ("#d3f9d8", VERDE),
+                      "errore": ("#ffe3e3", ROSSO)}.get(self.stato_carica, attivo if scelta else grigio))
+        for etichetta, (bg, fg) in zip(self.passi, stati):
+            etichetta.config(bg=bg, fg=fg)
+        if not p:
+            consiglio = "Collega la scheda al PC con il cavo USB: comparirà qui sopra da sola."
+        elif p["non_supportata"]:
+            consiglio = ("Questa scheda non è supportata: usa una UNO R4 WiFi o una Mega 2560 "
+                         "con la shield di rete.")
+        elif self.stato_carica == "corso":
+            consiglio = ("Non scollegare il cavo e non chiudere il programma finché non compare "
+                         "il messaggio finale.")
+        elif self.stato_carica == "errore":
+            consiglio = ("Se la UNO R4 non risponde, premi due volte, velocemente, il tasto RESET "
+                         "della scheda e riprova." if r4 else
+                         "Controlla che nessun altro programma (IDE Arduino, monitor seriale) usi "
+                         "la porta, poi riprova.")
+        elif self.stato_carica == "ok":
+            consiglio = ("Fatto! Se la scheda non conosce ancora il Wi-Fi, collegati alla rete "
+                         "ArduLearn-xxxx (password ardulearn)." if r4 else
+                         "Fatto! Collega il cavo di rete e trova la scheda in «Trova le schede».")
+        else:
+            consiglio = ("Consiglio: chiudi l'IDE di Arduino prima di caricare. La prima volta la "
+                         "UNO R4 prepara anche il modulo Wi-Fi: ci vuole fino a un minuto." if r4 else
+                         "Consiglio: chiudi l'IDE di Arduino e ogni monitor seriale prima di "
+                         "caricare. I programmi salvati sulla scheda restano.")
+        self.postit.config(text=consiglio)
 
     # --- porte e schede -------------------------------------------------
     def _porta_cambiata(self, p, automatica):
+        self.after_idle(self._aggiorna_passi)
+        if not self.in_corso and not automatica:
+            self.stato_carica = None
         if not p:
             self.info_porta.config(
                 text=self.scegli.errore or "Nessuna porta USB trovata: collega la scheda con "
@@ -1445,6 +1527,8 @@ class SchedaFirmware(ttk.Frame):
 
     def _scheda_scelta(self):
         self.scheda_manuale = True
+        self.stato_carica = None
+        self._aggiorna_passi()
 
     def _mostra_versioni(self):
         versioni = leggi_versioni()
@@ -1516,8 +1600,11 @@ class SchedaFirmware(ttk.Frame):
         self.scegli.abilita(False)
         self.scegli.pausa = True
         self.combo_scheda.state(["disabled"])
+        self.barra.config(mode="indeterminate")
         self.barra.start(12)
         self.esito.config(text="Caricamento in corso...", foreground="")
+        self.stato_carica = "corso"
+        self._aggiorna_passi()
         self.log.pulisci()
         self.log.aggiungi(f"Firmware: {file_fw}\n")
         if self.da_riconnettere:
@@ -1553,6 +1640,7 @@ class SchedaFirmware(ttk.Frame):
 
         self.in_corso = False
         self.barra.stop()
+        self.barra.config(mode="determinate", value=0)
         self.pulsante.state(["!disabled"])
         self.scegli.abilita(True)
         self.scegli.pausa = False
@@ -1560,6 +1648,8 @@ class SchedaFirmware(ttk.Frame):
         if self.da_riconnettere and self.monitor:
             self.after(2500, self._riconnetti, self.da_riconnettere, 6)
             self.da_riconnettere = None
+        self.stato_carica = "ok" if fine[1] else "errore"
+        self._aggiorna_passi()
         if fine[1]:
             self.esito.config(text="Firmware caricato correttamente.", foreground=VERDE)
             testo = "Firmware caricato correttamente.\nLa scheda si riavvia da sola."
@@ -2027,35 +2117,90 @@ class SchedaGuida(ttk.Frame):
 # ---------------------------------------------------------------------------
 
 class App(tk.Tk):
+    VOCI = (("trova", "◎  Trova le schede"), ("firmware", "⬆  Carica il firmware"),
+            ("monitor", "▤  Monitor seriale"), ("guida", "✎  Guida"))
+
     def __init__(self):
         super().__init__()
         self.title(TITOLO)
-        self.geometry("900x660")
-        self.minsize(720, 560)
+        self.geometry("980x680")
+        self.minsize(800, 580)
+        self.configure(bg=SFONDO)
         self._stili()
         self._icona()
 
-        testata = ttk.Frame(self)
-        testata.pack(fill="x", padx=12, pady=(10, 0))
+        # testata blu con il logo e una nota "a mano", come la brochure
+        testata = tk.Frame(self, bg=NOTTE)
+        testata.pack(fill="x")
         if self.logo is not None:
-            ttk.Label(testata, image=self.logo).pack(side="left", padx=(0, 8))
-        ttk.Label(testata, text=TITOLO, style="Marchio.TLabel").pack(side="left")
+            tk.Label(testata, image=self.logo, bg=NOTTE).pack(side="left", padx=(14, 8), pady=10)
+        tk.Label(testata, text=TITOLO, bg=NOTTE, fg="#ffffff",
+                 font=("Segoe UI", 17, "bold")).pack(side="left", pady=10,
+                                                     padx=(0 if self.logo else 14, 0))
+        tk.Label(testata, text="il PLC da laboratorio ✎", bg=NOTTE, fg=ORO,
+                 font=(MANO, 18)).pack(side="right", padx=16)
 
-        schede = ttk.Notebook(self)
-        schede.pack(fill="both", expand=True, padx=10, pady=(8, 0))
-        self.trova = SchedaTrova(schede)
-        self.firmware = SchedaFirmware(schede)
-        self.monitor = SchedaMonitor(schede)
+        corpo = tk.Frame(self, bg=SFONDO)
+        corpo.pack(fill="both", expand=True)
+
+        # menu a sinistra
+        menu = tk.Frame(corpo, bg=LATERALE, width=200)
+        menu.pack(side="left", fill="y")
+        menu.pack_propagate(False)
+        tk.Frame(menu, bg=LATERALE, height=10).pack()
+        self.voci = {}
+        for chiave, testo in self.VOCI:
+            voce = tk.Label(menu, text=testo, anchor="w", bg=LATERALE, fg=TESTO, cursor="hand2",
+                            font=("Segoe UI", 10), padx=14, pady=8)
+            voce.pack(fill="x", padx=8, pady=1)
+            voce.bind("<Button-1>", lambda _e, c=chiave: self.mostra(c))
+            voce.bind("<Enter>", lambda _e, c=chiave: self._sopra(c, True))
+            voce.bind("<Leave>", lambda _e, c=chiave: self._sopra(c, False))
+            self.voci[chiave] = voce
+
+        # in fondo al menu: firma e donazione
+        tk.Label(menu, text=FIRMA, bg=LATERALE, fg="#6b7280", font=("Segoe UI", 8),
+                 wraplength=180, justify="left").pack(side="bottom", anchor="w", padx=16, pady=(0, 10))
+        dono = tk.Label(menu, text="♥  Fai una donazione", bg=LATERALE, fg="#c2255c",
+                        font=("Segoe UI", 10, "bold"), cursor="hand2", anchor="w", padx=14, pady=6)
+        dono.pack(side="bottom", fill="x", padx=8)
+        dono.bind("<Button-1>", lambda _e: webbrowser.open(DONAZIONE))
+        Suggerimento(dono, "Apre la pagina PayPal nel browser: " + DONAZIONE)
+        tk.Label(menu, text="ArduLearn è gratuito:\nse ti è utile,\noffrimi un caffè",
+                 bg=LATERALE, fg="#3b2f00", font=(MANO, 14), justify="left", padx=4).pack(
+            side="bottom", anchor="w", padx=16)
+
+        # pagine
+        self.contenuto = ttk.Frame(corpo)
+        self.contenuto.pack(side="left", fill="both", expand=True, padx=(6, 8), pady=(6, 8))
+        self.trova = SchedaTrova(self.contenuto)
+        self.firmware = SchedaFirmware(self.contenuto)
+        self.monitor = SchedaMonitor(self.contenuto)
         self.firmware.monitor = self.monitor
         self.monitor.firmware = self.firmware
-        schede.add(self.trova, text="  Trova le schede  ")
-        schede.add(self.firmware, text="  Carica il firmware  ")
-        schede.add(self.monitor, text="  Monitor seriale  ")
-        schede.add(SchedaGuida(schede), text="  Guida  ")
-
-        ttk.Label(self, text=FIRMA, style="Firma.TLabel").pack(side="bottom", anchor="e",
-                                                               padx=12, pady=4)
+        self.pagine = {"trova": self.trova, "firmware": self.firmware,
+                       "monitor": self.monitor, "guida": SchedaGuida(self.contenuto)}
+        self.scelta = None
+        self.mostra("trova")
         self.protocol("WM_DELETE_WINDOW", self._chiudi)
+
+    def mostra(self, chiave):
+        """Mostra una pagina e segna la voce del menu."""
+        if self.scelta == chiave:
+            return
+        for c, pagina in self.pagine.items():
+            if c != chiave:
+                pagina.pack_forget()
+        self.pagine[chiave].pack(fill="both", expand=True)
+        self.scelta = chiave
+        for c, voce in self.voci.items():
+            su = c == chiave
+            voce.config(bg="#ffffff" if su else LATERALE, fg=BLU if su else TESTO,
+                        font=("Segoe UI", 10, "bold" if su else "normal"))
+
+    def _sopra(self, chiave, dentro):
+        if chiave != self.scelta:
+            self.voci[chiave].config(bg="#f4f7ff" if dentro else LATERALE)
 
     def _icona(self):
         """Icona della finestra e della barra delle applicazioni, logo nella testata."""
@@ -2111,19 +2256,46 @@ class App(tk.Tk):
 
     def _stili(self):
         stile = ttk.Style(self)
-        if "vista" in stile.theme_names():
-            stile.theme_use("vista")
-        stile.configure("Titolo.TLabel", font=("Segoe UI", 12, "bold"))
+        stile.theme_use("clam")
+        stile.configure(".", background=SFONDO, foreground=TESTO, font=("Segoe UI", 9),
+                        bordercolor="#c5cedd", lightcolor=SFONDO, darkcolor=SFONDO,
+                        troughcolor="#e3e8f2", fieldbackground="#ffffff", focuscolor=BLU)
+        stile.configure("TFrame", background=SFONDO)
+        stile.configure("TLabel", background=SFONDO, foreground=TESTO)
+        stile.configure("TCheckbutton", background=SFONDO)
+        stile.map("TCheckbutton", background=[("active", SFONDO)])
+        stile.configure("TButton", background="#ffffff", foreground=TESTO, padding=(10, 4),
+                        bordercolor="#c5cedd", lightcolor="#ffffff", darkcolor="#ffffff")
+        stile.map("TButton", background=[("disabled", "#eef1f6"), ("active", "#eef2ff")],
+                  foreground=[("disabled", "#9aa3b2")], bordercolor=[("active", BLU)])
+        stile.configure("Accento.TButton", background=BLU, foreground="#ffffff",
+                        font=("Segoe UI", 9, "bold"), bordercolor=BLU, lightcolor=BLU, darkcolor=BLU)
+        stile.map("Accento.TButton", background=[("disabled", "#9db2ea"), ("active", "#1e40af")],
+                  foreground=[("disabled", "#eef2ff")], bordercolor=[("active", "#1e40af")],
+                  lightcolor=[("active", "#1e40af")], darkcolor=[("active", "#1e40af")])
+        stile.configure("TCombobox", arrowcolor=NOTTE, padding=3)
+        stile.map("TCombobox", fieldbackground=[("readonly", "#ffffff"), ("disabled", "#eef1f6")],
+                  selectbackground=[("readonly", "#ffffff")], selectforeground=[("readonly", TESTO)])
+        stile.configure("TEntry", padding=3)
+        stile.configure("Horizontal.TProgressbar", background=BLU, bordercolor="#c5cedd",
+                        lightcolor=BLU, darkcolor=BLU)
+        stile.configure("Treeview", background="#ffffff", fieldbackground="#ffffff", rowheight=26,
+                        bordercolor="#c5cedd")
+        stile.map("Treeview", background=[("selected", BLU)], foreground=[("selected", "#ffffff")])
+        stile.configure("Treeview.Heading", background=LATERALE, foreground=NOTTE,
+                        font=("Segoe UI", 9, "bold"), relief="flat")
+        stile.map("Treeview.Heading", background=[("active", "#dbe4ff")])
+        stile.configure("Vertical.TScrollbar", background="#dfe5f0", arrowcolor=NOTTE)
+        stile.configure("Titolo.TLabel", font=(MANO, 22, "bold"), foreground=NOTTE)
         stile.configure("Marchio.TLabel", font=("Segoe UI", 16, "bold"), foreground="#1A1A1A")
-        stile.configure("Sottotitolo.TLabel", font=("Segoe UI", 9, "bold"))
-        stile.configure("Nota.TLabel", font=("Segoe UI", 9), foreground="#555555")
+        stile.configure("Sottotitolo.TLabel", font=("Segoe UI", 9, "bold"), foreground=NOTTE)
+        stile.configure("Nota.TLabel", font=("Segoe UI", 9), foreground="#555f70")
         stile.configure("Esito.TLabel", font=("Segoe UI", 10, "bold"))
         stile.configure("Firma.TLabel", font=("Segoe UI", 8), foreground="#888888")
-        stile.configure("Accento.TButton", font=("Segoe UI", 9, "bold"))
-        stile.configure("Treeview", rowheight=24)
 
 
 def main():
+    carica_font()
     App().mainloop()
 
 

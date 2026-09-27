@@ -8,11 +8,21 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544516,
+  "ver": 3544555,
   "file": "INDEX.GZ"
  },
- "note": "Script ST, funzioni C e box SCL: il pulsante \"⤢ Ingrandisci\" apre il codice in un riquadro grande, con i numeri di riga, gli errori mentre scrivi e la guida del linguaggio a lato.",
+ "note": "In Impostazioni → Informazioni c'è il link per sostenere ArduLearn con una donazione su PayPal. · L'app per Windows ha un nuovo aspetto: menu a sinistra, passi guidati 1-2-3 e consigli su un foglietto giallo.",
  "novita": [
+  {
+   "data": "27/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.2",
+   "page": 3544555,
+   "voci": [
+    "In Impostazioni → Informazioni c'è il link per sostenere ArduLearn con una donazione su PayPal.",
+    "L'app per Windows ha un nuovo aspetto: menu a sinistra, passi guidati 1-2-3 e consigli su un foglietto giallo."
+   ]
+  },
   {
    "data": "27/09/2026",
    "fw": "2.2",

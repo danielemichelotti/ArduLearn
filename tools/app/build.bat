@@ -27,6 +27,7 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed --name "ArduLearn
   --add-data "%~dp0bin;bin" ^
   --add-data "%~dp0firmware;firmware" ^
   --add-data "%~dp0sd;sd" ^
+  --add-data "%~dp0font;font" ^
   --hidden-import hid ^
   --exclude-module unittest --exclude-module pydoc --exclude-module doctest ^
   --exclude-module pdb --exclude-module lib2to3 --exclude-module setuptools ^
