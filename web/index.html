@@ -682,7 +682,7 @@ const DEFS = {
         params: [{ k: 0, t: 'num', label: 'Minimo', def: 0 }, { k: 1, t: 'num', label: 'Massimo', def: 100 }],
         desc: 'Un valore numerico che si regola trascinando il cursore sul blocco.' },
   8:  { cat: 'ui', name: 'Indicatore', short: 'VIEW', ins: [{ n: 'IN' }], outs: [],
-        params: [{ k: 0, t: 'sel', label: 'Mostra come', opts: ['Numero', 'Lampada', 'Barra'], def: 1 }, { k: 1, t: 'num', label: 'Fondo scala (barra e lampada)', def: 1023 }],
+        params: [{ k: 0, t: 'sel', label: 'Mostra come', opts: ['Numero', 'Lampada', 'Barra'], def: 1 }, { k: 1, t: 'num', label: 'Fondo scala della barra', def: 1023 }],
         desc: 'Mostra nella pagina il valore che riceve. Non fa niente sulla scheda: serve per osservare.' },
   10: { cat: 'logic', name: 'AND', short: 'AND', ins: [{ n: 'A' }, { n: 'B' }, { n: 'C' }, { n: 'D' }, { n: 'E' }, { n: 'F' }, { n: 'G' }, { n: 'H' }], outs: ['Q'], params: [{ k: 4, t: 'sel', label: 'Numero di ingressi', opts: ['2', '3', '4', '5', '6', '7', '8'], def: 0 }], gate: '&',
         desc: 'Uscita 1 solo se TUTTI gli ingressi collegati valgono 1. Gli ingressi non collegati sono ignorati.' },
@@ -843,7 +843,7 @@ const HELP = {
         p: { 0: 'Valore con il cursore tutto a sinistra.', 1: 'Valore con il cursore tutto a destra.' } },
   8:  { u: 'Serve per vedere cosa succede dentro il programma: collegalo a un\'uscita qualsiasi mentre fai le prove.', ex: 'Esempio: collegato all\'uscita ET di un TON mostra i millisecondi che passano.',
         in: { IN: 'Il valore da mostrare (un numero, oppure 0/1).' },
-        p: { 0: 'Numero: mostra il valore. Lampada: con 0 e 1 spenta o accesa; con valori più grandi si illumina in proporzione al fondo scala (es. 512 su 1023 = metà luce). Barra: riempita in proporzione al fondo scala.', 1: 'Il valore che riempie tutta la barra o accende la lampada al 100% (per "Barra" e "Lampada").' } },
+        p: { 0: 'Numero: mostra il valore. Lampada: con 0 e 1 spenta o accesa; con valori più grandi si illumina in proporzione, da 0 = spenta a 255 = piena luce (come un\'uscita PWM). Barra: riempita in proporzione al fondo scala.', 1: 'Il valore che riempie tutta la barra (solo per "Barra").' } },
   10: { gate: 1, u: 'Serve quando più condizioni devono essere vere INSIEME.', ex: 'Esempio: il motore parte solo se il pulsante di marcia è premuto E il cancello è chiuso.',
         out: { Q: '1 se tutti gli ingressi collegati valgono 1, altrimenti 0 (0 anche se non è collegato niente).' } },
   11: { gate: 1, u: 'Serve quando basta UNA condizione vera fra tante.', ex: 'Esempio: la luce si accende dal pulsante della cucina OPPURE da quello del salotto.',
@@ -1555,9 +1555,9 @@ function oledRender(P, inp, con, page, now) {
   }
   return px;
 }
-// lampada dell'Indicatore: 0/1 = spenta/accesa (segnali a bit), valori più grandi = luce in proporzione al fondo scala
-function lampLevel(el, v, fs) {
-  const r = v == null || v <= 0 ? 0 : v === 1 ? 1 : clamp(v / (fs > 0 ? fs : 1023), 0, 1);
+// lampada dell'Indicatore: 0/1 = spenta/accesa (segnali a bit), valori più grandi = luce in proporzione, 255 = piena (come il PWM)
+function lampLevel(el, v) {
+  const r = v == null || v <= 0 ? 0 : v === 1 ? 1 : clamp(v / 255, 0, 1);
   el.classList.toggle('on', r > 0);
   if (r > 0 && r < 1) {
     const pc = Math.round(15 + 85 * r);
@@ -2433,7 +2433,7 @@ function applyLive() {
       if (!el) continue;
       const src = b.in[0];
       const v = show && src ? liveValue(src.b, src.o) : null;
-      if (b.k[0] === 1) lampLevel(el, v, b.k[1]);
+      if (b.k[0] === 1) lampLevel(el, v);
       else if (b.k[0] === 2) el.setAttribute('width', (W - 24) * clamp((v || 0) / (b.k[1] || 1), 0, 1));
       else el.textContent = v == null ? '—' : fmtVal(v);
     }
