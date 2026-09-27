@@ -4,7 +4,7 @@
 
 // ---- Wi-Fi (wifimgr.cpp) ----
 // Senza rete salvata, o se non riesce a collegarsi 3 volte, la scheda crea la propria rete
-// "ArduLearn-xxxx" (password ardulearn, pagina su http://192.168.4.1/) con portale di configurazione.
+// "ArduLearn-xxxx" (password ardulearn, pagina su http://192.168.4.1/), senza portale "captive".
 // Stati come g_netState del firmware ArduLearn (config.h)
 enum : uint8_t { NET_NO_HW, NET_NO_LINK, NET_DHCP, NET_OK, NET_FALLBACK };
 

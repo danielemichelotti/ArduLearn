@@ -225,8 +225,7 @@ static esp_err_t sendPage(httpd_req_t* req) {
   return streamFile(req, f);
 }
 
-// Tutto cio' che non e' /api/: la pagina; sulla rete della scheda qualunque altro indirizzo
-// (i controlli "c'e' Internet?" di telefoni e PC) porta alla pagina: portale di configurazione
+// Tutto cio' che non e' /api/: la pagina (niente portale "captive" sulla rete della scheda)
 static esp_err_t pageRoute(httpd_req_t* req);
 static esp_err_t pageHandler(httpd_req_t* req) {
   const char* u = req->uri;
@@ -241,11 +240,6 @@ static esp_err_t pageHandler(httpd_req_t* req) {
 static esp_err_t pageRoute(httpd_req_t* req) {
   const char* u = req->uri;
   if (!strcmp(u, "/") || !strncmp(u, "/?", 2) || !strcmp(u, "/index.html")) return sendPage(req);
-  if (wifiIsAP()) {
-    httpd_resp_set_status(req, "302 Found");
-    httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/");
-    return httpd_resp_send(req, nullptr, 0);
-  }
   return replyErr(req, 404, "Non trovato");
 }
 
@@ -625,7 +619,7 @@ static bool startServer() {
   httpd_config_t c = HTTPD_DEFAULT_CONFIG();
   c.uri_match_fn = httpd_uri_match_wildcard;
   c.max_uri_handlers = 8;
-  c.max_open_sockets = 7;          // lwIP ne ha 16: margine per DNS, UDP, mDNS e per la memoria
+  c.max_open_sockets = 4;          // ogni connessione trattiene buffer: con 7 la memoria libera scendeva a 252 byte aprendo la pagina
   c.lru_purge_enable = true;       // molti browser: si chiudono le connessioni ferme da piu' tempo
   c.stack_size = 12288;
   c.recv_wait_timeout = 5;

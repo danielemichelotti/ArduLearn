@@ -434,7 +434,7 @@ MSG_R4_MINIMA = ("UNO R4 Minima: non supportata (per ora). Usa un Arduino Mega 2
 # prossimi passi dopo il caricamento del firmware sulla UNO R4 WiFi
 PASSI_R4_WIFI = ("Se la scheda non conosce ancora una rete Wi-Fi crea la propria rete "
                  "ArduLearn-xxxx (password ardulearn): collega il PC o il telefono a quella rete "
-                 "(la pagina si apre da sola, oppure http://192.168.4.1/) e in Impostazioni → "
+                 "e apri nel browser http://192.168.4.1 ; in Impostazioni → "
                  "Rete Wi-Fi inserisci la rete della scuola. L'indirizzo della scheda scorre "
                  "sulla matrice LED.")
 
@@ -1473,7 +1473,8 @@ class SchedaFirmware(ttk.Frame):
         scelta = collegata and scheda in FIRMWARE
         fatto, attivo, grigio = (BLU, "#ffffff"), ("#dbe4ff", NOTTE), ("#e3e8f2", "#6b7280")
         stati = [fatto if collegata else attivo, fatto if scelta else (attivo if collegata else grigio)]
-        stati.append({"corso": ("#ffe8a3", "#5c3d00"), "ok": ("#d3f9d8", VERDE),
+        stati.append({"corso": ("#ffe8a3", "#5c3d00"), "ricollega": ("#ffe8a3", "#5c3d00"),
+                      "ok": ("#d3f9d8", VERDE),
                       "errore": ("#ffe3e3", ROSSO)}.get(self.stato_carica, attivo if scelta else grigio))
         for etichetta, (bg, fg) in zip(self.passi, stati):
             etichetta.config(bg=bg, fg=fg)
@@ -1485,6 +1486,9 @@ class SchedaFirmware(ttk.Frame):
         elif self.stato_carica == "corso":
             consiglio = ("Non scollegare il cavo e non chiudere il programma finché non compare "
                          "il messaggio finale.")
+        elif self.stato_carica == "ricollega":
+            consiglio = ("Ultimo passo: scollega il cavo USB della scheda, aspetta un paio di "
+                         "secondi e ricollegalo. Così la scheda riparte da capo, Wi-Fi compreso.")
         elif self.stato_carica == "errore":
             consiglio = ("Se la UNO R4 non risponde, premi due volte, velocemente, il tasto RESET "
                          "della scheda e riprova." if r4 else
@@ -1645,6 +1649,9 @@ class SchedaFirmware(ttk.Frame):
         self.scegli.abilita(True)
         self.scegli.pausa = False
         self.combo_scheda.state(["!disabled"])
+        if fine[1] and scheda == R4_WIFI:
+            self._chiedi_ricollegamento()
+            return
         if self.da_riconnettere and self.monitor:
             self.after(2500, self._riconnetti, self.da_riconnettere, 6)
             self.da_riconnettere = None
@@ -1662,6 +1669,50 @@ class SchedaFirmware(ttk.Frame):
             self.esito.config(text="Caricamento non riuscito.", foreground=ROSSO)
             self.log.aggiungi(f"\nSuggerimento: {aiuto}\n")
             messagebox.showerror(TITOLO, f"Caricamento non riuscito.\n\n{aiuto}")
+
+    # --- UNO R4 WiFi: ultimo passo, scollegare e ricollegare il cavo -----------
+    # Il riavvio fatto via USB alla fine del caricamento non sempre rimette in ordine il Wi-Fi
+    # (rete visibile ma pagina che non risponde): staccare l'alimentazione lo risolve.
+    def _chiedi_ricollegamento(self):
+        self.in_corso = True                      # niente nuovi caricamenti nel frattempo
+        self.pulsante.state(["disabled"])
+        self.stato_carica = "ricollega"
+        self._aggiorna_passi()
+        self.esito.config(text="Ultimo passo: scollega e ricollega il cavo USB della scheda.",
+                          foreground=ARANCIO)
+        self.log.aggiungi("\nFirmware caricato. Ultimo passo: scollega il cavo USB della scheda, "
+                          "aspetta un paio di secondi e ricollegalo.\n")
+        self.after(700, self._attendi_ricollegamento, False, time.time() + 180)
+
+    def _attendi_ricollegamento(self, staccata, scadenza):
+        porta = porta_r4()
+        if not staccata:
+            if porta is None:
+                self.log.aggiungi("Scheda scollegata: ora ricollega il cavo.\n")
+                self.esito.config(text="Ora ricollega il cavo USB della scheda.", foreground=ARANCIO)
+                staccata = True
+        elif porta:
+            self.log.aggiungi(f"Scheda ricollegata sulla porta {porta}: attendo che sia pronta...\n")
+            self.after(5000, self._scheda_pronta, porta)
+            return
+        if time.time() > scadenza:
+            self.log.aggiungi("La scheda non è stata ricollegata: se la pagina non risponde, "
+                              "scollega e ricollega il cavo USB.\n")
+            self._scheda_pronta(porta)
+            return
+        self.after(500, self._attendi_ricollegamento, staccata, scadenza)
+
+    def _scheda_pronta(self, porta):
+        self.in_corso = False
+        self.pulsante.state(["!disabled"])
+        if self.da_riconnettere and self.monitor and porta:
+            self.after(500, self._riconnetti, porta, 6)
+        self.da_riconnettere = None
+        self.stato_carica = "ok"
+        self._aggiorna_passi()
+        self.esito.config(text="Firmware caricato: la scheda è pronta.", foreground=VERDE)
+        self.log.aggiungi("\nLa scheda è pronta.\n\nProssimi passi:\n" + PASSI_R4_WIFI + "\n")
+        messagebox.showinfo(TITOLO, "Firmware caricato: la scheda è pronta.\n\n" + PASSI_R4_WIFI)
 
     def _riconnetti(self, porta, tentativi):
         """Dopo il caricamento ricollega il monitor (la porta può metterci un po')."""

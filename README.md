@@ -26,7 +26,7 @@ Tutto insieme (app, brochure e manuale): **[ArduLearn.zip](https://github.com/da
 | Scheda | Stato | Rete | Memoria programmi |
 |---|---|---|---|
 | **Arduino Mega 2560** + shield DFRobot [Ethernet & PoE DFR0850](https://www.dfrobot.com/product-2370.html) (W5500) | completo | Ethernet (DHCP o indirizzo automatico 169.254.x.y), PoE | microSD della shield (slot 1–99, bozza condivisa) + copia in EEPROM |
-| **Arduino UNO R4 WiFi** (senza shield) | completo | Wi-Fi integrato (rete della scuola o rete propria "ArduLearn-xxxx" con portale), nome `.local` | programma attivo nel RA4M1; slot 1–99 e bozza nella flash del modulo Wi-Fi |
+| **Arduino UNO R4 WiFi** (senza shield) | completo | Wi-Fi integrato (rete della scuola o rete propria "ArduLearn-xxxx", pagina su http://192.168.4.1), nome `.local` | programma attivo nel RA4M1; slot 1–99 e bozza nella flash del modulo Wi-Fi |
 
 Sulla UNO R4 WiFi il modulo ESP32-S3 ha un firmware proprio, **ArduLearnBridge** (al posto del
 "USB bridge" di Arduino, di cui tiene la parte USB: caricamento degli sketch dall'IDE, aggiornamento

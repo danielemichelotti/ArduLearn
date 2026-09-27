@@ -6,7 +6,7 @@
 //   - ponte USB <-> Serial del RA4M1, tocco a 1200 baud (bootloader) e 2400 (ROM Renesas);
 //   - HID CMSIS-DAP con il comando 0xAA (ESP32 in modalita' download: ripristino dall'IDE).
 //  Al posto dei comandi AT (WiFiS3) c'e' ArduLearn:
-//   - Wi-Fi della scuola o rete propria "ArduLearn-xxxx" con portale (wifimgr.cpp);
+//   - Wi-Fi della scuola o rete propria "ArduLearn-xxxx", pagina su 192.168.4.1 (wifimgr.cpp);
 //   - server web con la pagina nella flash dell'ESP32 (web.cpp);
 //   - collegamento veloce col RA4M1, che resta il PLC (link.cpp);
 //   - nome <host>.local (mDNS) e risposta alla ricerca UDP "PLC?" dell'app (porta 4210).

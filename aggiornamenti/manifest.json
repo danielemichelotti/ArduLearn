@@ -4,15 +4,24 @@
   "file": "PlcBlocchi_r4wifi.bin"
  },
  "bridge": {
-  "ver": "0.3.2",
+  "ver": "0.3.3",
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544985,
+  "ver": 3545165,
   "file": "INDEX.GZ"
  },
- "note": "Indicatore in stile Lampada: con 0 e 1 resta spenta o accesa; con valori più grandi si illumina in proporzione, da 0 = spenta a 255 = piena luce (come un'uscita PWM).",
+ "note": "Rete propria della scheda (ArduLearn-xxxx): la pagina non si apre più da sola (su Windows compariva MSN); apri tu http://192.168.4.1. La pagina risponde più in fretta e il modulo Wi-Fi usa meno memoria.",
  "novita": [
+  {
+   "data": "28/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.3",
+   "page": 3545165,
+   "voci": [
+    "Rete propria della scheda (ArduLearn-xxxx): la pagina non si apre più da sola (su Windows compariva MSN); apri tu http://192.168.4.1. La pagina risponde più in fretta e il modulo Wi-Fi usa meno memoria."
+   ]
+  },
   {
    "data": "27/09/2026",
    "fw": "2.2",

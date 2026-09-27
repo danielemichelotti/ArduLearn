@@ -1,14 +1,14 @@
 #include "wifimgr.h"
 #include <WiFi.h>
-#include <DNSServer.h>
 #include <Preferences.h>
 #include <esp_mac.h>
 #include <esp_wifi.h>
 
 // =====================================================================
 //  Wi-Fi dell'UNO R4 WiFi (sull'ESP32): stessa logica del vecchio wifi.cpp del RA4M1
-//  - nessuna rete salvata: rete propria "ArduLearn-xxxx" (password ardulearn), portale
-//    di configurazione: qualunque indirizzo porta alla pagina http://192.168.4.1/;
+//  - nessuna rete salvata: rete propria "ArduLearn-xxxx" (password ardulearn), pagina su
+//    http://192.168.4.1/. Niente portale ("captive"): Windows apriva MSN e i telefoni la pagina
+//    in un mini browser che restava bianco;
 //  - rete salvata: ci si collega; dopo 3 tentativi falliti si torna alla rete propria e ogni
 //    10 minuti (se nessuno e' collegato alla rete della scheda) si riprova quella salvata.
 //  Le credenziali stanno nella memoria nvs dell'ESP32.
@@ -19,7 +19,6 @@ enum : uint8_t { W_OFF, W_CONN, W_STA, W_AP };
 static uint8_t  mode = W_OFF, fails = 0;
 static uint32_t t0 = 0, lastCheck = 0, applyAt = 0;
 static char apName[24], ssid[33], pass[64], host[32] = "";
-static DNSServer dns;
 static Preferences prefs;
 
 static bool saved() { return ssid[0] != 0; }
@@ -61,18 +60,18 @@ static void store() {
 
 static void startAP() {
   WiFi.disconnect(true);
-  WiFi.mode(WIFI_AP_STA);                  // la parte "stazione" serve per cercare le reti
+  WiFi.mode(WIFI_AP);                      // solo rete propria: la parte "stazione" occupa memoria, si accende per cercare le reti
   WiFi.softAPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1), IPAddress(255, 255, 255, 0));
   WiFi.softAP(apName, WIFI_AP_PASS);
-  dns.setErrorReplyCode(DNSReplyCode::NoError);
-  dns.start(53, "*", WiFi.softAPIP());     // portale: ogni nome porta alla scheda
+  WiFi.setSleep(false);
+  esp_wifi_set_ps(WIFI_PS_NONE);           // col risparmio energetico la rete della scheda risponde lenta e a scatti
   mode = W_AP;
   t0 = millis();
 }
 
 static void startConnect() {
   if (!saved()) { startAP(); return; }
-  if (mode == W_AP) { dns.stop(); WiFi.softAPdisconnect(true); }
+  if (mode == W_AP) WiFi.softAPdisconnect(true);
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);                    // niente risparmio energetico: risposte piu' pronte (la scheda e' alimentata)
   if (host[0]) WiFi.setHostname(host);
@@ -93,7 +92,6 @@ void wifiBegin() {
 
 void wifiTick() {
   uint32_t now = millis();
-  if (mode == W_AP) dns.processNextRequest();
   if (applyAt && (int32_t)(now - applyAt) >= 0) { applyAt = 0; fails = 0; startConnect(); return; }
   if (now - lastCheck < 500) return;
   lastCheck = now;
@@ -153,6 +151,8 @@ void wifiJson(String& o) {
 }
 
 void wifiScanJson(String& o) {
+  bool soloAP = WiFi.getMode() == WIFI_AP;   // sulla rete propria la ricerca richiede anche la parte "stazione"
+  if (soloAP) WiFi.mode(WIFI_AP_STA);
   int n = WiFi.scanNetworks();
   o += "{\"nets\":[";
   int shown = 0;
@@ -170,6 +170,7 @@ void wifiScanJson(String& o) {
   }
   o += "]}";
   WiFi.scanDelete();
+  if (soloAP && mode == W_AP) { WiFi.mode(WIFI_AP); esp_wifi_set_ps(WIFI_PS_NONE); }
 }
 
 // Comandi dal monitor seriale (li inoltra il RA4M1): stesse risposte del vecchio firmware
