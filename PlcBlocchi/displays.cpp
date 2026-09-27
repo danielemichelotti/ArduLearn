@@ -120,6 +120,7 @@ static uint8_t formatMessage(const Block& b, char* out, uint8_t size) {
 
 #if HAS_LED_MATRIX
 uint8_t displaysFormat(const Block& b, char* out, uint8_t size) { return formatMessage(b, out, size); }
+uint8_t displaysNextChar(const char*& s) { return nextChar(s, true); }
 #endif
 
 // Scrive nella griglia le scritte del programma che stanno sulla pagina corrente.

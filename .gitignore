@@ -9,5 +9,6 @@ __pycache__/
 Thumbs.db
 ArduLearnBridge/build/
 ArduLearnBridge/data/
-tools/app/firmware/ArduLearnBridge_littlefs.bin
+
 build_aggiornamento/
+build_app/

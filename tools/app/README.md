@@ -13,12 +13,19 @@ Un solo file, `dist\ArduLearn.exe`, con quattro schede:
     Il pulsante **Prepara la microSD / Aggiorna la pagina** chiede il PIN
     docente e invia `sd\PLC\INDEX.GZ` e `INDEX.VER` con
     `POST /api/file?name=...` (header `X-Pin`, timeout 60 s).
-  - UNO R4 WiFi (`"board":"r4wifi"`): *nel firmware* (non ha la microSD; il
-    pulsante della microSD è disattivato).
+  - UNO R4 WiFi con il firmware ArduLearnBridge (`"fs":1`): pagina nella memoria
+    del modulo Wi-Fi, stessi stati e stesso pulsante del Mega.
 - **Carica il firmware**: riconosce la scheda collegata via USB e carica il firmware:
   - Arduino Mega 2560 - avrdude (`-c wiring`, 115200)
-  - Arduino UNO R4 WiFi - tocco a 1200 baud, poi bossac
-    `--port=COMx -U -e -w ... -R` (attraverso il ponte USB dell'ESP32).
+  - Arduino UNO R4 WiFi - due passi:
+    1. modulo Wi-Fi ESP32-S3: l'app legge la versione via HID (feature report; ArduLearnBridge
+       aggiunge il byte `A`). Firmware Arduino originale o modulo in modalità download
+       (303A:1001) → installazione completa con esptool (bootloader, partizioni, otadata,
+       app, pagina LittleFS); ArduLearnBridge più vecchio → solo otadata e app (restano
+       slot, bozza e rete Wi-Fi); aggiornato → niente. Per entrare in modalità download
+       manda il feature report `0xAA`, come l'aggiornamento del firmware dell'IDE;
+    2. PLC RA4M1: tocco a 1200 baud, poi bossac `--port=COMx -U -e -w ... -R`
+       (attraverso il ponte USB dell'ESP32).
     Alla fine mostra i passi successivi (rete ArduLearn-xxxx, pagina
     `http://192.168.4.1/`, Impostazioni → Rete Wi-Fi).
   - Non supportate (caricamento bloccato con un messaggio):
@@ -41,8 +48,8 @@ Un solo file, `dist\ArduLearn.exe`, con quattro schede:
   microSD): <https://www.dfrobot.com/product-2370.html>. Firmware
   `PlcBlocchi_mega.hex`.
 - **Arduino UNO R4 WiFi da sola**: Wi-Fi integrato, nessuna shield (la DFR0850
-  non serve), alimentazione da USB-C o jack. Niente microSD: la pagina web è nel
-  firmware `PlcBlocchi_r4wifi.bin`.
+  non serve), alimentazione da USB-C o jack. Firmware `PlcBlocchi_r4wifi.bin` (PLC)
+  e `ArduLearnBridge*.bin` (modulo Wi-Fi: pagina, slot, bozza, rete).
 - Non supportate: UNO R4 Minima (per ora), Arduino Uno classico, DFRobot DFR0342.
 
 ## Wi-Fi della UNO R4 WiFi
@@ -72,8 +79,9 @@ Accanto a `ArduLearn.exe` si possono mettere:
 - una cartella `firmware` con `PlcBlocchi_mega.hex` e/o
   `PlcBlocchi_r4wifi.bin` e, se si vuole, `versions.json`:
   ```json
-  { "mega": "1.2", "r4wifi": "1.2" }
+  { "mega": "2.1", "r4wifi": "2.1", "bridge": "0.3.1", "pagina": 3544213 }
   ```
+  (`bridge` = versione di ArduLearnBridge inclusa: il modulo Wi-Fi si aggiorna se è più vecchio)
 - una cartella `sd\PLC` con `INDEX.GZ` e `INDEX.VER` (pagina per la microSD
   del Mega).
 
@@ -81,10 +89,13 @@ I file nelle cartelle accanto all'exe hanno la precedenza su quelli inclusi.
 
 ## Ricreare l'exe
 
-Serve Python 3 con pyserial e PyInstaller:
+Serve Python 3 con pyserial, hidapi e PyInstaller, più arduino-cli con i core
+`arduino:avr`, `arduino:renesas_uno` ed `esp32:esp32`:
 
 ```
-python -m pip install --user pyserial pyinstaller
+python -m pip install --user pyserial hidapi pyinstaller
+python prepara_firmware.py      (compila i firmware, copia esptool e la pagina)
+python -m unittest test_app.py  (prove della logica, senza schede)
 build.bat
 ```
 
@@ -94,7 +105,8 @@ Contenuto della cartella:
 - `bin\` - avrdude 6.3.0 (`avrdude.exe`, `avrdude.conf`, `libusb0.dll`),
   bossac 1.9.1-arduino (`bossac.exe`), presi da
   `%LOCALAPPDATA%\Arduino15\packages\arduino\tools\`. `dfu-util.exe` (usato
-  solo per la UNO R4 Minima) non serve più.
+  solo per la UNO R4 Minima) non serve più. `esptool.exe` (dal core esp32 di Arduino,
+  copiato da `prepara_firmware.py`) per il modulo Wi-Fi della UNO R4 WiFi.
 - `firmware\` - file del firmware inclusi nell'exe
   (`PlcBlocchi_r4minima.bin` non serve più e si può cancellare)
 - `sd\PLC\` - pagina web per la microSD del Mega (creata da `tools\build_web.py`)

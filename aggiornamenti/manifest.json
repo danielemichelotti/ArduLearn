@@ -1,15 +1,15 @@
 {
  "r4wifi": {
-  "fw": "2.1",
+  "fw": "2.2",
   "file": "PlcBlocchi_r4wifi.bin"
  },
  "bridge": {
-  "ver": "0.3.1",
+  "ver": "0.3.2",
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3543942,
+  "ver": 3544264,
   "file": "INDEX.GZ"
  },
- "note": "Prima versione con aggiornamento dalla rete: collegamento piu' stabile col modulo Wi-Fi."
+ "note": "Matrice LED: blocchi immagine e testo (caratteri 5x7, scorrimento), aggiornamento dalla rete piu' affidabile, controllo automatico del server web."
 }

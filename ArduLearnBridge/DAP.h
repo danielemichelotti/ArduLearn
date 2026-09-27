@@ -73,7 +73,8 @@ public:
     buffer[0] = BRIDGE_FW_MAJOR;
     buffer[1] = BRIDGE_FW_MINOR;
     buffer[2] = BRIDGE_FW_PATCH;
-    return 3;
+    buffer[3] = 'A';                 // ArduLearnBridge (il firmware Arduino risponde solo con 3 byte)
+    return 4;
   }
 };
 

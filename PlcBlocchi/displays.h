@@ -13,4 +13,5 @@ void displaysSplash();        // schermata di avvio (solo OLED)
 struct Block;
 // Messaggio con i segnaposto {1} {2} (V1, V2) come le scritte su OLED: per la matrice LED
 uint8_t displaysFormat(const Block& b, char* out, uint8_t size);
+uint8_t displaysNextChar(const char*& s);   // prossimo carattere UTF-8 -> codice del font 5x7 (font5x7.h)
 #endif

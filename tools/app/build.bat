@@ -1,14 +1,15 @@
 @echo off
 rem Crea l'eseguibile "ArduLearn.exe" nella cartella dist\
-rem Requisiti: Python 3 con pyserial e PyInstaller
-rem   python -m pip install --user pyserial pyinstaller
+rem Requisiti: Python 3 con pyserial, hidapi e PyInstaller
+rem   python -m pip install --user pyserial hidapi pyinstaller
+rem Prima: python prepara_firmware.py (firmware, esptool, pagina)
 cd /d "%~dp0"
 
 if not exist "ardulearn.ico" (
   echo Manca ardulearn.ico: crealo con  python make_icon.py
   exit /b 1
 )
-for %%F in (avrdude.exe avrdude.conf bossac.exe) do (
+for %%F in (avrdude.exe avrdude.conf bossac.exe esptool.exe) do (
   if not exist "bin\%%F" (
     echo Manca bin\%%F
     exit /b 1
@@ -26,6 +27,7 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed --name "ArduLearn
   --add-data "%~dp0bin;bin" ^
   --add-data "%~dp0firmware;firmware" ^
   --add-data "%~dp0sd;sd" ^
+  --hidden-import hid ^
   --exclude-module unittest --exclude-module pydoc --exclude-module doctest ^
   --exclude-module pdb --exclude-module lib2to3 --exclude-module setuptools ^
   --exclude-module pip --exclude-module test --exclude-module sqlite3 ^

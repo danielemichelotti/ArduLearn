@@ -649,27 +649,29 @@ void webBegin() {
   startServer();
 }
 
-// Il server accetta ancora connessioni? (una volta e' capitato che smettesse, con la rete a posto)
+RTC_NOINIT_ATTR uint32_t resetByWatchdog;   // sopravvive al riavvio: chi l'ha chiesto
+uint32_t webServerRestarts = 0;
+
+// Il server risponde ancora? (una volta e' capitato che smettesse di accettare connessioni, con la
+// rete a posto). Si chiede /api/wifi su 127.0.0.1 e si aspetta la risposta: la sola connessione non
+// basta, perche' lo stack TCP la accetta anche se il server e' fermo. Una richiesta gia' in corso
+// (es. un aggiornamento lungo) vuol dire che il server e' vivo.
 static bool serverAnswers() {
-  IPAddress ip = wifiIP();
-  if (ip == IPAddress(0, 0, 0, 0)) return true;           // rete non pronta: niente da controllare
+  if (strcmp((const char*)webWhere, "fermo")) return true;
   int fd = socket(AF_INET, SOCK_STREAM, 0);
   if (fd < 0) return false;
-  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
+  timeval tv = { 3, 0 };
+  setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
   sockaddr_in a = {};
   a.sin_family = AF_INET;
   a.sin_port = htons(80);
-  a.sin_addr.s_addr = (uint32_t)ip;
+  a.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   bool ok = false;
-  if (connect(fd, (sockaddr*)&a, sizeof(a)) == 0) ok = true;
-  else if (errno == EINPROGRESS) {
-    fd_set w;
-    FD_ZERO(&w);
-    FD_SET(fd, &w);
-    timeval tv = { 2, 0 };
-    int err = 0;
-    socklen_t l = sizeof(err);
-    ok = select(fd + 1, nullptr, &w, nullptr, &tv) == 1 && getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &l) == 0 && !err;
+  if (connect(fd, (sockaddr*)&a, sizeof(a)) == 0) {
+    static const char req[] = "GET /api/wifi HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
+    char buf[16];
+    ok = send(fd, req, sizeof(req) - 1, 0) == (int)sizeof(req) - 1 && recv(fd, buf, sizeof(buf), 0) > 0;
   }
   close(fd);
   return ok;
@@ -689,7 +691,8 @@ static void webWatchdog() {
   fails = 0;
   linkLog("server web fermo: lo riavvio");
   if (srv) { httpd_stop(srv); srv = nullptr; }
-  if (++restarts > 2 || !startServer()) ESP.restart();
+  webServerRestarts++;
+  if (++restarts > 2 || !startServer()) { resetByWatchdog = 0xA11E; ESP.restart(); }
 }
 
 // Task "svc": copia di /api/live (spesso se qualcuno guarda, altrimenti ogni 2 s) e info ogni 15 s

@@ -728,7 +728,7 @@ const DEFS = {
         desc: 'Solo UNO R4 WiFi: mostra sulla matrice LED della scheda un\'immagine 12×8 disegnata nella scheda "Immagini" (pulsante "Nuova 12×8"). Con più fotogrammi: se FOTOGR. non è collegato (−1) l\'animazione gira da sola, altrimenti mostra il fotogramma indicato. EN a 0 la nasconde; PAGINA è la pagina della matrice (blocco Pagine con "Matrice LED").' },
   45: { cat: 'disp', name: 'Testo su matrice LED', short: 'MTXT', mtx: 1, ins: [{ n: 'V1' }, { n: 'V2' }, { n: 'EN', fb: true, def: 1 }, { n: 'PAGINA', fb: true, def: 0 }], outs: [],
         params: [{ k: 1, t: 'text', label: 'Messaggio', def: '{1}' }, { k: 0, t: 'num', label: 'Scorrimento: ms per passo (20–2000)', def: 100, min: 20, max: 2000 }],
-        desc: 'Solo UNO R4 WiFi: scrive sulla matrice LED un messaggio con caratteri 3×5. Se entra nella matrice (circa 3 caratteri) resta fermo, altrimenti scorre. Come le scritte su OLED, {1} e {2} diventano i valori di V1 e V2 ({1.1} un decimale, {1:2} due cifre). Compare solo se EN vale 1 e PAGINA è la pagina della matrice.' },
+        desc: 'Solo UNO R4 WiFi: scrive sulla matrice LED un messaggio con i caratteri del display OLED (5×7, anche minuscole e accentate). Se entra nella matrice (circa 2 caratteri) resta fermo, altrimenti scorre; copre l\'immagine della stessa pagina. Come le scritte su OLED, {1} e {2} diventano i valori di V1 e V2 ({1.1} un decimale, {1:2} due cifre). Compare solo se EN vale 1 e PAGINA è la pagina della matrice.' },
   60: { cat: 'seq', name: 'Passo (sequenza)', short: 'PASSO', ins: [{ n: 'IN' }, { n: 'T' }, { n: 'RESET' }, { n: 'MIN', fb: true, def: 0, unit: 'ms' }], outs: ['X', 'AVANTI'],
         params: [{ k: 0, t: 'bool', label: 'Passo iniziale (attivo alla partenza e dopo RESET)', def: 0 }],
         desc: 'Un passo di una sequenza, come nel GRAFCET. Metti i passi in catena: AVANTI di un passo va nell\'IN del successivo, e l\'ultimo torna al primo per ripetere il ciclo. X vale 1 mentre il passo è attivo; si passa al successivo quando T è vero e il passo è attivo da almeno MIN ms. Un solo passo va segnato come iniziale.' },
@@ -1433,16 +1433,27 @@ function decodeRaw(buf) {
 // =====================================================================
 //  Matrice LED 12x8 (UNO R4 WiFi): stesso font 3x5 e stesso disegno del firmware (ledmatrix.cpp)
 // =====================================================================
-const MTX_FONT = [0,0,0,0,23,0,3,0,3,31,10,31,18,31,9,25,4,19,10,21,26,0,3,0,0,14,17,17,14,0,10,4,10,4,14,4,16,8,0,4,4,4,0,16,0,24,4,3,31,17,31,18,31,16,29,21,23,17,21,31,7,4,31,23,21,29,31,21,29,1,29,3,31,21,31,23,21,31,0,10,0,16,10,0,4,10,17,10,10,10,17,10,4,1,21,7,15,21,23,30,5,30,31,21,10,14,17,17,31,17,14,31,21,17,31,5,1,14,17,29,31,4,31,17,31,17,8,16,15,31,4,27,31,16,16,31,6,31,31,1,30,14,17,14,31,5,2,14,25,22,31,5,26,18,21,9,1,31,1,31,16,31,15,16,15,31,12,31,27,4,27,3,28,3,25,21,19,0,31,17,3,4,24,17,31,0,2,1,2,16,16,16,2,5,2];   // ' '..'_' e i gradi (64): 3 colonne, bit 0 in alto
+// font 5x7 dell'OLED (font5x7.h): ASCII 32..126, poi à è é ì ò ù e gradi; colonne, bit 0 in alto
+const MTX_FONT = [0,0,0,0,0,0,0,95,0,0,0,7,0,7,0,20,127,20,127,20,36,42,127,42,18,35,19,8,100,98,54,73,86,32,80,0,8,7,3,0,0,28,34,65,0,0,65,34,28,0,42,28,127,28,42,8,8,62,8,8,0,128,112,48,0,8,8,8,8,8,0,0,96,96,0,32,16,8,4,2,62,81,73,69,62,0,66,127,64,0,114,73,73,73,70,33,65,73,77,51,24,20,18,127,16,39,69,69,69,57,60,74,73,73,49,65,33,17,9,7,54,73,73,73,54,70,73,73,41,30,0,0,20,0,0,0,64,52,0,0,0,8,20,34,65,20,20,20,20,20,0,65,34,20,8,2,1,89,9,6,62,65,93,89,78,124,18,17,18,124,127,73,73,73,54,62,65,65,65,34,127,65,65,65,62,127,73,73,73,65,127,9,9,9,1,62,65,65,81,115,127,8,8,8,127,0,65,127,65,0,32,64,65,63,1,127,8,20,34,65,127,64,64,64,64,127,2,28,2,127,127,4,8,16,127,62,65,65,65,62,127,9,9,9,6,62,65,81,33,94,127,9,25,41,70,38,73,73,73,50,3,1,127,1,3,63,64,64,64,63,31,32,64,32,31,63,64,56,64,63,99,20,8,20,99,3,4,120,4,3,97,89,73,77,67,0,127,65,65,65,2,4,8,16,32,0,65,65,65,127,4,2,1,2,4,64,64,64,64,64,0,3,7,8,0,32,84,84,120,64,127,40,68,68,56,56,68,68,68,40,56,68,68,40,127,56,84,84,84,24,0,8,126,9,2,24,164,164,156,120,127,8,4,4,120,0,68,125,64,0,32,64,64,61,0,127,16,40,68,0,0,65,127,64,0,124,4,120,4,120,124,8,4,4,120,56,68,68,68,56,252,24,36,36,24,24,36,36,24,252,124,8,4,4,8,72,84,84,84,36,4,4,63,68,36,60,64,64,32,124,28,32,64,32,28,60,64,48,64,60,68,40,16,40,68,76,144,144,144,124,68,100,84,76,68,0,8,54,65,0,0,0,119,0,0,0,65,54,8,0,2,1,2,4,2,33,85,84,120,64,57,85,84,84,88,56,84,84,85,89,0,1,69,124,64,50,74,72,72,48,58,66,64,32,120,6,15,9,15,6];
+// carattere -> posizione nel font, come nextChar() in displays.cpp (per l'OLED)
+function mtxGlyphIndex(ch) {
+  const c = ch.codePointAt(0);
+  if (c >= 32 && c <= 126) return c - 32;
+  const extra = { 'à': 0, 'è': 1, 'é': 2, 'ì': 3, 'ò': 4, 'ù': 5, '°': 6 }[ch];
+  if (extra !== undefined) return 95 + extra;
+  if (ch === 'È') return 'E'.charCodeAt(0) - 32;
+  if (ch === 'À') return 'A'.charCodeAt(0) - 32;
+  return '?'.charCodeAt(0) - 32;
+}
+// testo -> colonne: proporzionale come textColumns() in ledmatrix.cpp
 function mtxTextCols(str) {
   const out = [];
-  for (const ch0 of str) {
-    let ch = ch0.toUpperCase().normalize('NFD')[0], g;
-    if (ch0 === '°') g = 64;
-    else { const c = ch.charCodeAt(0); g = c >= 32 && c < 96 ? c - 32 : 31; }
-    const c3 = MTX_FONT.slice(g * 3, g * 3 + 3);
-    if (g && !c3[0] && !c3[2]) out.push(c3[1]); else out.push(...c3);
-    out.push(0);
+  for (const ch of str) {
+    const g = MTX_FONT.slice(mtxGlyphIndex(ch) * 5, mtxGlyphIndex(ch) * 5 + 5);
+    let a = 0, b = 5;
+    if (ch === ' ') b = 3;
+    else { while (a < 4 && !g[a]) a++; while (b > a + 1 && !g[b - 1]) b--; }
+    out.push(...g.slice(a, b), 0);
   }
   if (out.length && !out[out.length - 1]) out.pop();
   return out;
@@ -1472,9 +1483,9 @@ function mtxRender(P, inp, con, page, now) {
       any = true;
     } else if (b.t === 45 && inp(b, 2) && inp(b, 3) === page) {
       const cols = mtxTextCols(mtxFormat(b.k[1] >= 0 ? P.cstr(b.k[1]) : '', [inp(b, 0), inp(b, 1)]));
-      const put = (x, v) => { if (x >= 0 && x < 12) f[x] |= v << 1; };
+      const put = (x, v) => { if (x >= 0 && x < 12) f[x] = v; };           // opaco, come nel firmware
       if (cols.length <= 12) { const x0 = Math.floor((12 - cols.length) / 2); cols.forEach((v, i) => put(x0 + i, v)); }
-      else { const off = Math.floor(now / Math.max(20, b.k[0])) % (cols.length + 12); for (let x = 0; x < 12; x++) { const i = off + x - 12; if (i >= 0 && i < cols.length) put(x, cols[i]); } }
+      else { const off = Math.floor(now / Math.max(20, b.k[0])) % (cols.length + 12); for (let x = 0; x < 12; x++) { const i = off + x - 12; put(x, i >= 0 && i < cols.length ? cols[i] : 0); } }
       any = true;
     }
   }

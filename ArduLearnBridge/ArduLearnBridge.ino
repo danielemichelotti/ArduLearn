@@ -76,10 +76,23 @@ static void netServices() {
 
 // Rete, collegamento col RA4M1, copia dello stato: un task sul core 0 (il ponte USB resta nel loop)
 static volatile const char* svcWhere = "avvio";
+extern uint32_t resetByWatchdog, webServerRestarts;
+static char bootWhy[40] = "";
+
+// motivo dell'ultimo riavvio dell'ESP32 (nel registro all'avvio e nella diagnostica)
+static void readBootReason() {
+  static const char* const R[] = { "?", "accensione", "pin EN", "software", "crash", "watchdog interrupt",
+                                   "watchdog task", "watchdog", "sonno", "tensione bassa", "SDIO", "USB", "JTAG" };
+  int r = esp_reset_reason();
+  snprintf(bootWhy, sizeof(bootWhy), "%s%s", r >= 0 && r < 13 ? R[r] : "?",
+           resetByWatchdog == 0xA11E ? " (controllo del server web)" : "");
+  resetByWatchdog = 0;
+}
 static volatile uint32_t svcLoops = 0;
 
 static void svcTask(void*) {
   svcWhere = "wifiBegin";
+  linkLog("avvio: ultimo riavvio per %s", bootWhy);
   wifiBegin();
   svcWhere = "webBegin";
   webBegin();                           // dopo il Wi-Fi: lo stack di rete (lwIP) dev'essere avviato
@@ -108,14 +121,14 @@ static void diagTask(void*) {
   for (;;) {
     vTaskDelay(pdMS_TO_TICKS(5000));
     if (!diagOn || (int32_t)(quietUntil - millis()) > 0) continue;
-    char b[260];
+    char b[340];
     int n = snprintf(b, sizeof(b), "[diag] svc=%s giri=%lu | web=%s | link=%s da %lu ms, up=%d baud=%lu saluti %lu/%lu persi %lu rx %lu | heap=%u\r\n",
                      (const char*)svcWhere, (unsigned long)svcLoops, (const char*)webWhere, (const char*)linkWhere,
                      (unsigned long)(millis() - linkWhereAt), linkUp(), (unsigned long)linkBaud(),
                      (unsigned long)linkHelloOk, (unsigned long)linkHelloTries, (unsigned long)linkLost,
                      (unsigned long)linkRxBytes, (unsigned)ESP.getFreeHeap());
-    n += snprintf(b + n - 2, sizeof(b) - n + 2, " (blocco max %u, minimo %u)\r\n",
-                  (unsigned)ESP.getMaxAllocHeap(), (unsigned)ESP.getMinFreeHeap()) - 2;
+    n += snprintf(b + n - 2, sizeof(b) - n + 2, " (blocco max %u, minimo %u) avvio: %s, server riavviato %lu\r\n",
+                  (unsigned)ESP.getMaxAllocHeap(), (unsigned)ESP.getMinFreeHeap(), bootWhy, (unsigned long)webServerRestarts) - 2;
     USBSerial.write((const uint8_t*)b, n);
   }
 }
@@ -144,6 +157,7 @@ static void romPutc(char c) {
 
 // ---------------------------------------------------------------------
 void setup() {
+  readBootReason();
   pinMode(GPIO_BOOT, OUTPUT);
   pinMode(GPIO_RST, OUTPUT);
   digitalWrite(GPIO_BOOT, HIGH);

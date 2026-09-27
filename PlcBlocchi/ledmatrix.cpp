@@ -3,12 +3,14 @@
 #include "engine.h"
 #include "net.h"
 #include "displays.h"
+#include "font5x7.h"
 #include <Arduino_LED_Matrix.h>
 
 // =====================================================================
 //  Matrice LED 12x8 dell'UNO R4 WiFi
-//  - blocchi del programma (in RUN): "Immagine su matrice" (44) e "Testo su matrice" (45),
-//    solo se EN vale 1 e PAGINA e' la pagina della matrice; piu' blocchi si sovrappongono;
+//  - blocchi del programma (in RUN): "Immagine su matrice" (44) e "Testo su matrice" (45, font
+//    5x7 dell'OLED), solo se EN vale 1 e PAGINA e' la pagina della matrice; le immagini si
+//    sovrappongono, il testo copre quello che c'e' sotto;
 //  - la rete e' appena diventata disponibile o e' cambiato l'indirizzo: fa scorrere l'indirizzo
 //    (in modalita' AP prima "AP"), poi torna al programma; senza blocchi attivi l'indirizzo
 //    ripassa ogni 2 minuti;
@@ -19,112 +21,33 @@ static ArduinoLEDMatrix matrix;
 static uint8_t frame[8][12], shown[8][12];
 static bool shownValid = false;
 
-// caratteri 3x5 da ' ' a '_' e il simbolo dei gradi: 3 colonne per carattere, bit 0 in alto
-static const uint8_t FONT[] = {
-  0x00, 0x00, 0x00,  //  
-  0x00, 0x17, 0x00,  // !
-  0x03, 0x00, 0x03,  // "
-  0x1F, 0x0A, 0x1F,  // #
-  0x12, 0x1F, 0x09,  // $
-  0x19, 0x04, 0x13,  // %
-  0x0A, 0x15, 0x1A,  // &
-  0x00, 0x03, 0x00,  // '
-  0x00, 0x0E, 0x11,  // (
-  0x11, 0x0E, 0x00,  // )
-  0x0A, 0x04, 0x0A,  // *
-  0x04, 0x0E, 0x04,  // +
-  0x10, 0x08, 0x00,  // ,
-  0x04, 0x04, 0x04,  // -
-  0x00, 0x10, 0x00,  // .
-  0x18, 0x04, 0x03,  // /
-  0x1F, 0x11, 0x1F,  // 0
-  0x12, 0x1F, 0x10,  // 1
-  0x1D, 0x15, 0x17,  // 2
-  0x11, 0x15, 0x1F,  // 3
-  0x07, 0x04, 0x1F,  // 4
-  0x17, 0x15, 0x1D,  // 5
-  0x1F, 0x15, 0x1D,  // 6
-  0x01, 0x1D, 0x03,  // 7
-  0x1F, 0x15, 0x1F,  // 8
-  0x17, 0x15, 0x1F,  // 9
-  0x00, 0x0A, 0x00,  // :
-  0x10, 0x0A, 0x00,  // ;
-  0x04, 0x0A, 0x11,  // <
-  0x0A, 0x0A, 0x0A,  // =
-  0x11, 0x0A, 0x04,  // >
-  0x01, 0x15, 0x07,  // ?
-  0x0F, 0x15, 0x17,  // @
-  0x1E, 0x05, 0x1E,  // A
-  0x1F, 0x15, 0x0A,  // B
-  0x0E, 0x11, 0x11,  // C
-  0x1F, 0x11, 0x0E,  // D
-  0x1F, 0x15, 0x11,  // E
-  0x1F, 0x05, 0x01,  // F
-  0x0E, 0x11, 0x1D,  // G
-  0x1F, 0x04, 0x1F,  // H
-  0x11, 0x1F, 0x11,  // I
-  0x08, 0x10, 0x0F,  // J
-  0x1F, 0x04, 0x1B,  // K
-  0x1F, 0x10, 0x10,  // L
-  0x1F, 0x06, 0x1F,  // M
-  0x1F, 0x01, 0x1E,  // N
-  0x0E, 0x11, 0x0E,  // O
-  0x1F, 0x05, 0x02,  // P
-  0x0E, 0x19, 0x16,  // Q
-  0x1F, 0x05, 0x1A,  // R
-  0x12, 0x15, 0x09,  // S
-  0x01, 0x1F, 0x01,  // T
-  0x1F, 0x10, 0x1F,  // U
-  0x0F, 0x10, 0x0F,  // V
-  0x1F, 0x0C, 0x1F,  // W
-  0x1B, 0x04, 0x1B,  // X
-  0x03, 0x1C, 0x03,  // Y
-  0x19, 0x15, 0x13,  // Z
-  0x00, 0x1F, 0x11,  // [
-  0x03, 0x04, 0x18,  // backslash
-  0x11, 0x1F, 0x00,  // ]
-  0x02, 0x01, 0x02,  // ^
-  0x10, 0x10, 0x10,  // _
-  0x02, 0x05, 0x02,  // gradi
-};
-static const uint8_t FONT_DEG = 64;
-
-// prossimo carattere del testo (UTF-8) -> indice nel font
-static uint8_t nextGlyph(const char*& s) {
-  uint8_t c = *s++;
-  if (c >= 'a' && c <= 'z') c -= 32;
-  if (c >= 32 && c < 96) return c - 32;
-  if (c == 0xC2 && (uint8_t)*s == 0xB0) { s++; return FONT_DEG; }            // gradi
-  if (c == 0xC3 && ((uint8_t)*s & 0xC0) == 0x80) {                           // lettere accentate
-    uint8_t cp = (uint8_t)*s++ & 0x3F;
-    static const char base[] = "AAAAAAACEEEEIIIIDNOOOOOxOUUUUY";            // U+00C0..U+00DD
-    uint8_t i = cp & 0x1F;
-    return i < sizeof(base) - 1 ? base[i] - 32 : '?' - 32;
-  }
-  while (((uint8_t)*s & 0xC0) == 0x80) s++;
-  return '?' - 32;
-}
-
-// Testo -> colonne (bit 0 in alto): le lettere strette (". : ! '") occupano una colonna sola
+// Testo -> colonne con il font 5x7 dell'OLED (bit 0 in alto, riga 7 per le gambette di g, p, y...):
+// proporzionale (senza le colonne vuote dei caratteri stretti), una colonna di spazio tra i caratteri
 static uint16_t textColumns(const char* s, uint8_t* out, uint16_t max) {
   uint16_t n = 0;
   while (*s && n < max) {
-    uint8_t g = nextGlyph(s);
-    const uint8_t* c = FONT + g * 3;
-    bool narrow = g && !c[0] && !c[2];
-    if (narrow) out[n++] = c[1];
-    else for (uint8_t i = 0; i < 3 && n < max; i++) out[n++] = c[i];
-    if (n < max) out[n++] = 0;                      // spazio tra i caratteri
+    uint8_t ch = displaysNextChar(s), g[5];
+    uint16_t idx;
+    if (ch >= FONT_FIRST && ch <= FONT_ASCII_LAST) idx = ch - FONT_FIRST;
+    else if (ch >= FONT_EXTRA && ch < FONT_EXTRA + FONT_EXTRA_N) idx = FONT_ASCII_LAST - FONT_FIRST + 1 + (ch - FONT_EXTRA);
+    else idx = '?' - FONT_FIRST;
+    memcpy_P(g, FONT5X7 + idx * 5, 5);
+    uint8_t a = 0, b = 5;
+    if (ch == ' ') b = 3;                            // spazio: 3 colonne
+    else { while (a < 4 && !g[a]) a++; while (b > a + 1 && !g[b - 1]) b--; }
+    for (uint8_t c = a; c < b && n < max; c++) out[n++] = g[c];
+    if (n < max) out[n++] = 0;
   }
+  if (n && !out[n - 1]) n--;                         // senza lo spazio finale
   return n;
 }
 
 static void clear() { memset(frame, 0, sizeof(frame)); }
 
-// una colonna di testo (5 righe) alla posizione x, righe da 1 a 5
+// una colonna di testo (8 righe) alla posizione x; opaca: cancella quello che c'era sotto
 static void drawColumn(int16_t x, uint8_t bits) {
   if (x < 0 || x >= 12) return;
-  for (uint8_t r = 0; r < 5; r++) if ((bits >> r) & 1) frame[r + 1][x] = 1;
+  for (uint8_t r = 0; r < 8; r++) frame[r][x] = (bits >> r) & 1;
 }
 
 static void show() {
@@ -160,14 +83,14 @@ static bool drawImage(Block& b, uint32_t now) {
 }
 
 // Testo: k0 = ms per passo, k1 = testo con {1} {2}; ingressi V1, V2, EN, PAGINA.
-// Se entra nella matrice resta fermo al centro, altrimenti scorre.
+// Se entra nella matrice (circa 2 caratteri) resta fermo al centro, altrimenti scorre.
+// E' opaco: sopra un'immagine della stessa pagina si legge comunque.
 static bool drawText(Block& b, uint32_t now) {
   if (!Engine::input(b, 2) || Engine::input(b, 3) != Engine::pageMtx) return false;
   char msg[48];
   displaysFormat(b, msg, sizeof(msg));
-  static uint8_t cols[200];
+  static uint8_t cols[300];
   uint16_t n = textColumns(msg, cols, sizeof(cols));
-  if (n && !cols[n - 1]) n--;                       // senza lo spazio finale
   if (n <= 12) {
     int16_t x0 = (12 - n) / 2;
     for (uint16_t i = 0; i < n; i++) drawColumn(x0 + i, cols[i]);
@@ -177,7 +100,7 @@ static bool drawText(Block& b, uint32_t now) {
     int16_t off = (now / step) % len;
     for (int16_t x = 0; x < 12; x++) {
       int16_t i = off + x - 12;
-      if (i >= 0 && i < (int16_t)n) drawColumn(x, cols[i]);
+      drawColumn(x, i >= 0 && i < (int16_t)n ? cols[i] : 0);
     }
   }
   return true;
@@ -196,7 +119,7 @@ static bool drawProgram(uint32_t now) {
 // ---------------------------------------------------------------------
 //  Indirizzo che scorre e icone di stato
 // ---------------------------------------------------------------------
-static uint8_t  ipCols[64];
+static uint8_t  ipCols[160];
 static int16_t  scrollX = 0, ipW = 0;
 static uint8_t  repeats = 0;
 static uint32_t lastStep = 0, lastIpShow = 0;

@@ -5,7 +5,8 @@ Schede della finestra:
      (broadcast UDP sulla porta 4210), le apre nel browser e prepara la
      pagina web sulla microSD del Mega (POST /api/file).
   2. "Carica il firmware": carica il firmware via USB su Arduino Mega 2560
-     (avrdude) o UNO R4 WiFi (bossac).
+     (avrdude) o UNO R4 WiFi: prima il modulo Wi-Fi ESP32-S3 (firmware ArduLearnBridge,
+     con esptool, se manca o e' vecchio), poi il PLC RA4M1 (bossac).
   3. "Monitor seriale": monitor a 115200 baud con i pulsanti dei comandi.
   4. "Guida": istruzioni per l'uso.
 
@@ -239,8 +240,10 @@ NOMI_BOARD = {"mega": "Mega", "r4wifi": "UNO R4 WiFi", "r4": "UNO R4"}
 
 
 def pagina_nel_firmware(info):
-    """True per le schede senza microSD (UNO R4 WiFi): la pagina è nel firmware."""
-    return isinstance(info, dict) and info.get("board") == "r4wifi"
+    """True per le vecchie UNO R4 WiFi con la pagina nel firmware del RA4M1.
+    Con il firmware ArduLearnBridge ("fs" in /api/info) la pagina sta nella memoria del
+    modulo Wi-Fi e si aggiorna come quella della microSD del Mega (POST /api/file)."""
+    return isinstance(info, dict) and info.get("board") == "r4wifi" and not info.get("fs")
 
 
 def stato_pagina(info, pv_inclusa):
@@ -383,7 +386,7 @@ def prepara_microsd(ip, pin, avanzamento=None, timeout=60):
     ok, msg = invia_file(ip, "INDEX.VER", dati_ver, pin, timeout)
     if not ok:
         return False, msg
-    return True, (f"Pagina copiata sulla microSD ({len(dati_gz) // 1024} KB, "
+    return True, (f"Pagina copiata sulla scheda ({len(dati_gz) // 1024} KB, "
                   f"versione {dati_ver.decode('ascii', 'replace')}).")
 
 
@@ -401,10 +404,11 @@ MSG_R4_MINIMA = ("UNO R4 Minima: non supportata (per ora). Usa un Arduino Mega 2
                  "con shield Ethernet, oppure un UNO R4 WiFi.")
 
 # prossimi passi dopo il caricamento del firmware sulla UNO R4 WiFi
-PASSI_R4_WIFI = ("La scheda crea la rete Wi-Fi ArduLearn-xxxx (password ardulearn): collega "
-                 "il PC o il telefono a quella rete, apri http://192.168.4.1/ e in "
-                 "Impostazioni → Rete Wi-Fi inserisci la rete della scuola. Il nome esatto "
-                 "della rete scorre sulla matrice LED della scheda.")
+PASSI_R4_WIFI = ("Se la scheda non conosce ancora una rete Wi-Fi crea la propria rete "
+                 "ArduLearn-xxxx (password ardulearn): collega il PC o il telefono a quella rete "
+                 "(la pagina si apre da sola, oppure http://192.168.4.1/) e in Impostazioni → "
+                 "Rete Wi-Fi inserisci la rete della scuola. L'indirizzo della scheda scorre "
+                 "sulla matrice LED.")
 
 VIDPID_MEGA = {(0x2341, 0x0010), (0x2341, 0x0042), (0x2A03, 0x0010),
                (0x2A03, 0x0042), (0x2341, 0x0210), (0x2341, 0x0242)}
@@ -413,6 +417,8 @@ VIDPID_UNO_CLASSICO = {(0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
 # dal file boards.txt di renesas_uno 1.6.0
 VIDPID_R4_MINIMA = {(0x2341, 0x0069), (0x2341, 0x0369)}   # anche il bootloader DFU
 VIDPID_R4_WIFI = {(0x2341, 0x1002), (0x2341, 0x006D)}
+# ESP32-S3 in modalita' download (ROM): UNO R4 WiFi da ripristinare (anche dopo un aggiornamento interrotto)
+VIDPID_ESP_DOWNLOAD = {(0x303A, 0x1001)}
 VIDPID_COMPATIBILI = {(0x1A86, 0x7523): "CH340", (0x10C4, 0xEA60): "CP210x",
                       (0x0403, 0x6001): "FTDI"}
 
@@ -430,6 +436,8 @@ def classifica_porta(vid, pid):
         return MEGA, MEGA, False
     if chiave in VIDPID_R4_WIFI:
         return R4_WIFI, R4_WIFI, False
+    if chiave in VIDPID_ESP_DOWNLOAD:
+        return "UNO R4 WiFi con il modulo Wi-Fi da ripristinare", R4_WIFI, False
     if chiave in VIDPID_R4_MINIMA:
         return "UNO R4 Minima: non supportata (per ora)", None, MSG_R4_MINIMA
     if chiave in VIDPID_UNO_CLASSICO:
@@ -469,6 +477,13 @@ def porta_presente(porta):
 # ---------------------------------------------------------------------------
 
 FIRMWARE = {MEGA: "PlcBlocchi_mega.hex", R4_WIFI: "PlcBlocchi_r4wifi.bin"}
+# UNO R4 WiFi: firmware ArduLearnBridge del modulo Wi-Fi (ESP32-S3), indirizzi di partitions.csv.
+# "completo" = firmware Arduino originale o modulo da ripristinare: si scrive tutto, anche la
+# pagina (LittleFS); aggiornamento = solo l'app (restano slot, bozza e rete Wi-Fi salvata).
+FILE_ESP_COMPLETO = (("ArduLearnBridge_bootloader.bin", 0x0), ("ArduLearnBridge_partitions.bin", 0x8000),
+                     ("ArduLearnBridge_boot_app0.bin", 0xE000), ("ArduLearnBridge.bin", 0x10000),
+                     ("ArduLearnBridge_littlefs.bin", 0x310000))
+FILE_ESP_APP = (("ArduLearnBridge_boot_app0.bin", 0xE000), ("ArduLearnBridge.bin", 0x10000))
 CHIAVE_VERSIONE = {MEGA: "mega", R4_WIFI: "r4wifi"}
 PROGRAMMA = {MEGA: "avrdude.exe", R4_WIFI: "bossac.exe"}
 
@@ -603,17 +618,158 @@ def attendi_porta(porta, secondi, presente=porta_presente):
     return presente(porta)
 
 
+def versione_tupla(testo):
+    """"0.3.1" -> (0, 3, 1)."""
+    try:
+        return tuple(int(x) for x in str(testo).split(".")[:3])
+    except ValueError:
+        return (0, 0, 0)
+
+
+def leggi_modulo_wifi():
+    """Firmware del modulo Wi-Fi della UNO R4 WiFi, letto via HID (come fa l'IDE Arduino).
+
+    Restituisce (versione, ardulearn): (0, 3, 1), True per ArduLearnBridge (che aggiunge il
+    byte 'A'); (0, 6, 0), False per il firmware Arduino originale; None se non si legge.
+    """
+    try:
+        import hid
+        d = hid.device()
+        d.open(0x2341, 0x1002)
+        try:
+            r = list(d.get_feature_report(0, 65))
+        finally:
+            d.close()
+    except Exception:
+        return None
+    if len(r) >= 4 and r[0] == 0:
+        r = r[1:]                      # primo byte: numero del report
+    if len(r) < 3:
+        return None
+    return (r[0], r[1], r[2]), len(r) >= 4 and r[3] == 0x41
+
+
+def porta_modulo_in_download():
+    """Porta dell'ESP32-S3 in modalita' download (303A:1001), None se non c'e'."""
+    if list_ports is None:
+        return None
+    for p in list_ports.comports():
+        if (p.vid, p.pid) in VIDPID_ESP_DOWNLOAD:
+            return p.device
+    return None
+
+
+def porta_r4():
+    """Porta della UNO R4 WiFi (2341:1002) dopo il riavvio del modulo, None se non c'e'."""
+    if list_ports is None:
+        return None
+    for p in list_ports.comports():
+        if (p.vid, p.pid) in VIDPID_R4_WIFI:
+            return p.device
+    return None
+
+
+def modulo_in_download(scrivi, attendi_s=15):
+    """Comando HID 0xAA (come l'aggiornamento del firmware dell'IDE): l'ESP32 si riavvia in
+    modalita' download. Restituisce la porta seriale della ROM dell'ESP32, None se non compare."""
+    porta = porta_modulo_in_download()
+    if porta:
+        return porta
+    scrivi("Modulo Wi-Fi: riavvio in modalita' aggiornamento...\n")
+    fine = time.time() + attendi_s
+    inviato = False
+    while time.time() < fine:
+        if not inviato:
+            try:
+                import hid
+                d = hid.device()
+                d.open(0x2341, 0x1002)
+                b = [0] * 65
+                b[1] = 0xAA
+                d.send_feature_report(b)
+                d.close()
+                inviato = True
+            except Exception:
+                time.sleep(0.1)        # un firmware che si riavvia di continuo risponde a tratti
+                continue
+        porta = porta_modulo_in_download()
+        if porta:
+            return porta
+        time.sleep(0.25)
+    return porta_modulo_in_download()
+
+
+def comando_esptool(porta, file_indirizzi):
+    return ([os.path.join(cartella_bin(), "esptool.exe"), "--chip", "esp32s3", "--port", porta,
+             "--baud", "921600", "--before", "no-reset", "--after", "hard-reset", "write-flash", "-z",
+             "--flash-mode", "keep", "--flash-size", "keep"] +
+            [x for nome, indirizzo in file_indirizzi for x in (hex(indirizzo), nome)])
+
+
+def installa_modulo_wifi(scrivi, esegui=esegui_strumento, forza=False):
+    """Prima installazione o aggiornamento del firmware ArduLearnBridge sul modulo Wi-Fi.
+
+    Restituisce la porta della scheda dopo il riavvio (None se qualcosa non va)."""
+    incluso = versione_tupla(leggi_versioni().get("bridge", "0"))
+    rom = porta_modulo_in_download()
+    letto = None if rom else leggi_modulo_wifi()
+    if not rom and letto is None:
+        scrivi("Modulo Wi-Fi: versione non leggibile (manca la libreria hid o la scheda non "
+               "risponde). Scollega e ricollega la scheda e riprova.\n")
+        return None
+    if letto:
+        v, nostro = letto
+        nome = "ArduLearnBridge" if nostro else "firmware Arduino originale"
+        scrivi(f"Modulo Wi-Fi: {nome} {'.'.join(map(str, v))}\n")
+        if nostro and v >= incluso and not forza:
+            scrivi("Modulo Wi-Fi gia' aggiornato.\n")
+            return porta_r4()
+    completo = rom is not None or not letto[1]
+    file_esp = FILE_ESP_COMPLETO if completo else FILE_ESP_APP
+    mancanti = [nome for nome, _ in file_esp if not trova_firmware(nome)]
+    if mancanti:
+        scrivi("Mancano i file del modulo Wi-Fi: " + ", ".join(mancanti) + "\n")
+        return None
+    scrivi("Modulo Wi-Fi: " + ("installazione completa di ArduLearnBridge (anche la pagina)"
+                               if completo else "aggiornamento di ArduLearnBridge (slot e rete restano)")
+           + f" {'.'.join(map(str, incluso))}\n")
+    rom = rom or modulo_in_download(scrivi)
+    if not rom:
+        scrivi("Il modulo Wi-Fi non e' entrato in modalita' aggiornamento.\n")
+        return None
+    cartella = os.path.dirname(trova_firmware(file_esp[0][0]))
+    for tentativo in range(3):         # la porta a volte e' occupata per un attimo
+        if esegui(comando_esptool(rom, file_esp), cartella, scrivi, timeout=240) == 0:
+            break
+        time.sleep(2)
+    else:
+        return None
+    scrivi("Modulo Wi-Fi aggiornato: attendo che la scheda riparta...\n")
+    fine = time.time() + 20
+    while time.time() < fine and not porta_r4():
+        time.sleep(0.5)
+    time.sleep(4)                      # il modulo riavvia anche il PLC: si aspetta che sia pronto
+    return porta_r4()
+
+
 def esegui_caricamento(scheda, porta, file_fw, scrivi, esegui=esegui_strumento,
-                       tocco=tocco_1200, attesa=time.sleep, attendi=attendi_porta):
+                       tocco=tocco_1200, attesa=time.sleep, attendi=attendi_porta,
+                       modulo=installa_modulo_wifi):
     """Sequenza completa di caricamento. Restituisce True se riuscito.
 
-    Le funzioni esegui/tocco/attesa/attendi si possono sostituire nei test.
+    Le funzioni esegui/tocco/attesa/attendi/modulo si possono sostituire nei test.
     """
     cartella = os.path.dirname(file_fw)
     if scheda == MEGA:
         return esegui(comando_avrdude(porta, file_fw), cartella, scrivi, timeout=180) == 0
 
     if scheda == R4_WIFI:
+        # 1) modulo Wi-Fi (ESP32-S3): pagina, rete e collegamento; 2) PLC (RA4M1) con bossac
+        nuova = modulo(scrivi, esegui)
+        if not nuova:
+            return False
+        porta = nuova
+        scrivi(f"\nPLC (RA4M1) sulla porta {porta}:\n")
         tocco(porta, scrivi)
         attesa(1.5)
         if not attendi(porta, 5):
@@ -931,9 +1087,9 @@ class SchedaTrova(ttk.Frame):
         self.pulsante_sd = ttk.Button(pulsanti, text="Prepara la microSD / Aggiorna la pagina",
                                       command=self.prepara_sd)
         self.pulsante_sd.pack(side="left")
-        Suggerimento(self.pulsante_sd, "Copia la pagina web sulla microSD dell'Arduino Mega "
-                                       "selezionato (serve il PIN docente). Non serve per la "
-                                       "UNO R4 WiFi: la sua pagina è dentro il firmware.")
+        Suggerimento(self.pulsante_sd, "Copia la pagina web sulla microSD dell'Arduino Mega o "
+                                       "nella memoria del modulo Wi-Fi della UNO R4 WiFi "
+                                       "selezionata (serve il PIN docente).")
         ttk.Button(pulsanti, text="Cerca di nuovo",
                    command=self.cerca_di_nuovo).pack(side="right")
 
@@ -1306,6 +1462,8 @@ class SchedaFirmware(ttk.Frame):
             if e_esterno(percorso):
                 dettagli += ", dalla cartella firmware accanto al programma"
             righe.append(f"  {scheda}: {dettagli}")
+        if versioni.get("bridge"):
+            righe.append(f"  UNO R4 WiFi, modulo Wi-Fi (ArduLearnBridge): versione {versioni['bridge']}")
         self.info_versioni.config(text="\n".join(righe))
 
     # --- caricamento ----------------------------------------------------
@@ -1327,11 +1485,10 @@ class SchedaFirmware(ttk.Frame):
         if not file_fw:
             messagebox.showinfo(TITOLO, f"Firmware per {scheda} non ancora disponibile.")
             return
-        programma = os.path.join(cartella_bin(), PROGRAMMA[scheda])
-        if not os.path.isfile(programma):
-            messagebox.showerror(TITOLO, f"Programma {PROGRAMMA[scheda]} non trovato "
-                                         "nella cartella bin.")
-            return
+        for nome_prog in [PROGRAMMA[scheda]] + (["esptool.exe"] if scheda == R4_WIFI else []):
+            if not os.path.isfile(os.path.join(cartella_bin(), nome_prog)):
+                messagebox.showerror(TITOLO, f"Programma {nome_prog} non trovato nella cartella bin.")
+                return
         if p and p["scheda"] and p["scheda"] != scheda:
             if not messagebox.askyesno(TITOLO, (
                     f'Sulla porta {p["porta"]} sembra collegata una scheda "{p["scheda"]}", '
@@ -1340,6 +1497,8 @@ class SchedaFirmware(ttk.Frame):
         if not messagebox.askokcancel(TITOLO, (
                 f'Stai per caricare il firmware su {scheda} (porta {p["porta"]}).\n\n'
                 "- I programmi salvati nella memoria della scheda restano.\n"
+                + ("- UNO R4 WiFi: se serve si aggiorna prima il modulo Wi-Fi (fino a un minuto).\n"
+                   if scheda == R4_WIFI else "") +
                 "- Chiudi prima ogni altro programma che usa la porta seriale "
                 "(per esempio il monitor seriale dell'IDE Arduino).\n\n"
                 "Durante il caricamento non scollegare il cavo USB.\nContinuare?")):
@@ -1759,9 +1918,14 @@ GUIDA = [
     ("li", "Collega la scheda con il cavo USB e apri \"Carica il firmware\": la porta e il "
            "tipo di scheda vengono riconosciuti da soli (controlla che siano giusti)."),
     ("li", "Premi \"Carica il firmware\" e aspetta il messaggio finale. Non scollegare il cavo."),
+    ("li", "UNO R4 WiFi: la prima volta si installa anche il firmware del modulo Wi-Fi "
+           "(ArduLearnBridge, fino a un minuto); le volte successive solo se ne serve uno nuovo. "
+           "Programmi, slot, bozza e rete Wi-Fi salvati restano. Il firmware originale del modulo "
+           "si rimette con l'IDE Arduino (Strumenti → Aggiornamento firmware)."),
     ("li", "UNO R4 WiFi: se il caricamento non riesce, premi due volte velocemente il tasto "
-           "RESET e riprova. I driver USB vengono installati con l'IDE Arduino (piattaforma "
-           "\"Arduino UNO R4 Boards\")."),
+           "RESET e riprova. Se la scheda compare come \"modulo Wi-Fi da ripristinare\" "
+           "basta caricare di nuovo. I driver USB vengono installati con l'IDE Arduino "
+           "(piattaforma \"Arduino UNO R4 Boards\")."),
     ("li", "Chiudi gli altri programmi che usano la porta (per esempio il monitor seriale "
            "dell'IDE Arduino). Il monitor di questo programma si scollega da solo."),
 
@@ -1776,8 +1940,9 @@ GUIDA = [
            "aggiornare oppure assente."),
 
     ("h2", "2B. UNO R4 WiFi: la rete Wi-Fi"),
-    ("li", "La UNO R4 WiFi non ha la microSD: la pagina web è dentro il firmware (colonna "
-           "\"Pagina\": nel firmware). Si aggiorna caricando il firmware nuovo."),
+    ("li", "La UNO R4 WiFi non ha la microSD: pagina web, slot e bozza stanno nella memoria "
+           "del modulo Wi-Fi. La pagina si aggiorna da qui (\"Aggiorna la pagina\") o dalla "
+           "pagina stessa (Impostazioni → Aggiornamento del firmware), anche da Internet."),
     ("li", "Dopo il caricamento la scheda crea la sua rete Wi-Fi \"ArduLearn-xxxx\" "
            "(password: ardulearn). Il nome esatto scorre sulla matrice LED della scheda."),
     ("li", "Collega il PC (o il telefono) a quella rete e apri http://192.168.4.1/. Mentre è "
