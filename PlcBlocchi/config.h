@@ -17,12 +17,15 @@
   #define BOARD_MEGA 1
   #define BOARD_NAME "mega"
   #define NET_WIFI 0                  // rete: shield Ethernet W5500
+  #define NET_BRIDGE 0
   #define HAS_SD   1                  // microSD della shield
 #elif defined(ARDUINO_UNOR4_WIFI)
   #define BOARD_R4 1
   #define BOARD_NAME "r4wifi"
-  #define NET_WIFI 1                  // rete: Wi-Fi integrato (modulo ESP32-S3)
-  #define HAS_SD   0                  // niente shield: programmi nella memoria interna
+  #define NET_WIFI 0
+  #define NET_BRIDGE 1                // rete: il modulo ESP32-S3 con il firmware ArduLearnBridge
+                                      // (Wi-Fi, pagina, slot e bozza); qui il PLC (vedi bridge.cpp)
+  #define HAS_SD   0                  // niente shield: programma attivo nella memoria interna
   #define HAS_LED_MATRIX 1            // matrice LED 12x8 per gli avvisi
 #elif defined(ARDUINO_UNOR4_MINIMA)
   #error "UNO R4 Minima: per ora non supportata. Usa Arduino Mega 2560 con shield Ethernet o Arduino UNO R4 WiFi"
@@ -60,13 +63,9 @@ const uint8_t  MAX_BLOCKS = 96;
 #if BOARD_MEGA
 const uint16_t MAX_IMAGE_EE = 3072;   // dimensione massima di un progetto in EEPROM (byte)
 #else
-// memoria interna dell'R4 (8 KB): configurazione e Wi-Fi fino a 511, programma attivo 512..4607,
-// due slot da 1792 byte (4608..6399, 6400..8191)
-const uint16_t MAX_IMAGE_EE = 4096;
-const uint8_t  EE_SLOTS     = 2;
-const uint16_t EE_SLOT_LEN  = 1792;
-const uint16_t EE_SLOT_BASE = 4608;
-const uint16_t MAX_DRAFT_RAM = 4096;  // bozza condivisa del docente, in RAM (come il programma: max 4 KB)
+// memoria interna dell'R4 (8 KB): configurazione fino a 511, programma attivo 512..8191
+// (slot e bozza stanno nella flash del modulo ESP32)
+const uint16_t MAX_IMAGE_EE = 7680;
 #endif
 const uint16_t MAX_IMAGE_SD = 8192;   // ... e su microSD
 const uint8_t  NUM_MBITS  = 128;      // memorie a bit  %M0.0 ... %M15.7
@@ -75,7 +74,7 @@ const uint8_t  NUM_MWORDS = 32;       // memorie intere %MW0 ... %MW62 (a 32 bit
 const uint16_t MAX_POOL   = 512;      // testi dei display + codice degli script (byte, in RAM)
 const uint8_t  SCRIPT_VARS = 32;      // variabili locali di tutti gli script
 #else
-const uint16_t MAX_POOL   = 1024;     // l'R4 ha 32 KB di RAM (ma 8 KB sono riservati al Wi-Fi)
+const uint16_t MAX_POOL   = 1024;     // l'R4 ha 32 KB di RAM
 const uint8_t  SCRIPT_VARS = 128;
 #endif
 const uint16_t SCRIPT_BUDGET = 4000;  // istruzioni massime per script in un ciclo
@@ -87,10 +86,11 @@ const uint16_t SCRIPT_BUDGET = 4000;  // istruzioni massime per script in un cic
 #else
 #define HAS_LCD     0                 // UNO R4 WiFi: flash al limite, ci sono la matrice LED e l'OLED
 #endif
-#define HAS_EMBEDDED_PAGE 1           // pagina web dentro il firmware (sul Mega la SD puo' averne una piu' nuova)
-#if NET_WIFI
-#define HAS_MDNS 0                    // nome .local: sul Wi-Fi dell'R4 costa RAM e flash (si usa l'app ArduLearn)
+#if NET_BRIDGE
+#define HAS_EMBEDDED_PAGE 0           // UNO R4 WiFi: pagina, nome .local e ricerca UDP li gestisce l'ESP32
+#define HAS_MDNS 0
 #else
+#define HAS_EMBEDDED_PAGE 1           // pagina web dentro il firmware (sul Mega la SD puo' averne una piu' nuova)
 #define HAS_MDNS 1
 #endif
 #ifndef HAS_LED_MATRIX

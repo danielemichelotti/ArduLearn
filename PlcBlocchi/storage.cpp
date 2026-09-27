@@ -132,18 +132,43 @@ bool FileSource::readAt(uint32_t, void*, uint16_t) { return false; }
 // ---------------------------------------------------------------------
 EepromSink::EepromSink() : base_(EE_IMG_BASE), max_(MAX_IMAGE_EE) {}
 
+#if BOARD_R4
+// Scrive n byte con una sola cancellazione/scrittura per ogni blocco di flash toccato
+// (come EEPROM.put, ma per una lunghezza qualunque)
+static bool eeWriteBytes(uint32_t idx, const uint8_t* p, uint16_t n) {
+  while (n) {
+    uint32_t room = 0;
+    if (veeprom::getInstance().read_block(idx, room) != ReadStatus::ALLOCATED) return false;
+    uint16_t k = n < room ? n : room;
+    for (uint16_t i = 0; i < k; i++) veeprom::getInstance().write_byte(p[i], idx + i);
+    if (!veeprom::getInstance().write()) return false;
+    idx += k; p += k; n -= k;
+  }
+  return true;
+}
+
+bool EepromSink::flush() {
+  if (!bufLen_) return true;
+  bool ok = eeWriteBytes(base_ + pos_ - bufLen_, buf_, bufLen_);
+  bufLen_ = 0;
+  return ok;
+}
+
+bool EepromSink::write(const uint8_t* b, uint16_t n) {
+  if ((uint32_t)pos_ + n > max_) return false;
+  for (uint16_t i = 0; i < n; i++) {
+    buf_[bufLen_++] = b[i];
+    pos_++;
+    if (bufLen_ == sizeof(buf_) && !flush()) return false;
+  }
+  return true;
+}
+#else
 bool EepromSink::write(const uint8_t* b, uint16_t n) {
   if ((uint32_t)pos_ + n > max_) return false;
   for (uint16_t i = 0; i < n; i++) EEPROM.update(base_ + pos_ + i, b[i]);
   pos_ += n;
   return true;
-}
-
-#if !HAS_SD
-void eeSlotErase(uint8_t n) {
-  if (n < 1 || n > EE_SLOTS) return;
-  EEPROM.update(eeSlotBase(n), 0);
-  EEPROM.update(eeSlotBase(n) + 1, 0);
 }
 #endif
 

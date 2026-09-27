@@ -34,10 +34,32 @@ static NetUDP mdnsUdp;
 static MDNS        mdns(mdnsUdp);
 #endif
 static bool        mdnsStarted = false;
+#if !NET_BRIDGE
 static NetUDP discovery;
 static const uint16_t DISCOVERY_PORT = 4210;
+#endif
 
 static void printInfo();
+#if BOARD_R4
+static char resetCause[40] = "";
+// Causa del riavvio dai registri del RA4M1; poi si azzerano per il prossimo avvio
+static void readResetCause() {
+  uint8_t r0 = R_SYSTEM->RSTSR0;
+  uint16_t r1 = R_SYSTEM->RSTSR1;
+  const char* c = "pulsante o linea di reset (RES)";
+  if (r0 & 0x01) c = "accensione";
+  else if (r0 & 0x0E) c = "tensione bassa (LVD)";
+  else if (r1 & 0x01) c = "watchdog indipendente";
+  else if (r1 & 0x02) c = "watchdog";
+  else if (r1 & 0x04) c = "software";
+  else if (r1 & 0xFF00) c = "errore di memoria o del bus";
+  snprintf(resetCause, sizeof(resetCause), "%s (%02x %04x)", c, r0, r1);
+  R_SYSTEM->PRCR = 0xA502;
+  R_SYSTEM->RSTSR0 = 0;
+  R_SYSTEM->RSTSR1 = 0;
+  R_SYSTEM->PRCR = 0xA500;
+}
+#endif
 
 #if BOARD_MEGA
 int freeRam() {
@@ -73,6 +95,7 @@ void netHostnameChanged() {
 
 static bool netUp() { return g_netState == NET_OK || g_netState == NET_FALLBACK; }
 
+#if !NET_BRIDGE
 static void startServices() {
 #if HAS_MDNS
   mdns.begin(netIP(), g_hostname);
@@ -83,7 +106,6 @@ static void startServices() {
   printInfo();
 }
 
-#if !NET_WIFI
 // Senza DHCP (es. cavo diretto tra PC e scheda) la scheda si assegna un indirizzo
 // "link-local" 169.254.x.y, come fanno Windows e le stampanti: il PC la raggiunge
 // senza configurare niente. Il DHCP viene ritentato quando si ricollega il cavo
@@ -151,8 +173,6 @@ static bool ethInit() {
   return true;
 }
 
-#endif
-
 // Servizi di rete comuni: mDNS e risposta alla ricerca UDP dell'app ArduLearn ("PLC?")
 static void netServices() {
 #if HAS_MDNS
@@ -177,12 +197,11 @@ static void netServices() {
   discovery.print('}');
   discovery.endPacket();
 }
+#endif
 
-#if NET_WIFI
-static void netTick() {
-  if (wifiTick()) { startServices(); webNetUp(); displaysShowStatus(); }
-  if (netUp()) netServices();
-}
+#if NET_BRIDGE
+// UNO R4 WiFi: mDNS, ricerca UDP e Wi-Fi li gestisce l'ESP32
+static void netTick() { bridgeTick(); }
 #else
 static void netTick() {
   static uint32_t lastCheck = 0;
@@ -229,8 +248,19 @@ static void printInfo() {
   Serial.print(F("ArduLearn " FW_VERSION " (" BOARD_NAME ")  nome: "));
   Serial.print(g_hostname);
   Serial.println(F(".local"));
-#if NET_WIFI
-  wifiSerial("wifi");
+#if NET_BRIDGE
+  Serial.print(F("Rete: "));
+  switch (g_netState) {
+    case NET_NO_HW:    Serial.println(F("il modulo Wi-Fi non risponde (serve il firmware ArduLearnBridge)")); break;
+    case NET_NO_LINK:  Serial.println(F("modulo Wi-Fi in avvio")); break;
+    case NET_DHCP:     Serial.println(F("collegamento al Wi-Fi in corso")); break;
+    case NET_FALLBACK: Serial.print(F("rete della scheda ")); Serial.print(bridgeApName()); Serial.println(F(" (password ardulearn)")); break;
+    default:           Serial.println(F("Wi-Fi collegato")); break;
+  }
+  Serial.print(F("IP: "));
+  if (netUp()) Serial.println(netIP());
+  else Serial.println(F("(nessuno)"));
+  bridgeSerial("wifi");                            // dettagli (e riga "@wifi" per l'app) dall'ESP32
 #else
   Serial.print(F("Rete: "));
   switch (g_netState) {
@@ -266,6 +296,10 @@ static void printInfo() {
   }
   Serial.print(F("RAM libera: "));
   Serial.println(freeRam());
+#if BOARD_R4
+  Serial.print(F("Ultimo riavvio: "));
+  Serial.println(resetCause);
+#endif
   Serial.println(F("Scrivi help per l'elenco dei comandi"));
   Serial.println(F("--------------------------------"));
 }
@@ -278,7 +312,7 @@ static void printHelp() {
 #endif
     "  run / stop         avvia / ferma il programma\n"
     "  io                 ingressi, uscite e valori dei blocchi (io on / io off: ogni secondo)\n"
-#if NET_WIFI
+#if NET_BRIDGE
     "  wifi               stato del Wi-Fi\n"
     "  wifi clear         dimentica la rete e torna alla rete ArduLearn della scheda\n"
     "  wifi ssid <nome> / wifi pass <password> / wifi connect   imposta la rete\n"
@@ -287,7 +321,7 @@ static void printHelp() {
     "  ip A M G           IP fisso, es. ip 192.168.1.50 255.255.255.0 192.168.1.1\n"
 #endif
     "  pin reset          PIN docente = 1234\n"
-#if !NET_WIFI
+#if !NET_BRIDGE
     "  mac xx:xx:xx:xx:xx:xx  cambia il MAC (riavvio)"
 #endif
     ));
@@ -335,7 +369,7 @@ static bool parseIp(const char*& s, uint8_t* out) {
   return true;
 }
 
-#if !NET_WIFI
+#if !NET_BRIDGE
 static void restartNetwork() {
   if (g_netState != NET_NO_HW && Ethernet.linkStatus() == LinkON) startDhcp();
   else Serial.println(F("La rete ripartira' quando il cavo e' collegato"));
@@ -354,6 +388,12 @@ static void serialTick() {
     if (c != '\n') { if (n < sizeof(line) - 1) line[n++] = c; continue; }
     line[n] = 0;
     n = 0;
+#if BOARD_R4
+    // l'ESP32 riconfigura la seriale quando il PC apre la porta: il disturbo arriva come caratteri a caso
+    bool junk = false;
+    for (const char* p = line; *p; p++) if ((uint8_t)*p < 0x20 || (uint8_t)*p >= 0x7F) junk = true;
+    if (junk) continue;
+#endif
     if (!strcmp_P(line, PSTR("info"))) printInfo();
     else if (!strcmp_P(line, PSTR("help")) || !strcmp_P(line, PSTR("?"))) printHelp();
     else if (!strcmp_P(line, PSTR("run")) || !strcmp_P(line, PSTR("stop"))) {
@@ -367,8 +407,8 @@ static void serialTick() {
     else if (!strcmp_P(line, PSTR("io"))) printIo();
     else if (!strcmp_P(line, PSTR("io on"))) { ioLive = true; ioLast = 0; }
     else if (!strcmp_P(line, PSTR("io off"))) { ioLive = false; Serial.println(F("[io] fermo")); }
-#if NET_WIFI
-    else if (wifiSerial(line)) {}
+#if NET_BRIDGE
+    else if (bridgeSerial(line)) {}
 #else
     else if (!strcmp_P(line, PSTR("ip dhcp"))) {
       cfg.ipStatic = 0;
@@ -400,7 +440,7 @@ static void serialTick() {
       if (cs == PIN_ETH_CS || cs >= NUM_PINS || (Engine::isReserved(cs) && cs != PIN_SD_CS)) Serial.println(F("pin non ammesso"));
       else { pinMode(cs, OUTPUT); digitalWrite(cs, HIGH); storageDiag(Serial, cs); }
 #endif
-#if !NET_WIFI
+#if !NET_BRIDGE
     } else if (!strncmp_P(line, PSTR("mac "), 4)) {
       // "mac 00:08:DC:12:34:56": cambia il MAC (serve un riavvio)
       unsigned int m[6];
@@ -426,6 +466,7 @@ static void serialTick() {
 void setup() {
   Serial.begin(115200);
 #if BOARD_R4
+  readResetCause();
   // la seriale USB dell'R4 e' nativa: si aspetta un attimo che il PC la apra (senza bloccare)
   for (uint32_t t = millis(); !Serial && millis() - t < 1500; ) {}
 #endif
@@ -433,7 +474,7 @@ void setup() {
 #if HAS_LED_MATRIX
   ledBegin();
 #endif
-#if !NET_WIFI
+#if !NET_BRIDGE
   // tutti i dispositivi SPI deselezionati prima di iniziare
   pinMode(SS, OUTPUT);
   pinMode(PIN_SD_CS, OUTPUT);  digitalWrite(PIN_SD_CS, HIGH);
@@ -441,15 +482,13 @@ void setup() {
 #endif
 
   Wire.begin();
-#if BOARD_MEGA
   Wire.setWireTimeout(5000, true);   // un display scollegato non deve bloccare la scheda
-#endif
 
   cfgLoad();
   strlcpy(g_hostname, cfg.host, sizeof(g_hostname));
 
-#if NET_WIFI
-  wifiBegin();
+#if NET_BRIDGE
+  bridgeBegin();
 #else
   if (!ethInit()) {
     g_netState = NET_NO_HW;

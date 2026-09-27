@@ -208,6 +208,7 @@ static void streamSource(Print& o, ImgSource& src) {
 // ---------------------------------------------------------------------
 //  Endpoint
 // ---------------------------------------------------------------------
+#if !NET_BRIDGE
 // versione della pagina sulla SD (0 = assente o incompleta)
 static uint32_t sdPageVersion() {
   if (!sdExists(PAGE_PATH)) return 0;
@@ -255,6 +256,7 @@ static void sendPage(Out& o, Req& r) {
     Engine::scan();
   }
 }
+#endif
 
 static void sendInfo(Print& o) {
   header(o, 200, F("application/json"));
@@ -267,19 +269,19 @@ static void sendInfo(Print& o) {
   }
   o.print(F("\",\"ip\":")); printIp(o, netIP());
   o.print(F(",\"net\":")); o.print(g_netState);
+#if NET_BRIDGE
+  // UNO R4 WiFi: "sd", "pv", "dr" e "wifi" li aggiunge l'ESP32 (slot, pagina, bozza e rete sono li')
+  o.print(F(",\"prog\":")); jsonStr(o, Engine::name);
+#else
   o.print(F(",\"sd\":")); o.print(g_sdOk);
+#endif
   o.print(F(",\"rev\":")); o.print(cfg.rev);
+#if !NET_BRIDGE
   o.print(F(",\"dr\":")); o.print(draftRev);
+#endif
   o.print(F(",\"run\":")); o.print(Engine::running);
   o.print(F(",\"ld\":")); o.print(Engine::loaded);
   o.print(F(",\"err\":")); jsonStr(o, Engine::error);
-#if NET_WIFI
-  o.print(F(",\"wifi\":")); wifiJson(o);
-#endif
-#if !HAS_SD
-  o.print(F(",\"slotsInt\":")); o.print(EE_SLOTS);
-  o.print(F(",\"slotMax\":")); o.print(EE_SLOT_LEN);
-#endif
   o.print(F(",\"maxBlocks\":")); o.print(MAX_BLOCKS);
   o.print(F(",\"maxImage\":")); o.print(maxImage());
   o.print(F(",\"maxText\":")); o.print(MAX_POOL);
@@ -294,7 +296,9 @@ static void sendInfo(Print& o) {
   o.print(F(",\"nmb\":")); o.print(NUM_MBITS);
   o.print(F(",\"nmw\":")); o.print(NUM_MWORDS);
   o.print(F(",\"nsv\":")); o.print(SCRIPT_VARS);
+#if !NET_BRIDGE
   o.print(F(",\"pv\":")); o.print(sdPageVersion());
+#endif
   o.print(F(",\"pinDefault\":")); o.print(strcmp_P(cfg.pin, PSTR("1234")) == 0);
   o.print(F(",\"oled\":{\"a\":")); o.print(cfg.oledAddr);
   o.print(F(",\"t\":")); o.print(cfg.oledType);
@@ -331,7 +335,9 @@ static void sendLive(Print& o) {
   o.print(F(",\"lcd\":")); o.print(lcdPresent());
   o.print(F(",\"err\":")); jsonStr(o, Engine::error);
   o.print(F(",\"so\":")); o.print(Engine::scriptOverrun);
+#if !NET_BRIDGE
   o.print(F(",\"dr\":")); o.print(draftRev);
+#endif
   o.print(F(",\"v\":["));
   for (uint8_t i = 0; i < Engine::nBlocks; i++) {
     if (i) o.print(',');
@@ -447,115 +453,7 @@ static void postErase(Print& o, Req& r) {
   replyOk(o);
 }
 
-#if !HAS_SD
-// UNO R4 WiFi: EE_SLOTS slot nella memoria interna, bozza del docente in RAM
-static uint8_t  draftBuf[MAX_DRAFT_RAM];
-static uint16_t draftLen = 0;
-class RamSink : public ImgSink {
-public:
-  bool write(const uint8_t* b, uint16_t n) override {
-    if ((uint32_t)pos + n > sizeof(draftBuf)) return false;
-    memcpy(draftBuf + pos, b, n);
-    pos += n;
-    return true;
-  }
-  uint16_t pos = 0;
-};
-class RamSource : public ImgSource {
-public:
-  bool read(uint16_t off, void* dst, uint16_t n) override {
-    if ((uint32_t)off + n > draftLen) return false;
-    memcpy(dst, draftBuf + off, n);
-    return true;
-  }
-  uint16_t size() override { return draftLen; }
-};
-
-static bool slotN(const char* q, uint8_t& n) {
-  long v;
-  if (!getLong(q, "n", v) || v < 1 || v > EE_SLOTS) return false;
-  n = v;
-  return true;
-}
-
-static void sendSlots(Print& o) {
-  header(o, 200, F("application/json"));
-  o.print(F("{\"sd\":0,\"int\":1,\"max\":")); o.print(EE_SLOTS);
-  o.print(F(",\"slotMax\":")); o.print(EE_SLOT_LEN);
-  o.print(F(",\"slots\":["));
-  bool first = true;
-  for (uint8_t n = 1; n <= EE_SLOTS; n++) {
-    EepromSource src(eeSlotBase(n), EE_SLOT_LEN);
-    uint16_t len = src.size();
-    if (len < IMG_HDR_LEN) continue;
-    char name[23] = {0};
-    src.read(18, name, 22);
-    if (!first) o.print(',');
-    first = false;
-    o.print(F("{\"n\":")); o.print(n);
-    o.print(F(",\"name\":")); jsonStr(o, name);
-    o.print(F(",\"len\":")); o.print(len);
-    o.print('}');
-  }
-  o.print(F("]}"));
-}
-
-static void getSlot(Print& o, Req& r) {
-  uint8_t n;
-  if (!slotN(r.query, n)) return replyErrP(o, 400, F("Slot non valido"));
-  EepromSource src(eeSlotBase(n), EE_SLOT_LEN);
-  if (src.size() < IMG_HDR_LEN) return replyErrP(o, 404, F("Slot vuoto"));
-  streamSource(o, src);
-}
-
-static void postSlot(Print& o, NetClient& c, Req& r) {
-  uint8_t n;
-  char err[48];
-  if (!slotN(r.query, n)) return replyErrP(o, 400, F("Slot non valido"));
-  if (r.contentLength < IMG_HDR_LEN || r.contentLength > EE_SLOT_LEN)
-    return replyErrP(o, 400, F("Programma troppo grande per uno slot interno"));
-  eeSlotErase(n);
-  EepromSink sink(eeSlotBase(n), EE_SLOT_LEN);
-  bool ok = receiveBody(c, &sink, r.contentLength);
-  if (ok) {
-    EepromSource src(eeSlotBase(n), EE_SLOT_LEN);
-    ok = Engine::validate(src, err, sizeof(err));
-  } else {
-    strcpy_P(err, PSTR("Scrittura non riuscita"));
-  }
-  if (!ok) { eeSlotErase(n); return replyErr(o, 400, err); }
-  replyOk(o);
-}
-
-static void postDraft(Print& o, NetClient& c, Req& r) {
-  if (r.contentLength < IMG_HDR_LEN || r.contentLength > (int32_t)sizeof(draftBuf)) return replyErrP(o, 400, F("Dimensione non valida"));
-  RamSink sink;
-  draftLen = 0;
-  bool ok = receiveBody(c, &sink, r.contentLength);
-  if (!ok) return replyErrP(o, 400, F("Ricezione non riuscita"));
-  draftLen = sink.pos;
-  if (++draftRev == 0) draftRev = 1;
-  header(o, 200, F("application/json"));
-  o.print(F("{\"ok\":true,\"dr\":")); o.print(draftRev); o.print('}');
-}
-
-static void getDraft(Print& o) {
-  RamSource src;
-  if (src.size() < IMG_HDR_LEN) return replyErrP(o, 404, F("Nessuna bozza"));
-  streamSource(o, src);
-}
-
-// ---- Wi-Fi ----
-static void postWifi(Print& o, Req& r) {
-  char ssid[40], pass[70], err[64];
-  if (getParam(r.query, "clear", ssid, sizeof(ssid))) { wifiForget(); wifiApplyLater(); return replyOk(o); }
-  if (!getParam(r.query, "ssid", ssid, sizeof(ssid))) return replyErrP(o, 400, F("Manca il nome della rete"));
-  if (!getParam(r.query, "pass", pass, sizeof(pass))) pass[0] = 0;
-  if (!wifiSetCredentials(ssid, pass, err, sizeof(err))) return replyErr(o, 400, err);
-  wifiApplyLater();                                // prima si risponde, poi ci si ricollega
-  replyOk(o);
-}
-#else
+#if HAS_SD
 static void sendSlots(Print& o) {
   header(o, 200, F("application/json"));
   o.print(F("{\"sd\":")); o.print(g_sdOk);
@@ -583,6 +481,7 @@ static void sendSlots(Print& o) {
 
 #endif
 
+#if HAS_SD
 static bool slotNumber(const char* q, char* path) {
   long n;
   if (!getLong(q, "n", n) || n < 1 || n > 99) return false;
@@ -590,7 +489,6 @@ static bool slotNumber(const char* q, char* path) {
   return true;
 }
 
-#if HAS_SD
 static void getSlot(Print& o, Req& r) {
   char path[16];
   if (!g_sdOk) return replyErrP(o, 404, F("Scheda SD assente"));
@@ -599,7 +497,6 @@ static void getSlot(Print& o, Req& r) {
   if (!src.ok()) return replyErrP(o, 404, F("Slot vuoto"));
   streamSource(o, src);
 }
-#endif
 
 // ---------------------------------------------------------------------
 //  Bozza condivisa: il progetto che il docente sta modificando (anche non
@@ -607,7 +504,6 @@ static void getSlot(Print& o, Req& r) {
 //  draftRev cambia a ogni salvataggio (0 = nessuna bozza).
 // ---------------------------------------------------------------------
 
-#if HAS_SD
 static void postDraft(Print& o, NetClient& c, Req& r) {
   if (!g_sdOk) return replyErrP(o, 400, F("Serve la microSD per condividere la bozza"));
   if (r.contentLength < IMG_HDR_LEN || r.contentLength > MAX_IMAGE_SD) return replyErrP(o, 400, F("Dimensione non valida"));
@@ -626,7 +522,6 @@ static void getDraft(Print& o) {
   if (!src.ok() || src.size() < IMG_HDR_LEN) return replyErrP(o, 404, F("Nessuna bozza"));
   streamSource(o, src);
 }
-#endif
 
 // Svuota la microSD: cancella i file di ArduLearn (slot, bozza e, con all=1, anche il programma attivo).
 // I file si cancellano uno alla volta riaprendo la cartella: non serve memoria per l'elenco.
@@ -673,7 +568,6 @@ static void postFile(Print& o, NetClient& c, Req& r) {
   replyOk(o);
 }
 
-#if HAS_SD
 static void postSlot(Print& o, NetClient& c, Req& r) {
   char path[16], err[48];
   if (!g_sdOk) return replyErrP(o, 400, F("Scheda SD assente"));
@@ -766,17 +660,19 @@ static void route(Out& o, NetClient& c, Req& r) {
   const char* p = r.path;
   long a, b;
 
+#if !NET_BRIDGE
   if (get && is(p, PSTR("/")))            return sendPage(o, r);
+#endif
   if (get && is(p, PSTR("/api/info")))    return sendInfo(o);
   if (get && is(p, PSTR("/api/live")))    return sendLive(o);
+#if HAS_SD
   if (get && is(p, PSTR("/api/slots")))   return sendSlots(o);
-#if NET_WIFI
-  if (get && is(p, PSTR("/api/wifi")))    { header(o, 200, F("application/json")); wifiJson(o); return; }
-  if (get && is(p, PSTR("/api/wifiscan"))) { header(o, 200, F("application/json")); wifiScanJson(o); return; }
 #endif
   if (get && is(p, PSTR("/api/stored")))  return sendStored(o);
+#if HAS_SD
   if (get && is(p, PSTR("/api/draft")))   return getDraft(o);
   if (get && is(p, PSTR("/api/slot")))    return getSlot(o, r);
+#endif
   if (get && is(p, PSTR("/api/scan")))    return sendScan(o);
 #if HAS_MODULES
   if (get && is(p, PSTR("/api/rtc"))) {
@@ -819,29 +715,24 @@ static void route(Out& o, NetClient& c, Req& r) {
   // da qui in poi serve il PIN docente
   if (post && !r.authed) return replyErrP(o, 403, F("PIN docente errato"));
   if (post && is(p, PSTR("/api/program"))) return postProgram(o, c, r);
+#if HAS_SD
   if (post && is(p, PSTR("/api/slot")))    return postSlot(o, c, r);
   if (post && is(p, PSTR("/api/draft"))) return postDraft(o, c, r);
   if (post && is(p, PSTR("/api/sdwipe"))) return postSdWipe(o, r);
   if (post && is(p, PSTR("/api/file")))   return postFile(o, c, r);
+#endif
   if (post && is(p, PSTR("/api/erase")))  return postErase(o, r);
   if (post && is(p, PSTR("/api/eecopy"))) {
     if (!eeCopyActive()) return replyErrP(o, 400, F("Copia non riuscita: programma assente o piu' grande della EEPROM"));
     return replyOk(o);
   }
-  if (post && is(p, PSTR("/api/slotdel"))) {
 #if HAS_SD
+  if (post && is(p, PSTR("/api/slotdel"))) {
     char path[16];
     if (!g_sdOk || !slotNumber(r.query, path)) return replyErrP(o, 400, F("Slot non valido"));
     sdRemove(path);
-#else
-    uint8_t n;
-    if (!slotN(r.query, n)) return replyErrP(o, 400, F("Slot non valido"));
-    eeSlotErase(n);
-#endif
     return replyOk(o);
   }
-#if NET_WIFI
-  if (post && is(p, PSTR("/api/wifi"))) return postWifi(o, r);
 #endif
   if (post && is(p, PSTR("/api/run"))) {
     if (!getLong(r.query, "s", a)) return replyErrP(o, 400, F("Parametro mancante"));
@@ -868,6 +759,7 @@ void webBegin() {
   server.begin();
   if (sdExists(DRAFT_PATH)) draftRev = 1;
 }
+
 
 // Wi-Fi: la rete e' cambiata (rete della scuola o rete della scheda): si riapre il server
 void webNetUp() { server.begin(); }

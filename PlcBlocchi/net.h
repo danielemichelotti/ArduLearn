@@ -2,15 +2,46 @@
 #include "config.h"
 
 // =====================================================================
-//  Rete: shield Ethernet W5500 (Mega) oppure Wi-Fi integrato (UNO R4 WiFi).
-//  Il resto del firmware usa solo questi nomi.
+//  Rete: shield Ethernet W5500 (Mega) oppure il modulo ESP32-S3 dell'UNO R4 WiFi
+//  con il firmware ArduLearnBridge. Il resto del firmware usa solo questi nomi.
 // =====================================================================
-#if NET_WIFI
-#include <WiFiS3.h>
-typedef WiFiServer NetServer;
-typedef WiFiClient NetClient;
-typedef WiFiUDP    NetUDP;
-inline IPAddress netIP() { return WiFi.localIP(); }
+#if NET_BRIDGE
+#include <IPAddress.h>
+
+// ---- UNO R4 WiFi (bridge.cpp) ----
+// L'ESP32 gestisce Wi-Fi, pagina, slot e bozza; le richieste per il PLC arrivano dal
+// collegamento seriale (Serial2) come testo HTTP: LinkServer/LinkClient le presentano
+// al server web (web.cpp) come se venissero dalla rete.
+class LinkClient {
+public:
+  explicit LinkClient(bool v = false) : valid(v) {}
+  explicit operator bool() const;
+  int available();
+  int read();
+  int read(uint8_t* buf, size_t n);
+  bool connected();
+  size_t write(uint8_t b) { return write(&b, 1); }
+  size_t write(const uint8_t* buf, size_t n);
+  void stop();
+private:
+  bool valid;
+};
+
+class LinkServer {
+public:
+  explicit LinkServer(uint16_t) {}
+  void begin() {}
+  LinkClient available();
+};
+
+typedef LinkServer NetServer;
+typedef LinkClient NetClient;
+IPAddress netIP();                       // indirizzo della scheda (lo comunica l'ESP32)
+void bridgeBegin();
+void bridgeTick();
+bool bridgeSerial(const char* line);     // comandi seriali "wifi ...": li esegue l'ESP32
+const char* bridgeApName();              // nome della rete propria "ArduLearn-xxxx"
+extern const char WIFI_AP_PASS[];
 #else
 #include <Ethernet.h>
 #include <EthernetUdp.h>
@@ -18,20 +49,4 @@ typedef EthernetServer NetServer;
 typedef EthernetClient NetClient;
 typedef EthernetUDP    NetUDP;
 inline IPAddress netIP() { return Ethernet.localIP(); }
-#endif
-
-#if NET_WIFI
-// ---- Wi-Fi dell'UNO R4 WiFi (wifi.cpp) ----
-// Senza rete salvata, o se non riesce a collegarsi 3 volte, la scheda crea la propria rete
-// "ArduLearn-xxxx" (password ardulearn, pagina su http://192.168.4.1/).
-void wifiBegin();
-bool wifiTick();                         // true quando la rete e' appena diventata disponibile
-bool wifiSerial(const char* line);       // comandi seriali "wifi ..."; false se non e' un comando wifi
-void wifiJson(Print& o);                 // {"mode":..,"ssid":..,"rssi":..,"ip":..,"ap":..,"saved":..}
-bool wifiSetCredentials(const char* ssid, const char* pass, char* err, uint8_t errLen);
-void wifiForget();
-void wifiApplyLater();                   // si ricollega fra poco (dopo aver risposto al browser)
-void wifiScanJson(Print& o);             // reti visibili
-const char* wifiApName();
-extern const char WIFI_AP_PASS[];
 #endif

@@ -186,7 +186,7 @@ static void ipText(char* out) {
 
 static const __FlashStringHelper* netText() {
   switch (g_netState) {
-#if NET_WIFI
+#if NET_BRIDGE
     case NET_NO_HW:    return F("Wi-Fi guasto");
     case NET_NO_LINK:  return F("Wi-Fi spento");
     case NET_DHCP:     return F("Collego il Wi-Fi...");

@@ -75,15 +75,19 @@ public:
   EepromSink();
   EepromSink(uint16_t base, uint16_t max) : base_(base), max_(max) {}
   bool write(const uint8_t* b, uint16_t n) override;
+#if BOARD_R4
+  // UNO R4: la EEPROM e' emulata nella flash dati, che si cancella a blocchi di 1 KB:
+  // scrivere un byte alla volta vorrebbe dire cancellare e riscrivere il blocco per ogni byte.
+  // I dati si raccolgono e si scrivono a pezzi da 256 byte (e alla fine, nel distruttore).
+  ~EepromSink() override { flush(); }
+  bool flush();
+private:
+  uint8_t  buf_[256];
+  uint16_t bufLen_ = 0;
+#endif
 private:
   uint16_t base_, max_, pos_ = 0;
 };
-
-#if !HAS_SD
-// UNO R4 WiFi: slot 1..EE_SLOTS nella memoria interna (niente microSD)
-inline uint16_t eeSlotBase(uint8_t n) { return EE_SLOT_BASE + (n - 1) * EE_SLOT_LEN; }
-void eeSlotErase(uint8_t n);
-#endif
 
 extern bool g_sdOk;
 void storageBegin();
