@@ -139,6 +139,7 @@ enum : uint8_t {
   BT_TON = 20, BT_TOF = 21, BT_TP = 22, BT_BLINK = 23, BT_CTUD = 24,
   BT_MATH = 30, BT_CMP = 31, BT_SCALE = 32, BT_HYST = 33, BT_SELECT = 34, BT_LIMIT = 35,
   BT_OLED = 40, BT_LCD = 41, BT_OLEDIMG = 42, BT_PAGE = 43,
+  BT_MTXIMG = 44, BT_MTXTXT = 45,      // matrice LED 12x8 (solo UNO R4 WiFi, vedi ledmatrix.cpp)
   BT_MGET = 50, BT_MSET = 51,          // lettura / scrittura memorie (usati dal LADDER)
   BT_STEP = 60, BT_REPEAT = 61, BT_SCRIPT = 62,
   BT_CSCRIPT = 63,                     // script in stile C/Arduino: fino a 8 ingressi e 4 uscite

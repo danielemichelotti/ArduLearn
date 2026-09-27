@@ -621,32 +621,80 @@ static esp_err_t apiRoute(httpd_req_t* req) {
   return proxy(req);
 }
 
-void webBegin() {
-  cacheMtx = xSemaphoreCreateMutex();
-  LittleFS.mkdir("/PB");
-  LittleFS.mkdir("/PLC");
-  if (LittleFS.exists(DRAFT_PATH)) draftRev = 1;
-
+static bool startServer() {
   httpd_config_t c = HTTPD_DEFAULT_CONFIG();
   c.uri_match_fn = httpd_uri_match_wildcard;
   c.max_uri_handlers = 8;
-  c.max_open_sockets = 9;          // lwIP ne ha 16: restano DNS, UDP, mDNS
+  c.max_open_sockets = 7;          // lwIP ne ha 16: margine per DNS, UDP, mDNS e per la memoria
   c.lru_purge_enable = true;       // molti browser: si chiudono le connessioni ferme da piu' tempo
   c.stack_size = 12288;
   c.recv_wait_timeout = 5;
   c.send_wait_timeout = 10;
   c.core_id = 0;
-  if (httpd_start(&srv, &c) != ESP_OK) return;
+  if (httpd_start(&srv, &c) != ESP_OK) { srv = nullptr; return false; }
   httpd_uri_t apiGet  = { "/api/*", HTTP_GET,  apiHandler, nullptr };
   httpd_uri_t apiPost = { "/api/*", HTTP_POST, apiHandler, nullptr };
   httpd_uri_t page    = { "/*",     HTTP_GET,  pageHandler, nullptr };
   httpd_register_uri_handler(srv, &apiGet);
   httpd_register_uri_handler(srv, &apiPost);
   httpd_register_uri_handler(srv, &page);
+  return true;
+}
+
+void webBegin() {
+  cacheMtx = xSemaphoreCreateMutex();
+  LittleFS.mkdir("/PB");
+  LittleFS.mkdir("/PLC");
+  if (LittleFS.exists(DRAFT_PATH)) draftRev = 1;
+  startServer();
+}
+
+// Il server accetta ancora connessioni? (una volta e' capitato che smettesse, con la rete a posto)
+static bool serverAnswers() {
+  IPAddress ip = wifiIP();
+  if (ip == IPAddress(0, 0, 0, 0)) return true;           // rete non pronta: niente da controllare
+  int fd = socket(AF_INET, SOCK_STREAM, 0);
+  if (fd < 0) return false;
+  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
+  sockaddr_in a = {};
+  a.sin_family = AF_INET;
+  a.sin_port = htons(80);
+  a.sin_addr.s_addr = (uint32_t)ip;
+  bool ok = false;
+  if (connect(fd, (sockaddr*)&a, sizeof(a)) == 0) ok = true;
+  else if (errno == EINPROGRESS) {
+    fd_set w;
+    FD_ZERO(&w);
+    FD_SET(fd, &w);
+    timeval tv = { 2, 0 };
+    int err = 0;
+    socklen_t l = sizeof(err);
+    ok = select(fd + 1, nullptr, &w, nullptr, &tv) == 1 && getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &l) == 0 && !err;
+  }
+  close(fd);
+  return ok;
+}
+
+// prova del controllo ("wifi webstop"): ferma il server come se si fosse bloccato
+void webTestStop() { if (srv) { httpd_stop(srv); srv = nullptr; } }
+
+// Task "svc": ogni 30 s; 3 controlli falliti di fila -> si riavvia il server, e se non basta l'ESP32
+static void webWatchdog() {
+  static uint32_t last = 0;
+  static uint8_t fails = 0, restarts = 0;
+  if (millis() - last < 30000UL) return;
+  last = millis();
+  if (serverAnswers()) { fails = 0; restarts = 0; return; }
+  if (++fails < 3) return;
+  fails = 0;
+  linkLog("server web fermo: lo riavvio");
+  if (srv) { httpd_stop(srv); srv = nullptr; }
+  if (++restarts > 2 || !startServer()) ESP.restart();
 }
 
 // Task "svc": copia di /api/live (spesso se qualcuno guarda, altrimenti ogni 2 s) e info ogni 15 s
 void webPoll() {
+  webWatchdog();
   if (!linkUp()) { lastRev = -1; infoWanted = true; return; }
   uint32_t now = millis();
   uint32_t every = webStress || now - lastLiveReq < 3000 ? 200 : 2000;

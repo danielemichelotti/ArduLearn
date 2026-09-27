@@ -114,6 +114,8 @@ static void diagTask(void*) {
                      (unsigned long)(millis() - linkWhereAt), linkUp(), (unsigned long)linkBaud(),
                      (unsigned long)linkHelloOk, (unsigned long)linkHelloTries, (unsigned long)linkLost,
                      (unsigned long)linkRxBytes, (unsigned)ESP.getFreeHeap());
+    n += snprintf(b + n - 2, sizeof(b) - n + 2, " (blocco max %u, minimo %u)\r\n",
+                  (unsigned)ESP.getMaxAllocHeap(), (unsigned)ESP.getMinFreeHeap()) - 2;
     USBSerial.write((const uint8_t*)b, n);
   }
 }

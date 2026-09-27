@@ -26,6 +26,9 @@ namespace Engine {
   extern uint8_t  mbits[NUM_MBITS / 8];   // memorie %M
   extern int32_t  mwords[NUM_MWORDS];     // memorie %MW
   extern uint8_t  pageOled, pageLcd;      // pagina mostrata dai display
+#if HAS_LED_MATRIX
+  extern uint8_t  pageMtx;                // pagina della matrice LED
+#endif
   extern uint16_t imgBase, imgLen;        // zona immagini nel progetto attivo
 
   // Controlla un'immagine senza toccare il programma in esecuzione.

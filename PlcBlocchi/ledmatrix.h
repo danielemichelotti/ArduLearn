@@ -5,4 +5,5 @@
 #if HAS_LED_MATRIX
 void ledBegin();
 void ledTick();
+void ledHex(Print& o);    // quello che la matrice mostra: 12 colonne in esadecimale (per la pagina)
 #endif

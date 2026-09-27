@@ -8,6 +8,9 @@
 #if HAS_MODULES
 #include "modules.h"
 #endif
+#if HAS_LED_MATRIX
+#include "ledmatrix.h"
+#endif
 #include "net.h"
 #include <Wire.h>
 
@@ -296,6 +299,9 @@ static void sendInfo(Print& o) {
   o.print(F(",\"nmb\":")); o.print(NUM_MBITS);
   o.print(F(",\"nmw\":")); o.print(NUM_MWORDS);
   o.print(F(",\"nsv\":")); o.print(SCRIPT_VARS);
+#if HAS_LED_MATRIX
+  o.print(F(",\"mtx\":1"));                       // matrice LED 12x8: blocchi 44 e 45
+#endif
 #if !NET_BRIDGE
   o.print(F(",\"pv\":")); o.print(sdPageVersion());
 #endif
@@ -370,7 +376,12 @@ static void sendLive(Print& o) {
     if (Engine::pinModes[p] == PM_ANALOG) o.print(analogRead(p));
     else o.print(-1);
   }
+#if HAS_LED_MATRIX
+  o.print(F("],\"pm\":")); o.print(Engine::pageMtx);
+  o.print(F(",\"mx\":\"")); ledHex(o); o.print(F("\"}"));       // matrice LED: per l'anteprima nella pagina
+#else
   o.print(F("]}"));
+#endif
 }
 
 static void reloadProgram() {

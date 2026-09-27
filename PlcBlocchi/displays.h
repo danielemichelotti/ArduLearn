@@ -9,3 +9,8 @@ bool oledPresent();
 bool lcdPresent();
 void displaysShowStatus();     // forza la schermata di stato per qualche secondo
 void displaysSplash();        // schermata di avvio (solo OLED)
+#if HAS_LED_MATRIX
+struct Block;
+// Messaggio con i segnaposto {1} {2} (V1, V2) come le scritte su OLED: per la matrice LED
+uint8_t displaysFormat(const Block& b, char* out, uint8_t size);
+#endif

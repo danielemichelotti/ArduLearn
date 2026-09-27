@@ -184,6 +184,7 @@ void wifiSerialCommand(const char* line, String& out) {
   extern bool linkLogOn;
   if (!strcmp(a, "log"))    { linkLogOn = !linkLogOn; out = linkLogOn ? "registro acceso\r\n" : "registro spento\r\n"; return; }
   if (!strcmp(a, "diag"))   { diagOn = !diagOn; out = diagOn ? "diagnostica accesa (sulla USB ogni 5 s)\r\n" : "diagnostica spenta\r\n"; return; }
+  if (!strcmp(a, "webstop")) { extern void webTestStop(); webTestStop(); out = "server web fermato (prova: deve ripartire da solo)\r\n"; return; }
   if (!strcmp(a, "stress")) { webStress = !webStress; out = webStress ? "stress acceso\r\n" : "stress spento\r\n"; return; }
   if (!*a) {
     static const char* const M[] = { "spento", "in collegamento", "collegata", "rete della scheda (AP)" };

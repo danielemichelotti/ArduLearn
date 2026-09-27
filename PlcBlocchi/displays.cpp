@@ -118,6 +118,10 @@ static uint8_t formatMessage(const Block& b, char* out, uint8_t size) {
   return o;
 }
 
+#if HAS_LED_MATRIX
+uint8_t displaysFormat(const Block& b, char* out, uint8_t size) { return formatMessage(b, out, size); }
+#endif
+
 // Scrive nella griglia le scritte del programma che stanno sulla pagina corrente.
 // k0 = riga | colonna << 8 | effetto << 16 (0 nessuno, 1 lampeggia, 2 scorre); k1 = testo
 // ingressi: V1, V2, EN (0 = nascosta), PAGINA

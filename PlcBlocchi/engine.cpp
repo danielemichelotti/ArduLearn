@@ -17,6 +17,9 @@ bool     usesOled = false, usesLcd = false;
 uint8_t  mbits[NUM_MBITS / 8];
 int32_t  mwords[NUM_MWORDS];
 uint8_t  pageOled = 0, pageLcd = 0;
+#if HAS_LED_MATRIX
+uint8_t  pageMtx = 0;
+#endif
 uint16_t imgBase = 0, imgLen = 0;
 
 static char     textPool[MAX_POOL];         // testi, poi codice degli script
@@ -52,6 +55,9 @@ static const TypeInfo TYPES[] PROGMEM = {
 #endif
 #if HAS_IMAGES
   { BT_OLEDIMG, 3, 0, 0b0111 },
+#endif
+#if HAS_LED_MATRIX
+  { BT_MTXIMG, 3, 0, 0b0111 }, { BT_MTXTXT, 4, 0, 0b1100 },
 #endif
 #if HAS_SCRIPT
   { BT_SCRIPT, 4, 2, 0 },   { BT_CSCRIPT, 4, 2, 0 },  { BT_CEXT, 4, 2, 0 },
@@ -89,6 +95,10 @@ static uint8_t fbMaskOf(uint8_t type) {
     case BT_SELECT: return 0b0110;
     case BT_OLED: case BT_LCD: return 0b1100;
     case BT_OLEDIMG: return 0b0111;
+#if HAS_LED_MATRIX
+    case BT_MTXIMG: return 0b0111;
+    case BT_MTXTXT: return 0b1100;
+#endif
     case BT_MSET: return 0b0011;
     case BT_PAGE: case BT_STEP: return 0b1000;
     case BT_REPEAT: return 0b1110;
@@ -218,6 +228,22 @@ static bool parse(ImgSource& src, bool apply, char* err, uint8_t errLen) {
         break;
       }
 #endif
+#if HAS_LED_MATRIX
+      case BT_MTXIMG: {
+        // matrice: k3 = offset | periodo dell'animazione (x25 ms) << 26; immagine alta 8, larga fino a 12
+        uint16_t off = k[3] & 0xFFFF;
+        uint8_t ih[4];
+        if (off + 4u > iLen || !src.read(iOff + off, ih, 4)) FAIL(PSTR("Blocco %u: immagine"), i + 1);
+        if (!ih[0] || ih[0] > 12 || ih[1] != 8 || !ih[2] || off + 4u + (uint32_t)ih[2] * ih[0] > iLen)
+          FAIL(PSTR("Blocco %u: l'immagine per la matrice dev'essere 12x8"), i + 1);
+        break;
+      }
+      case BT_MTXTXT:
+        // k0 = ms per passo dello scorrimento, k1 = offset del testo; ingressi V1, V2, EN, PAGINA
+        if (k[1] >= (int32_t)tLen) FAIL(PSTR("Blocco %u: testo"), i + 1);
+        if (k[0] < 20 || k[0] > 2000) FAIL(PSTR("Blocco %u: velocita' dello scorrimento"), i + 1);
+        break;
+#endif
 #if HAS_SCRIPT
       case BT_CEXT:
         if (!i || types[i - 1] != BT_CSCRIPT) FAIL(PSTR("Blocco %u: estensione senza script C"), i + 1);
@@ -241,7 +267,11 @@ static bool parse(ImgSource& src, bool apply, char* err, uint8_t errLen) {
 #endif
         break;
       case BT_PAGE:
+#if HAS_LED_MATRIX
+        if (k[0] < 0 || k[0] > 3 || k[1] < 1 || k[1] > MAX_PAGES) FAIL(PSTR("Blocco %u: pagine"), i + 1);   // 3 = matrice
+#else
         if (k[0] < 0 || k[0] > 2 || k[1] < 1 || k[1] > MAX_PAGES) FAIL(PSTR("Blocco %u: pagine"), i + 1);
+#endif
         break;
       case BT_MGET: case BT_MSET: {
         uint8_t idx = k[2] & 0xFF, typ = (k[2] >> 8) & 0xFF;
@@ -314,6 +344,9 @@ static void clearMemory() {
 #endif
   scriptOverrun = 0;
   pageOled = pageLcd = 0;
+#if HAS_LED_MATRIX
+  pageMtx = 0;
+#endif
 }
 
 static void resetState() {
@@ -321,6 +354,9 @@ static void resetState() {
   for (uint8_t i = 0; i < nBlocks; i++) {
     Block& b = blocks[i];
     if (b.type == BT_OLEDIMG) continue;
+#if HAS_LED_MATRIX
+    if (b.type == BT_MTXIMG) continue;                      // flags = numero di fotogrammi
+#endif
     b.flags = 0;
     if (b.type == BT_VSWITCH) continue;                     // gli ingressi virtuali restano
     if (b.type == BT_VSLIDER) { vals[i][0] = constrain(vals[i][0], b.k[0], b.k[1]); continue; }
@@ -478,6 +514,9 @@ void scan() {
       }
       case BT_CONST:   out[0] = b.k[0]; break;
       case BT_VSWITCH: case BT_VSLIDER: case BT_MONITOR: case BT_OLED: case BT_LCD: case BT_OLEDIMG: break;
+#if HAS_LED_MATRIX
+      case BT_MTXIMG: case BT_MTXTXT: break;                // disegnati da ledmatrix.cpp
+#endif
 
       // ---- sequenze e ripetizioni ----
       case BT_STEP: {
@@ -540,14 +579,25 @@ void scan() {
       case BT_PAGE: {
         bool nx = input(b, 0) != 0, pv = input(b, 1) != 0, st = input(b, 2) != 0;
         uint8_t n = b.k[1];
+#if HAS_LED_MATRIX
+        // k0: 0 OLED, 1 LCD, 2 OLED e LCD, 3 matrice LED
+        int16_t cur = b.k[0] == 1 ? pageLcd : b.k[0] == 3 ? pageMtx : pageOled;
+#else
         int16_t cur = b.k[0] == 1 ? pageLcd : pageOled;
+#endif
         if (nx && !(b.flags & 1)) cur = (cur + 1) % n;
         if (pv && !(b.flags & 2)) cur = (cur + n - 1) % n;
         if (st && !(b.flags & 4)) cur = constrain(input(b, 3), 0, n - 1);
         if (cur >= n) cur = n - 1;
         b.flags = (nx ? 1 : 0) | (pv ? 2 : 0) | (st ? 4 : 0);
+#if HAS_LED_MATRIX
+        if (b.k[0] == 0 || b.k[0] == 2) pageOled = cur;
+        if (b.k[0] == 1 || b.k[0] == 2) pageLcd = cur;
+        if (b.k[0] == 3) pageMtx = cur;
+#else
         if (b.k[0] != 1) pageOled = cur;
         if (b.k[0] != 0) pageLcd = cur;
+#endif
         out[0] = cur;
         break;
       }
