@@ -21,6 +21,7 @@ static char webUri[48];
 static const char PAGE_PATH[] = "/PLC/INDEX.GZ";
 static const char PAGE_VER_PATH[] = "/PLC/INDEX.VER";
 static const char DRAFT_PATH[] = "/PB/DRAFT.PB";
+static const char STAGE_PATH[] = "/PB/STAGE.PB";   // programma in arrivo, prima di passarlo al RA4M1
 static const uint16_t IMG_HDR_LEN = 110;       // come config.h del firmware ArduLearn
 static const int32_t MAX_SLOT = 8192, MAX_DRAFT = 16384, MAX_FILE = 900 * 1024;
 static uint16_t draftRev = 0;
@@ -132,9 +133,11 @@ static uint32_t okPinAt = 0;
 
 static void forgetPin() { okPin[0] = 0; }
 
+static int pinStatus = 0;        // esito dell'ultimo controllo col RA4M1 (< 0 = non risponde)
 static bool pinOk(httpd_req_t* req) {
   char pin[12];
   getHeader(req, "X-Pin", pin, sizeof(pin));
+  pinStatus = 0;
   if (!pin[0]) return false;
   if (okPin[0] && !strcmp(pin, okPin) && millis() - okPinAt < 60000UL) return true;
   char resp[64];
@@ -143,6 +146,7 @@ static bool pinOk(httpd_req_t* req) {
                 [](void* x, const uint8_t* b, size_t n) { Ctx* c = (Ctx*)x; size_t k = min(n, 63 - c->n); memcpy(c->out + c->n, b, k); c->n += k; return true; },
                 &c };
   int s = linkHttp(r, 3000);
+  pinStatus = s;
   resp[c.n] = 0;
   if (s == 200 && strstr(resp, "\"ok\":true")) {
     strlcpy(okPin, pin, sizeof(okPin));
@@ -358,13 +362,18 @@ static esp_err_t postWifi(httpd_req_t* req) {
 // ---------------------------------------------------------------------
 struct ProxyCtx {
   httpd_req_t* req;
+  File* src;                // se non nullo, il corpo da inoltrare si legge da qui invece che dal browser
   char type[48];
   bool headSent;
   String* capture;          // se non nullo, la risposta si raccoglie qui invece di mandarla
   int status;
 };
 
-static int proxyRead(void* c, uint8_t* buf, size_t max) { return recvSome(((ProxyCtx*)c)->req, buf, max); }
+static int proxyRead(void* c, uint8_t* buf, size_t max) {
+  ProxyCtx* p = (ProxyCtx*)c;
+  if (p->src) return p->src->read(buf, max);
+  return recvSome(p->req, buf, max);
+}
 
 static void proxyHead(void* c, int status, const char* type, int32_t) {
   ProxyCtx* p = (ProxyCtx*)c;
@@ -387,15 +396,40 @@ static esp_err_t linkError(httpd_req_t* req, int s) {
   return replyErr(req, s == -1 ? 503 : 504, s == -1 ? "Il PLC non risponde (collegamento col modulo Wi-Fi)" : "Il PLC non ha risposto in tempo");
 }
 
+static esp_err_t pinError(httpd_req_t* req) {
+  if (pinStatus < 0) return linkError(req, pinStatus);
+  return replyErr(req, 403, "PIN docente errato");
+}
+
 static esp_err_t proxy(httpd_req_t* req, String* capture = nullptr) {
   char pin[12];
   getHeader(req, "X-Pin", pin, sizeof(pin));
-  ProxyCtx c = { req, "", false, capture, 0 };
+  ProxyCtx c = { req, nullptr, "", false, capture, 0 };
   LinkReq r = { req->method == HTTP_POST ? "POST" : "GET", req->uri, pin, (int32_t)req->content_len,
                 proxyRead, proxyHead, proxyData, &c };
   int s = linkHttp(r, 10000);
   linkLog("  RA4M1: %d, tipo %s", s, c.type);
   if (capture) return s < 0 ? linkError(req, s) : ESP_OK;
+  if (s < 0 && !c.headSent) return linkError(req, s);
+  return httpd_resp_send_chunk(req, nullptr, 0);
+}
+
+// Caricamento del programma: prima tutto nella flash dell'ESP32, poi al RA4M1. Se la rete cade
+// a meta' il programma in esecuzione non si tocca (il RA4M1 lo scrive direttamente nella sua memoria).
+static esp_err_t postProgram(httpd_req_t* req) {
+  if (!pinOk(req)) return pinError(req);
+  if (req->content_len < IMG_HDR_LEN || (int32_t)req->content_len > MAX_SLOT) return replyErr(req, 400, "Dimensione non valida");
+  if (!receiveToFile(req, STAGE_PATH)) return replyErr(req, 400, "Ricezione non riuscita");
+  if (!looksLikeProgram(STAGE_PATH)) { LittleFS.remove(STAGE_PATH); return replyErr(req, 400, "Programma non valido"); }
+  File f = LittleFS.open(STAGE_PATH, "r");
+  if (!f) return replyErr(req, 400, "Ricezione non riuscita");
+  char pin[12];
+  getHeader(req, "X-Pin", pin, sizeof(pin));
+  ProxyCtx c = { req, &f, "", false, nullptr, 0 };
+  LinkReq r = { "POST", req->uri, pin, (int32_t)f.size(), proxyRead, proxyHead, proxyData, &c };
+  int s = linkHttp(r, 15000);
+  f.close();
+  LittleFS.remove(STAGE_PATH);
   if (s < 0 && !c.headSent) return linkError(req, s);
   return httpd_resp_send_chunk(req, nullptr, 0);
 }
@@ -510,7 +544,7 @@ static esp_err_t apiRoute(httpd_req_t* req) {
   bool local = is(u, "/api/wifi") || is(u, "/api/slot") || is(u, "/api/slotdel") || is(u, "/api/draft") ||
                is(u, "/api/sdwipe") || is(u, "/api/file");
   if (local) {
-    if (!pinOk(req)) return replyErr(req, 403, "PIN docente errato");
+    if (!pinOk(req)) return pinError(req);
     if (is(u, "/api/wifi"))    return postWifi(req);
     if (is(u, "/api/slot"))    return postSlot(req);
     if (is(u, "/api/draft"))   return postDraft(req);
@@ -521,8 +555,9 @@ static esp_err_t apiRoute(httpd_req_t* req) {
     LittleFS.remove(p);
     return replyOk(req);
   }
+  if (is(u, "/api/program")) { infoWanted = true; return postProgram(req); }
   if (is(u, "/api/config")) { forgetPin(); infoWanted = true; }   // PIN o nome forse cambiati
-  if (is(u, "/api/run") || is(u, "/api/program") || is(u, "/api/erase")) infoWanted = true;
+  if (is(u, "/api/run") || is(u, "/api/erase")) infoWanted = true;
   return proxy(req);
 }
 

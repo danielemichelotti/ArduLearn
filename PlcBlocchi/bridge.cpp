@@ -16,6 +16,26 @@ const char WIFI_AP_PASS[] = "ardulearn";
 
 static uint32_t baud = LINK_SLOW_BAUD, lastFrame = 0, lastNet = 0;
 static uint32_t nOk = 0, nBad = 0, nSlow = 0;   // pacchetti buoni, rovinati, ritorni a 115200 (comando "link")
+static uint32_t nErr = 0, nReinit = 0;          // errori della seriale azzerati, reinizializzazioni
+
+// Serial2 e' la SCI1 del RA4M1. Se un byte arriva mentre il precedente non e' ancora stato letto
+// (overrun) o e' malformato, la SCI alza ORER/FER/PER e SMETTE DI RICEVERE finche' il flag resta
+// alzato; il core Arduino ignora questi errori. Qui si azzerano (si scrive 0 sul bit a 1).
+static R_SCI0_Type* const LINK_SCI = (R_SCI0_Type*)(R_SCI0_BASE + 1 * 0x20UL);
+static void clearSciErrors() {
+  uint8_t ssr = LINK_SCI->SSR;
+  if (ssr & 0x38) {                               // ORER 0x20, FER 0x10, PER 0x08
+    LINK_SCI->SSR = ssr & ~0x38 & 0xF8;
+    nErr++;
+  }
+}
+
+static void reinitLink(uint32_t b) {
+  LINK.end();
+  LINK.begin(b);
+  baud = b;
+  nReinit++;
+}
 static uint8_t  fr[LINK_MAX], fst = 0, ftype = 0;
 static uint16_t flen = 0, fpos = 0, fcrc = 0;
 // richiesta in corso: buffer circolare con il testo ricevuto
@@ -47,6 +67,7 @@ static void setBaud(uint32_t b) {
   LINK.begin(b);
   baud = b;
 }
+static uint32_t lastReinit = 0;
 
 static uint16_t rxFree() { return RX_LEN - rxCount; }
 
@@ -141,6 +162,7 @@ static void onFrame(uint8_t type, uint8_t* d, uint16_t n) {
 
 // Riceve i pacchetti arrivati (senza attendere)
 static void poll() {
+  clearSciErrors();
   while (LINK.available()) {
     uint8_t c = LINK.read();
     switch (fst) {
@@ -169,6 +191,11 @@ static void poll() {
   }
   // nessun pacchetto da un po' (ESP32 riavviato o in aggiornamento): si torna alla velocita' iniziale
   if (baud != LINK_SLOW_BAUD && !reqActive && millis() - lastFrame > LINK_IDLE_MS) { nSlow++; setBaud(LINK_SLOW_BAUD); }
+  // rete di sicurezza: niente da 6 s (l'ESP32 saluta ogni secondo) -> seriale reinizializzata da capo
+  else if (!reqActive && millis() - lastFrame > 2 * LINK_IDLE_MS && millis() - lastReinit > 2 * LINK_IDLE_MS) {
+    lastReinit = millis();
+    reinitLink(LINK_SLOW_BAUD);
+  }
 }
 
 void bridgeBegin() {
@@ -191,7 +218,11 @@ bool bridgeSerial(const char* line) {
     Serial.print(F("Collegamento col modulo Wi-Fi: ")); Serial.print(baud);
     Serial.print(F(" baud, pacchetti buoni ")); Serial.print(nOk);
     Serial.print(F(", rovinati ")); Serial.print(nBad);
-    Serial.print(F(", ritorni a 115200 ")); Serial.println(nSlow);
+    Serial.print(F(", ritorni a 115200 ")); Serial.print(nSlow);
+    Serial.print(F(", errori seriale azzerati ")); Serial.print(nErr);
+    Serial.print(F(", reinizializzazioni ")); Serial.print(nReinit);
+    Serial.print(F(" (SCR=")); Serial.print(LINK_SCI->SCR, HEX);
+    Serial.print(F(" SSR=")); Serial.print(LINK_SCI->SSR, HEX); Serial.println(')');
     return true;
   }
   if (strncmp(line, "wifi", 4) || (line[4] && line[4] != ' ')) return false;

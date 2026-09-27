@@ -572,6 +572,8 @@ const RES_R4 = { 18: 'I²C SDA (display)', 19: 'I²C SCL (display)' };
 let RES_WHY = RES_MEGA;
 const isPwm = p => BOARD === 'r4' ? [3, 5, 6, 9, 10, 11].includes(p) : (p >= 2 && p <= 13) || (p >= 44 && p <= 46);
 const boardName = () => BOARD === 'r4' ? 'Arduino UNO R4 WiFi' : 'Arduino Mega 2560';
+// dove stanno slot e bozza: microSD della shield (Mega) o memoria del modulo Wi-Fi (UNO R4 WiFi)
+const memName = () => info.fs ? 'memoria del modulo Wi-Fi' : 'microSD';
 function applyBoard(inf) {
   // 'r4wifi' (UNO R4 WiFi); il vecchio 'r4' (Minima, non più supportata) ha gli stessi pin
   const r4 = inf.board === 'r4wifi' || inf.board === 'r4' || (DEMO && new URLSearchParams(location.search).has('r4'));
@@ -1617,9 +1619,9 @@ function saveDraft() { store.set(draftKey(), { rev: board.rev, project }); sched
 // ---- bozza condivisa ----
 const following = () => $('#followChk').checked;
 function markSynced() { followBase = JSON.stringify(project); }
-// la bozza sta sulla microSD (Mega) o nella RAM della scheda (UNO R4 WiFi, fino a 8 KB)
+// la bozza sta sulla microSD (Mega) o nella memoria del modulo Wi-Fi (UNO R4 WiFi, fino a 16 KB)
 const canShare = () => !!info.sd || BOARD === 'r4';
-const draftMax = () => BOARD === 'r4' ? 8192 : info.maxImage;
+const draftMax = () => info.fs ? 16384 : info.maxImage;
 function schedulePublish() {
   if (!authed || !canShare()) return;
   clearTimeout(publishTimer);
@@ -2787,13 +2789,13 @@ async function renderStored() {
   const desc = x => x ? `<b>${esc(x.name || 'Senza nome')}</b> <span class="mut small">· ${x.n} blocchi · ${kb(x.len)}</span>` : '<span class="mut">vuota</span>';
   const tag = w => j.act === w && j[w] ? ' <span class="tag" style="background:var(--on-soft);color:var(--on)">in esecuzione</span>' : '';
   let h = '<table>';
-  if (info.sd) h += `<tr><td style="width:170px">microSD</td><td>${desc(j.sd)}${tag('sd')}</td><td class="row" style="justify-content:flex-end">${j.sd ? '<button data-pst="open-sd">Apri nell\'editor</button><button class="danger" data-pst="del-sd">Elimina</button>' : ''}</td></tr>`;
+  if (info.sd && !info.fs) h += `<tr><td style="width:170px">microSD</td><td>${desc(j.sd)}${tag('sd')}</td><td class="row" style="justify-content:flex-end">${j.sd ? '<button data-pst="open-sd">Apri nell\'editor</button><button class="danger" data-pst="del-sd">Elimina</button>' : ''}</td></tr>`;
   if (j.eeMax || !info.sd) h += `<tr><td style="width:170px">${BOARD === 'r4' ? 'Memoria interna' : 'Memoria interna (EEPROM)'}</td><td>${desc(j.ee)}${tag('ee')}</td><td class="row" style="justify-content:flex-end">${j.ee ? '<button data-pst="open-ee">Apri nell\'editor</button><button class="danger" data-pst="del-ee">Elimina</button>' : ''}${info.sd && j.sd ? `<button data-pst="copy" title="Copia di riserva: la scheda la usa se la microSD manca">Copia qui il programma della microSD</button>` : ''}</td></tr>`;
   h += '</table>';
   if (j.act === 'none') h += '<p class="small mut">Nessun programma in esecuzione: caricane uno dall\'editor con "Carica sulla scheda".</p>';
-  if (BOARD === 'r4' && !info.sd) h += `<p class="small mut">Il programma caricato resta nella memoria della scheda anche da spenta (massimo ${kb(info.maxImage)}).</p>`;
-  if (info.sd && j.ee && j.sd) h += `<p class="small mut">La copia in EEPROM parte solo se la microSD manca o non ha un programma. ${j.ee.name !== j.sd.name ? '<b>Attenzione: è un programma diverso da quello della microSD.</b>' : ''}</p>`;
-  if (info.sd && j.sd && j.eeMax && j.sd.len > j.eeMax) h += `<p class="small mut">Il programma della microSD (${kb(j.sd.len)}) è più grande della EEPROM (${kb(j.eeMax)}): non si può copiare.</p>`;
+  if (BOARD === 'r4') h += `<p class="small mut">Il programma caricato resta nella memoria della scheda anche da spenta (massimo ${kb(info.maxImage)}).</p>`;
+  if (info.sd && !info.fs && j.ee && j.sd) h += `<p class="small mut">La copia in EEPROM parte solo se la microSD manca o non ha un programma. ${j.ee.name !== j.sd.name ? '<b>Attenzione: è un programma diverso da quello della microSD.</b>' : ''}</p>`;
+  if (info.sd && !info.fs && j.sd && j.eeMax && j.sd.len > j.eeMax) h += `<p class="small mut">Il programma della microSD (${kb(j.sd.len)}) è più grande della EEPROM (${kb(j.eeMax)}): non si può copiare.</p>`;
   el.innerHTML = h;
 }
 $('#stored').addEventListener('click', async e => {
@@ -2803,12 +2805,12 @@ $('#stored').addEventListener('click', async e => {
     if (a.startsWith('open')) {
       const r = await http('GET', '/api/program' + (a === 'open-ee' ? '?src=ee' : ''));
       if (!r.ok) throw new Error('Programma non leggibile');
-      openProject(decode(await r.arrayBuffer()).project, a === 'open-ee' ? (info.sd ? 'Aperta la copia in EEPROM' : 'Aperto il programma della memoria interna') : 'Aperto il programma della microSD');
+      openProject(decode(await r.arrayBuffer()).project, a === 'open-ee' ? (info.sd && !info.fs ? 'Aperta la copia in EEPROM' : 'Aperto il programma della memoria interna') : 'Aperto il programma della microSD');
       return;
     }
     if (a.startsWith('del')) {
       const ee = a === 'del-ee';
-      const ok = await confirmDlg(ee ? (info.sd ? 'Eliminare la copia del programma nella memoria EEPROM della scheda?'
+      const ok = await confirmDlg(ee ? (info.sd && !info.fs ? 'Eliminare la copia del programma nella memoria EEPROM della scheda?'
         : BOARD === 'r4' ? 'Eliminare il programma dalla memoria interna della scheda? La scheda si ferma.' : 'Eliminare il programma dalla memoria EEPROM della scheda? La scheda si ferma.')
         : 'Eliminare il programma attivo dalla microSD? La scheda si ferma' + (info.sd ? ' (se c\'è una copia in EEPROM, parte quella)' : '') + '.', 'Elimina');
       if (!ok) return;
@@ -2864,7 +2866,7 @@ async function renderSlots() {
   const el = $('#slots');
   let j;
   try { j = await getJson('/api/slots'); } catch { el.innerHTML = '<p class="mut">Scheda non raggiungibile.</p>'; return; }
-  $('#slotsWhere').textContent = j.int ? '(memoria interna)' : '(microSD)';
+  $('#slotsWhere').textContent = j.int ? '(memoria interna)' : `(${memName()})`;
   if (!j.sd && !j.int) { el.innerHTML = '<p class="mut">Nessuna scheda microSD inserita: il programma attivo è salvato nella memoria EEPROM della scheda. Per conservare più programmi sulla scheda inserisci una microSD (FAT32) e riavvia; nel frattempo usa "Scarica file".</p>'; return; }
   const { nMax, sMax } = slotLimits(j);
   const slots = j.slots.filter(s => s.n >= 1 && s.n <= nMax).sort((a, b) => a.n - b.n);
@@ -2880,21 +2882,22 @@ async function renderSlots() {
   h += slots.length ? `<table><tr><th>Slot</th><th>Nome</th><th>Dim.</th><th></th></tr>${slots.map(s => `<tr><td>${s.n}</td><td>${esc(s.name)}</td><td class="mut small">${s.len} B</td>
     <td class="row" style="justify-content:flex-end"><button data-sopen="${s.n}">Apri nell'editor</button><button data-srun="${s.n}">Carica sulla scheda</button><button data-ssave="${s.n}">Sovrascrivi</button><button class="danger" data-sdel="${s.n}">Elimina</button></td></tr>`).join('')}</table>` : '<p class="mut">Nessun programma salvato.</p>';
   h += `<div class="row" style="margin-top:10px"><span>Salva il progetto dell'editor nello slot</span><input id="slotN" type="number" min="1" max="${nMax}" value="${free}" style="width:70px"><button class="pri" id="slotSave">Salva</button>
-    ${j.sd ? '<div class="spacer"></div><button class="danger" id="sdWipe" title="Cancella i programmi salvati sulla microSD">🧹 Svuota la microSD…</button>' : ''}</div>`;
+    ${j.sd ? `<div class="spacer"></div><button class="danger" id="sdWipe" title="Cancella i programmi salvati nella ${memName()}">🧹 Svuota la ${memName()}…</button>` : ''}</div>`;
   el.innerHTML = h;
   $('#slotSave').onclick = () => saveSlot(+$('#slotN').value);
   if (j.sd) $('#sdWipe').onclick = async () => {
-    const r = await dialog(`<form method="dialog"><h3>Svuotare la microSD?</h3>
+    const r = await dialog(`<form method="dialog"><h3>Svuotare la ${memName()}?</h3>
       <p>Verranno <b>cancellati definitivamente</b> tutti i programmi salvati negli slot (${slots.length}) e la bozza condivisa del docente.</p>
-      <label class="field chk"><input type="checkbox" id="wipeAll"><span>Cancella anche il programma in esecuzione (al riavvio la scheda userà quello rimasto nella memoria EEPROM)</span></label>
-      <p class="small mut">Non è una formattazione del file system: per quella usa il PC (FAT32). Conviene prima scaricare come file i progetti da tenere.</p>
+      ${info.fs ? '<p class="small mut">Il programma in esecuzione resta nella memoria della scheda.</p>' : `<label class="field chk"><input type="checkbox" id="wipeAll"><span>Cancella anche il programma in esecuzione (al riavvio la scheda userà quello rimasto nella memoria EEPROM)</span></label>
+      <p class="small mut">Non è una formattazione del file system: per quella usa il PC (FAT32).</p>`}
+      <p class="small mut">Conviene prima scaricare come file i progetti da tenere.</p>
       <div class="row" style="justify-content:flex-end"><button value="">Annulla</button><button class="danger" id="wipeOk" value="ok">Svuota</button></div></form>`, d => {
-      $('#wipeOk', d).onclick = ev => { ev.preventDefault(); d.close($('#wipeAll', d).checked ? 'all' : 'ok'); };
+      $('#wipeOk', d).onclick = ev => { ev.preventDefault(); d.close($('#wipeAll', d)?.checked ? 'all' : 'ok'); };
     });
     if (r !== 'ok' && r !== 'all') return;
     await withPin(async () => {
       const j = await post('/api/sdwipe?all=' + (r === 'all' ? 1 : 0));
-      toast(`microSD svuotata: ${j.removed} file cancellati`, 'ok');
+      toast(`${memName()[0].toUpperCase() + memName().slice(1)} svuotata: ${j.removed} file cancellati`, 'ok');
       renderSlots();
     });
   };
@@ -3075,7 +3078,7 @@ function renderSettings() {
     <dt>Indirizzo</dt><dd>${DEMO ? 'simulazione' : `<a href="http://${esc(info.host)}.local/">http://${esc(info.host)}.local</a> · ${esc(info.ip)}`}</dd>
     <dt>Rete</dt><dd id="netTxt">${esc(netTxt)}</dd><dt>MAC</dt><dd>${esc(info.mac)}</dd>
     <dt>Scheda</dt><dd>${esc(boardName())}</dd>
-    ${BOARD === 'r4' && !info.sd ? `<dt>Programmi</dt><dd>memoria interna: programma attivo + ${info.slotsInt || 2} posti</dd>` : `<dt>microSD</dt><dd>${info.sd ? 'presente' : 'assente (programma in EEPROM)'}</dd>`}<dt>Firmware</dt><dd>${esc(info.fw)}</dd></dl>
+    ${info.fs ? `<dt>Programmi</dt><dd>programma attivo nella scheda, 99 slot e bozza nella memoria del modulo Wi-Fi</dd>` : BOARD === 'r4' && !info.sd ? `<dt>Programmi</dt><dd>memoria interna: programma attivo + ${info.slotsInt || 2} posti</dd>` : `<dt>microSD</dt><dd>${info.sd ? 'presente' : 'assente (programma in EEPROM)'}</dd>`}<dt>Firmware</dt><dd>${esc(info.fw)}${info.bridge ? ` · modulo Wi-Fi ${esc(info.bridge)}` : ''}</dd></dl>
     <div class="row" style="margin-top:12px"><span>Nome in rete</span><input id="hostIn" value="${esc(info.host)}" maxlength="15" ${lock} style="width:160px"><span class="mut">.local</span><button id="hostSave" ${lock}>Salva</button></div>
     <p class="small mut">Dai a ogni scheda un nome diverso (es. <b>plc1</b>, <b>plc2</b>) e scrivilo su un'etichetta: gli studenti apriranno <b>http://plc1.local</b>. Se il nome non funziona sulla rete della scuola, usa lo script <b>trova_plc.py</b> o l'app ArduLearn (Trova le schede) dal PC del docente.</p>`;
   $('#setWifiCard').classList.toggle('hide', !isWifi);
@@ -6900,9 +6903,9 @@ const sim = {
     const pinOk = () => auth === '1234';
     await new Promise(r => setTimeout(r, 15));
     if (method === 'GET') {
-      if (path === '/api/info') return json({ fw: '1.0', host: 'simulatore', mac: '02:00:00:00:00:01', ip: '127.0.0.1', net: 3, sd: SIM_R4 ? 0 : 1, rev: this.rev, run: this.run, ld: this.prog ? 1 : 0, err: '',
-        maxBlocks: 96, maxImage: SIM_R4 ? 4096 : 8192, maxText: SIM_R4 ? 2048 : 512, nsv: SIM_NSV, nmb: 128, nmw: 32, pinDefault: 1, mods: MODS.map(m => m.t), dr: this.dr, oled: { a: 60, t: 0, ok: 0 }, lcd: { t: 1, a: 39, c: 16, r: 2, p: [22, 23, 24, 25, 26, 27], ok: 0 }, res: Object.keys(RES_WHY).map(Number),
-        ...(SIM_R4 ? { board: 'r4wifi', np: 20, fa: 14, res: [18, 19], slotsInt: 2, slotMax: 1920, wifi: this.wifiInfo() } : { board: 'mega' }) });
+      if (path === '/api/info') return json({ fw: '1.0', host: 'simulatore', mac: '02:00:00:00:00:01', ip: '127.0.0.1', net: 3, sd: 1, rev: this.rev, run: this.run, ld: this.prog ? 1 : 0, err: '',
+        maxBlocks: 96, maxImage: SIM_R4 ? 7680 : 8192, maxText: SIM_R4 ? 1024 : 512, nsv: SIM_NSV, nmb: 128, nmw: 32, pinDefault: 1, mods: MODS.map(m => m.t), dr: this.dr, oled: { a: 60, t: 0, ok: 0 }, lcd: { t: 1, a: 39, c: 16, r: 2, p: [22, 23, 24, 25, 26, 27], ok: 0 }, res: Object.keys(RES_WHY).map(Number),
+        ...(SIM_R4 ? { board: 'r4wifi', np: 20, fa: 14, res: [18, 19], fs: 1, bridge: 'simulato', wifi: this.wifiInfo() } : { board: 'mega' }) });
       if (path === '/api/wifiscan' && SIM_R4) { await new Promise(r => setTimeout(r, 800)); return json({ nets: [{ ssid: 'Scuola-Lab', rssi: -48, enc: 1 }, { ssid: 'CasaMia', rssi: -61, enc: 1 }, { ssid: 'Ospiti', rssi: -77, enc: 0 }] }); }
       if (path === '/api/wifi' && SIM_R4) return json({ ...this.wifiInfo(), ip: this.wifi.mode === 'sta' ? '127.0.0.1' : this.wifi.mode === 'ap' ? '192.168.4.1' : '' });
       if (path === '/api/live') return json(this.live());
@@ -6913,10 +6916,10 @@ const sim = {
       if (path === '/api/program') { const im = q.get('src') === 'ee' && !SIM_R4 ? this.ee : this.image; return im ? new Response(im) : err('Nessun programma', 404); }
       if (path === '/api/stored') {
         const d = im => { if (!im) return null; const r = decodeRaw(im); return { name: r.name, n: r.n ?? r.blocks?.length ?? 0, len: im.length }; };
-        if (SIM_R4) return json({ act: this.image ? 'ee' : 'none', sd: null, ee: d(this.image), eeMax: 4096 });
+        if (SIM_R4) return json({ act: this.image ? 'ee' : 'none', sd: null, ee: d(this.image), eeMax: 7680 });
         return json({ act: !this.image ? 'none' : this.fromEe ? 'ee' : 'sd', sd: this.fromEe ? null : d(this.image), ee: d(this.ee), eeMax: 3072 });
       }
-      if (path === '/api/slots') return json({ ...(SIM_R4 ? { sd: 0, int: 1 } : { sd: 1 }), slots: Object.entries(this.slots).map(([n, b64]) => { const r = decodeRaw(Uint8Array.from(atob(b64), c => c.charCodeAt(0))); return { n: +n, name: r.name, len: atob(b64).length }; }) });
+      if (path === '/api/slots') return json({ sd: 1, slots: Object.entries(this.slots).map(([n, b64]) => { const r = decodeRaw(Uint8Array.from(atob(b64), c => c.charCodeAt(0))); return { n: +n, name: r.name, len: atob(b64).length }; }) });
       if (path === '/api/slot') return this.slots[q.get('n')] ? new Response(Uint8Array.from(atob(this.slots[q.get('n')]), c => c.charCodeAt(0))) : err('Slot vuoto', 404);
     }
     if (method === 'POST') {
@@ -6925,7 +6928,7 @@ const sim = {
       if (!pinOk()) return err('PIN docente errato', 403);
       if (path === '/api/program') {
         try { decodeRaw(body); } catch (e) { return err(e.message); }
-        if (SIM_R4 && body.byteLength > 4096) return err('Programma troppo grande');
+        if (SIM_R4 && body.byteLength > 7680) return err('Programma troppo grande');
         this.setImage(new Uint8Array(body)); this.fromEe = false; this.rev++;
         store.set('plcb-demo-image', btoa(String.fromCharCode(...this.image)));
         return json({ ok: true });
@@ -6939,11 +6942,6 @@ const sim = {
         Object.assign(this.wifi, { mode: 'conn', ssid, pass, saved: 1 });
         setTimeout(() => { if (this.wifi.mode === 'conn') Object.assign(this.wifi, { mode: 'sta', rssi: -55 }); }, 1000);
         return json({ ok: true });
-      }
-      if (path === '/api/slot' && SIM_R4) {
-        const n = +q.get('n');
-        if (!(n >= 1 && n <= 2)) return err('Slot non valido');
-        if (body.byteLength > 1920) return err('Programma troppo grande per lo slot');
       }
       if (path === '/api/slot') { this.slots[q.get('n')] = btoa(String.fromCharCode(...new Uint8Array(body))); store.set(SIM_R4 ? 'plcb-demo-slots-r4' : 'plcb-demo-slots', this.slots); return json({ ok: true }); }
       if (path === '/api/erase') {
@@ -6959,7 +6957,7 @@ const sim = {
       if (path === '/api/slotdel') { delete this.slots[q.get('n')]; store.set(SIM_R4 ? 'plcb-demo-slots-r4' : 'plcb-demo-slots', this.slots); return json({ ok: true }); }
       if (path === '/api/sdwipe') { const n = Object.keys(this.slots).length + (this.draft ? 1 : 0); this.slots = {}; this.draft = null; this.dr = 0; store.set('plcb-demo-slots', this.slots); return json({ ok: true, removed: n }); }
       if (path === '/api/config' || path === '/api/rtc') return json({ ok: true });
-      if (path === '/api/draft') { if (body.byteLength > (SIM_R4 ? 8192 : 16384)) return err('Bozza troppo grande'); this.draft = new Uint8Array(body); this.dr = (this.dr + 1) & 0xFFFF || 1; return json({ ok: true, dr: this.dr }); }
+      if (path === '/api/draft') { if (body.byteLength > 16384) return err('Bozza troppo grande'); this.draft = new Uint8Array(body); this.dr = (this.dr + 1) & 0xFFFF || 1; return json({ ok: true, dr: this.dr }); }
     }
     return err('Non trovato', 404);
   },

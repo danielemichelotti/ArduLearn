@@ -81,11 +81,7 @@ const uint16_t SCRIPT_BUDGET = 4000;  // istruzioni massime per script in un cic
 #define HAS_MODULES 1                 // sensori e attuatori (mod_*.cpp)
 #define HAS_SCRIPT  1                 // blocco script
 #define HAS_IMAGES  1                 // immagini sull'OLED
-#if BOARD_MEGA
-#define HAS_LCD     1                 // display LCD a caratteri
-#else
-#define HAS_LCD     0                 // UNO R4 WiFi: flash al limite, ci sono la matrice LED e l'OLED
-#endif
+#define HAS_LCD     1                 // display LCD a caratteri (I2C o parallelo)
 #if NET_BRIDGE
 #define HAS_EMBEDDED_PAGE 0           // UNO R4 WiFi: pagina, nome .local e ricerca UDP li gestisce l'ESP32
 #define HAS_MDNS 0

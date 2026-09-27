@@ -1,13 +1,17 @@
-"""Comprime web/index.html (gzip) e genera PlcBlocchi/web_page.h.
-
-Genera anche i file della pagina per la microSD (tools/app/sd/PLC/INDEX.GZ e INDEX.VER):
-l'Arduino Uno la legge solo dalla SD, il Mega la usa se piu' nuova di quella interna.
-L'EXE (tools/app) li invia alla scheda via rete.
+"""Comprime web/index.html (gzip) e genera:
+- PlcBlocchi/web_page.h: la pagina dentro il firmware del Mega;
+- tools/app/sd/PLC/INDEX.GZ e INDEX.VER: la pagina per la microSD del Mega (la usa se piu'
+  nuova di quella interna; l'EXE la invia alla scheda via rete);
+- ArduLearnBridge/data/PLC/INDEX.GZ e INDEX.VER: la pagina per l'UNO R4 WiFi, nella flash del
+  modulo ESP32, e tools/app/firmware/ArduLearnBridge_littlefs.bin, l'immagine di quella flash
+  (serve mklittlefs del core esp32) da scrivere all'indirizzo 0x310000.
 
 Da rilanciare ogni volta che si modifica la pagina web:
     python tools/build_web.py
+    python tools/build_web.py --solo-esp32     # senza toccare web_page.h e la pagina della microSD
 """
 import gzip
+import sys
 import time
 from pathlib import Path
 
@@ -94,21 +98,11 @@ def compress(text: str) -> bytes:
         return gzip.compress(raw, compresslevel=9, mtime=0)
 
 
-def lite(html: str) -> str:
-    """Versione per l'UNO R4 WiFi (flash piu' piccola): senza il simulatore della pagina."""
-    import re
-    html, n1 = re.subn(r"/\*@SIM\*/.*?/\*@/SIM\*/", "const sim = null, SIM_R4 = false, SIM_NSV = 32;", html, flags=re.S)
-    html, n2 = re.subn(r"/\*@DEMO\*/.*?/\*@/DEMO\*/", "false", html, flags=re.S)
-    if not (n1 and n2):
-        raise SystemExit("marcatori /*@SIM*/ o /*@DEMO*/ non trovati in index.html")
-    return html
-
-
 full = compress(minify(minify_js(html)))
-small = compress(minify(minify_js(lite(html))))
-data = full                                         # pagina completa: Mega e microSD
-# versione della pagina: minuti dal 2020 (per scegliere la piu' recente tra firmware e SD)
+data = full                                         # la stessa pagina completa per tutte le schede
+# versione della pagina: minuti dal 2020 (per scegliere la piu' recente tra firmware e SD; ETag)
 version = int((time.time() - 1577836800) // 60)
+solo_esp32 = "--solo-esp32" in sys.argv
 
 
 def page_arrays(payload: bytes, out: list):
@@ -139,33 +133,53 @@ def page_arrays(payload: bytes, out: list):
     return len(chunks)
 
 
-out = [
-    "#pragma once",
-    "// FILE GENERATO da tools/build_web.py a partire da web/index.html: non modificare a mano.",
-    "// Mega: pagina completa; UNO R4 WiFi: pagina senza simulatore (la flash e' piu' piccola).",
-    "#include <Arduino.h>",
-    "#ifdef __AVR__",
-    "#define WEB_PAGE_ATTR " + SECTION,
-    "#else",
-    "#define WEB_PAGE_ATTR",
-    "#endif",
-    f"const uint16_t WEB_PAGE_CHUNK = {CHUNK};",
-    f"const uint32_t WEB_PAGE_VER = {version}UL;",
-    "",
-    "#ifdef __AVR__",
-]
-nf = page_arrays(full, out)
-out.append("#else")
-ns = page_arrays(small, out)
-out.append("#endif")
+if not solo_esp32:
+    out = [
+        "#pragma once",
+        "// FILE GENERATO da tools/build_web.py a partire da web/index.html: non modificare a mano.",
+        "// Solo Mega: l'UNO R4 WiFi ha la pagina nella flash del modulo ESP32 (ArduLearnBridge/data).",
+        "#include <Arduino.h>",
+        "#ifdef __AVR__",
+        "#define WEB_PAGE_ATTR " + SECTION,
+        f"const uint16_t WEB_PAGE_CHUNK = {CHUNK};",
+        f"const uint32_t WEB_PAGE_VER = {version}UL;",
+        "",
+    ]
+    nf = page_arrays(full, out)
+    out.append("#endif")
+    DST.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"{SRC.name}: {len(html.encode())} byte -> {len(full)} byte compressi ({nf} blocchi) -> {DST.relative_to(ROOT)}")
 
-DST.write_text("\n".join(out) + "\n", encoding="utf-8")
-print(f"{SRC.name}: {len(html.encode())} byte -> {len(full)} byte compressi (Mega, {nf} blocchi), "
-      f"{len(small)} byte (UNO R4, senza simulatore) -> {DST.relative_to(ROOT)}")
+    # pagina per la microSD del Mega (usata se piu' nuova di quella interna)
+    SD_DIR = ROOT / "tools" / "app" / "sd" / "PLC"
+    SD_DIR.mkdir(parents=True, exist_ok=True)
+    (SD_DIR / "INDEX.GZ").write_bytes(data)
+    (SD_DIR / "INDEX.VER").write_text(str(version), encoding="ascii")
+    print(f"pagina per la microSD: {SD_DIR.relative_to(ROOT)} (versione {version})")
 
-# pagina per la microSD (Uno: obbligatoria; Mega: usata se piu' nuova di quella interna)
-SD_DIR = ROOT / "tools" / "app" / "sd" / "PLC"
-SD_DIR.mkdir(parents=True, exist_ok=True)
-(SD_DIR / "INDEX.GZ").write_bytes(data)
-(SD_DIR / "INDEX.VER").write_text(str(version), encoding="ascii")
-print(f"pagina per la microSD: {SD_DIR.relative_to(ROOT)} (versione {version})")
+# UNO R4 WiFi: pagina nella flash del modulo ESP32 (firmware ArduLearnBridge)
+ESP_DIR = ROOT / "ArduLearnBridge" / "data" / "PLC"
+ESP_DIR.mkdir(parents=True, exist_ok=True)
+(ESP_DIR / "INDEX.GZ").write_bytes(data)
+(ESP_DIR / "INDEX.VER").write_text(str(version), encoding="ascii")
+(ESP_DIR.parent / "PB").mkdir(exist_ok=True)      # slot e bozza
+
+
+def littlefs_image():
+    """Immagine della partizione LittleFS (partitions.csv: 0x310000, 0xF0000) con la pagina."""
+    import glob
+    import os
+    import subprocess
+    tools = glob.glob(os.path.expanduser("~/AppData/Local/Arduino15/packages/esp32/tools/mklittlefs/*/mklittlefs*")) + \
+        glob.glob(os.path.expanduser("~/.arduino15/packages/esp32/tools/mklittlefs/*/mklittlefs"))
+    if not tools:
+        print("mklittlefs non trovato (core esp32 di Arduino): immagine LittleFS non generata")
+        return
+    img = ROOT / "tools" / "app" / "firmware" / "ArduLearnBridge_littlefs.bin"
+    img.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run([sorted(tools)[-1], "-c", str(ESP_DIR.parent), "-b", "4096", "-p", "256", "-s", str(0xF0000), str(img)],
+                   check=True, capture_output=True)
+    print(f"pagina per l'UNO R4 WiFi: {ESP_DIR.relative_to(ROOT)} e {img.relative_to(ROOT)} (0x310000)")
+
+
+littlefs_image()
