@@ -220,6 +220,8 @@ dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;font-family:var(--mono);font-size:13
 .lop{fill:var(--fg);font:12px var(--font);pointer-events:none}
 .lop.miss{fill:var(--err)}.lop.von{fill:#16a34a;font-weight:700}.lop.voff{fill:#2563eb}
 .laddr{fill:var(--mut);font:10px var(--mono);pointer-events:none}
+.upnews{margin:8px 0;padding:8px 12px;border-radius:6px;background:rgba(37,99,235,.08);font-size:13px}.upnews ul{margin:4px 0 6px;padding-left:20px}.upnews li{margin:2px 0}
+.ptitle{cursor:pointer;border-radius:4px}.ptitle:hover{background:rgba(127,127,127,.12)}.ptitle .pedit{margin-left:6px;font-size:.8em;opacity:.45}.ptitle:hover .pedit{opacity:1}
 .lbox{fill:var(--panel2);stroke:var(--fg);stroke-width:1.5;pointer-events:none}
 .lboxt{fill:var(--fg);font:700 11px var(--mono);pointer-events:none}
 .lpin{fill:var(--fg);font:10.5px var(--mono);pointer-events:none}
@@ -1622,6 +1624,16 @@ function updNeeded(m) {
   if (m.bridge?.ver && verCmp(m.bridge.ver, info.bridge) > 0) out.push({ k: 'esp', name: 'Firmware del modulo Wi-Fi (ESP32)', from: info.bridge, to: m.bridge.ver, file: m.bridge.file });
   return out;
 }
+// note di rilascio (manifest.novita, dalla piu' recente): quelle delle versioni che la scheda non ha ancora
+function updNews(m) {
+  if (!m) return [];
+  if (!Array.isArray(m.novita)) return m.note ? [{ voci: [m.note] }] : [];
+  return m.novita.filter(e => (e.page && +e.page > +(info.pv || 0)) || (e.fw && verCmp(e.fw, info.fw) > 0) || (e.bridge && verCmp(e.bridge, info.bridge) > 0));
+}
+function newsHtml(news) {
+  if (!news.length) return '';
+  return `<div class="upnews"><b>Novità</b>${news.map(e => `${news.length > 1 && e.data ? `<div class="small mut">${esc(e.data)}</div>` : ''}<ul>${(e.voci || []).map(v => `<li>${esc(v)}</li>`).join('')}</ul>`).join('')}</div>`;
+}
 async function checkUpdates(force = false) {
   if (DEMO || !info.fs) { updChecked = true; return null; }
   let m = null;
@@ -1701,13 +1713,16 @@ function showUpdateResult() {
     if (m.ok) toast(m.t, 'ok'); else showBanner('warn', m.t, [['OK', hideBanner]]);
   } catch {}
 }
-async function confirmUpdate(list) {
-  return confirmDlg('Aggiornare ' + list.join(', ') + '?\nIl programma si ferma per qualche secondo (fino a un minuto) e poi riparte da solo. Non spegnere la scheda durante l\'aggiornamento.', 'Aggiorna');
+async function confirmUpdate(list, news = []) {
+  const r = await dialog(`<form method="dialog"><h3>Aggiornare ${esc(list.join(', '))}?</h3>${newsHtml(news)}
+    <p>Il programma si ferma per qualche secondo (fino a un minuto) e poi riparte da solo. Non spegnere la scheda durante l'aggiornamento.</p>
+    <div class="row" style="justify-content:flex-end"><button value="no">Annulla</button><button class="pri" value="yes">Aggiorna</button></div></form>`);
+  return r === 'yes';
 }
 async function updateOnline() {
   const need = updNeeded(updManifest);
   if (!need.length) return;
-  if (!await confirmUpdate(need.map(n => UPD_NAMES[n.k]))) return;
+  if (!await confirmUpdate(need.map(n => UPD_NAMES[n.k]), updNews(updManifest))) return;
   await withPin(async () => {
     const parts = [];
     for (const n of need) {
@@ -1739,7 +1754,7 @@ function renderUpd() {
   const m = updManifest;
   const state = DEMO ? 'nel simulatore non si controlla' : !updChecked ? 'controllo in corso…'
     : !m ? (updState === 'none' ? `nessun aggiornamento pubblicato${UPD_BRANCH !== 'main' ? ' sul ramo ' + esc(UPD_BRANCH) : ''}` : 'non verificabile: il PC non raggiunge Internet (GitHub)')
-    : need.length ? `<b style="color:#f08c00">disponibile: ${need.map(n => `${esc(n.name)} ${esc(String(n.to))}`).join(', ')}</b>${m.note ? `<br><span class="small">${esc(m.note)}</span>` : ''}`
+    : need.length ? `<b style="color:#f08c00">disponibile: ${need.map(n => `${esc(n.name)} ${esc(String(n.to))}`).join(', ')}</b>${newsHtml(updNews(m))}`
     : 'la scheda è aggiornata';
   el.innerHTML = `<dl class="kv"><dt>PLC (RA4M1)</dt><dd>${esc(info.fw || '—')}</dd><dt>Modulo Wi-Fi (ESP32)</dt><dd>${esc(info.bridge || '—')}</dd>
       <dt>Pagina web</dt><dd>${pageDate(info.pv)}</dd><dt>Ultima versione</dt><dd>${state}</dd></dl>
@@ -2643,7 +2658,7 @@ function renderInspector() {
     el.innerHTML = close + `<h3>Nota</h3><p class="desc">Un commento sul foglio: non fa niente sulla scheda.</p><label class="field"><span>Testo</span><textarea data-f="note" rows="5">${esc(n.text)}</textarea></label><button data-act="del" class="danger">Elimina nota</button>`;
   } else {
     const probs = projectProblems();
-    let h = `<h3>${esc(project.name)}</h3><p class="desc">${project.blocks.length} blocchi su ${info.maxBlocks}.</p>`;
+    let h = `${projTitle()}<p class="desc">${project.blocks.length} blocchi su ${info.maxBlocks}.</p>`;
     if (probs.length) h += `<ul class="probs">${probs.map(p => `<li data-goto="${p.id ?? ''}" style="${p.warn ? 'background:transparent;border:1px solid var(--warn);color:var(--warn)' : ''}">${esc(p.msg)}</li>`).join('')}</ul>`;
     h += `<div class="hint"><b>Come si usa</b><ul>
       <li>Trascina i blocchi dalla colonna a sinistra (o cliccali).</li>
@@ -3105,6 +3120,15 @@ $('#stored').addEventListener('click', async e => {
   renderStored();
 });
 $('#projName').addEventListener('change', e => mutate(() => { project.name = e.target.value.trim() || 'Senza nome'; }));
+// nome del progetto anche dall'editor: si clicca il titolo nel pannello a destra
+const projTitle = () => `<h3 class="ptitle" data-prename title="Clicca per cambiare il nome del progetto">${esc(project.name)}<span class="pedit" aria-hidden="true">✎</span></h3>`;
+async function renameProject() {
+  const v = await promptDlg('Nome del progetto', project.name, 'Fino a 40 caratteri. Il nome compare nei programmi salvati e nel file scaricato.');
+  if (v == null) return;
+  const name = v.trim().slice(0, 40) || 'Senza nome';
+  if (name !== project.name) mutate(() => { project.name = name; });
+}
+document.addEventListener('click', e => { if (e.target.closest('[data-prename]')) renameProject(); });
 $('#newBtn').onclick = async () => {
   const lang = await dialog(`<form method="dialog"><h3>Nuovo progetto</h3><p class="small mut">Scegli il linguaggio. Un programma si scrive in un solo linguaggio e non si converte nell'altro. Il progetto aperto adesso verrà sostituito (puoi prima scaricarlo come file).</p>
     <div class="langPick"><button value="fbd"><b>Blocchi (FBD)</b>Blocchi collegati da fili, come i diagrammi funzionali. Ideale per iniziare.</button>
@@ -3164,7 +3188,7 @@ async function renderSlots() {
     if (size > sMax) h += `<p class="small" style="color:var(--warn)">⚠ Il progetto dell'editor (${size} B) è troppo grande per un posto (max ${sMax} B): riducilo o conservalo con "Scarica file".</p>`;
   }
   h += slots.length ? `<table><tr><th>Slot</th><th>Nome</th><th>Dim.</th><th></th></tr>${slots.map(s => `<tr><td>${s.n}</td><td>${esc(s.name)}</td><td class="mut small">${s.len} B</td>
-    <td class="row" style="justify-content:flex-end"><button data-sopen="${s.n}">Apri nell'editor</button><button data-srun="${s.n}">Carica sulla scheda</button><button data-ssave="${s.n}">Sovrascrivi</button><button class="danger" data-sdel="${s.n}">Elimina</button></td></tr>`).join('')}</table>` : '<p class="mut">Nessun programma salvato.</p>';
+    <td class="row" style="justify-content:flex-end"><button data-sopen="${s.n}">Apri nell'editor</button><button data-srun="${s.n}">Carica sulla scheda</button><button data-sren="${s.n}">Rinomina</button><button data-ssave="${s.n}">Sovrascrivi</button><button class="danger" data-sdel="${s.n}">Elimina</button></td></tr>`).join('')}</table>` : '<p class="mut">Nessun programma salvato.</p>';
   h += `<div class="row" style="margin-top:10px"><span>Salva il progetto dell'editor nello slot</span><input id="slotN" type="number" min="1" max="${nMax}" value="${free}" style="width:70px"><button class="pri" id="slotSave">Salva</button>
     ${j.sd ? `<div class="spacer"></div><button class="danger" id="sdWipe" title="Cancella i programmi salvati nella ${memName()}">🧹 Svuota la ${memName()}…</button>` : ''}</div>`;
   el.innerHTML = h;
@@ -3209,6 +3233,16 @@ $('#slots').addEventListener('click', async e => {
         await post('/api/program', new Uint8Array(buf));
         await loadInfo(); await syncFromBoard(true); toast('Programma dello slot ' + d.srun + ' caricato sulla scheda', 'ok'); renderStored();
       });
+    }
+    if (d.sren) {
+      // si riscrive lo slot con lo stesso programma e il nome nuovo (come "Apri" + "Sovrascrivi")
+      const pr = decode(await load(d.sren)).project;
+      let v = await promptDlg(`Nome del programma nello slot ${d.sren}`, pr.name, 'Fino a 40 caratteri.');
+      if (v == null || !(v = v.trim().slice(0, 40)) || v === pr.name) return;
+      pr.name = v;
+      const c = compile(pr), { int, sMax } = slotLimits();
+      if (int && c.size > sMax) throw new Error(`Programma troppo grande per un posto della memoria interna: ${c.size} byte su ${sMax}`);
+      await withPin(async () => { await post('/api/slot?n=' + d.sren, c.bytes); toast(`Slot ${d.sren} rinominato: ${v}`, 'ok'); renderSlots(); });
     }
     if (d.ssave && await confirmDlg(`Sovrascrivere lo slot ${d.ssave} con il progetto dell'editor?`, 'Sovrascrivi')) saveSlot(+d.ssave);
     if (d.sdel && await confirmDlg(`Eliminare il programma nello slot ${d.sdel}?`, 'Elimina'))
@@ -4756,7 +4790,7 @@ function renderLadInspector() {
   const gen = ladGenerate(project);
   h += ladTreeHtml() + `<div class="tcardh" style="margin-top:12px">Proprietà</div>`;
   if (!ladSel || !project.networks[ladSel.ni]) {
-    h += `<h3>${esc(project.name)}</h3><p class="desc">Programma LADDER · ${project.networks.length} segmenti · ${gen.blocks.length}/${info.maxBlocks} blocchi interni.</p>`;
+    h += `${projTitle()}<p class="desc">Programma LADDER · ${project.networks.length} segmenti · ${gen.blocks.length}/${info.maxBlocks} blocchi interni.</p>`;
     if (gen.errors.length) h += `<ul class="probs">${gen.errors.map(p => `<li data-lgoto="${p.ni ?? ''},${p.r ?? ''},${p.c ?? ''}">${p.ni !== undefined ? `Segm. ${p.ni + 1}: ` : ''}${esc(p.msg)}</li>`).join('')}</ul>`;
     h += `<div class="hint"><b>Come si usa</b><ul>
       <li>Clicca una cella, poi scegli l'elemento nella barra in alto (contatti, bobine, box).</li>
@@ -6573,7 +6607,7 @@ function renderGrafInspector() {
   }
   let rmsg = '';
   if ((G.reinit || '').trim()) { try { gxCheck(G.reinit); rmsg = '<div class="stok">✓</div>'; } catch (x) { rmsg = `<div class="sterr">✗ ${esc(x.message)}</div>`; } }
-  h += `<h3>${esc(project.name)}</h3><p class="desc">GRAFCET · ${G.steps.length} tappe, ${G.trans.length} transizioni, ${project.networks.filter(n => n.tr == null).length} segmenti LADDER · ${gen.blocks.length}/${info.maxBlocks} blocchi interni.</p>`;
+  h += `${projTitle()}<p class="desc">GRAFCET · ${G.steps.length} tappe, ${G.trans.length} transizioni, ${project.networks.filter(n => n.tr == null).length} segmenti LADDER · ${gen.blocks.length}/${info.maxBlocks} blocchi interni.</p>`;
   if (gen.errors.length) h += `<ul class="probs">${gen.errors.map(x => `<li data-gwhere='${JSON.stringify(x)}'>${esc(problemWhere(x) + x.msg)}</li>`).join('')}</ul>`;
   h += `<label class="field"><span>Condizione di reinizializzazione (forzatura alla situazione iniziale)</span><input list="ladTags" data-gg="reinit" value="${esc(G.reinit || '')}" placeholder="es. Emergenza"></label>${rmsg}
     <div class="hint"><b>Come si usa</b><ul>

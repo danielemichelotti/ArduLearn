@@ -8,8 +8,41 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3544361,
+  "ver": 3544398,
   "file": "INDEX.GZ"
  },
- "note": "LADDER: gli indirizzi sopra contatti e bobine (%I0.0, %Q0.0...) non sono piu' tagliati"
+ "note": "Il nome del progetto si cambia anche dall'editor: basta cliccare il titolo nel pannello a destra. · I programmi salvati sulla scheda si possono rinominare con il pulsante \"Rinomina\" nella scheda Progetti. · Prima di aggiornare la scheda, la pagina mostra l'elenco delle novità della nuova versione.",
+ "novita": [
+  {
+   "data": "27/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.2",
+   "page": 3544398,
+   "voci": [
+    "Il nome del progetto si cambia anche dall'editor: basta cliccare il titolo nel pannello a destra.",
+    "I programmi salvati sulla scheda si possono rinominare con il pulsante \"Rinomina\" nella scheda Progetti.",
+    "Prima di aggiornare la scheda, la pagina mostra l'elenco delle novità della nuova versione."
+   ]
+  },
+  {
+   "data": "27/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.2",
+   "page": 3544361,
+   "voci": [
+    "LADDER: gli indirizzi sopra contatti e bobine (%I0.0, %Q0.0...) non sono più tagliati"
+   ]
+  },
+  {
+   "data": "27/09/2026",
+   "fw": "2.2",
+   "bridge": "0.3.2",
+   "page": 3544264,
+   "voci": [
+    "Matrice LED: blocchi immagine e testo (caratteri 5x7, scorrimento)",
+    "Aggiornamento dalla rete più affidabile",
+    "Controllo automatico del server web"
+   ]
+  }
+ ]
 }
