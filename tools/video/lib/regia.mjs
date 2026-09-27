@@ -62,6 +62,9 @@ export class Regia {
     this.fotogrammi = [];      // { file, t }
     this.scene = [];           // { scritta, voce, inizio, fine }
     this.mouse = { x: VISTA.width / 2, y: VISTA.height / 2 };
+    this.coperture = [];       // { x, y, w, h, da, a } in pixel del video: zone da sfocare (nomi di rete, indirizzi)
+    this.tagli = [];           // { da, a }: attese da togliere al montaggio (per esempio mentre si scrive la password)
+    this.tagliato = 0;
   }
 
   // ---------- registrazione ----------
@@ -82,6 +85,7 @@ export class Regia {
   }
 
   async fermaRegistrazione() {
+    this.fermaCoperture();
     // un ultimo movimento invisibile obbliga il browser a mandare il fotogramma finale
     await this.p.evaluate(() => document.body.style.outline = '0px solid transparent');
     await attesa(400);
@@ -97,14 +101,61 @@ export class Regia {
     const inizio = this.ora();
     const s = { scritta, voce, capitolo, basso, inizio, fine: inizio };
     this.scene.push(s);
+    const t0 = this.tagliato;
     if (azioni) await azioni();
-    const manca = durataVoce(voce) - (this.ora() - inizio);
+    const manca = durataVoce(voce) - (this.ora() - inizio - (this.tagliato - t0));
     if (manca > 0) await attesa(manca * 1000);
     s.fine = this.ora();
     console.log(`  scena ${String(this.scene.length).padStart(2)}  ${s.inizio.toFixed(1).padStart(6)}–${s.fine.toFixed(1).padStart(6)} s  ${scritta || voce.slice(0, 40)}`);
   }
 
   pausa(ms) { return attesa(ms); }
+
+  // ---------- attese da tagliare e zone da coprire ----------
+  async taglio(azioni) {
+    const da = this.ora();
+    await azioni();
+    const a = this.ora();
+    this.tagli.push({ da, a });
+    this.tagliato += a - da;
+  }
+
+  // aspetta che una condizione nella pagina diventi vera (per esempio un'azione fatta a mano)
+  async aspetta(fn, arg, timeout = 600000) {
+    await this.p.waitForFunction(fn, arg, { timeout, polling: 250 });
+  }
+
+  // tiene d'occhio gli elementi dei selettori e ne annota posizione e tempi finché restano visibili
+  copri(selettori) {
+    const attive = new Map();
+    const giro = async () => {
+      let ora;
+      try {
+        ora = await this.p.evaluate(sel => {
+          const out = {};
+          sel.forEach((s, k) => document.querySelectorAll(s).forEach((e, i) => {
+            const r = e.getBoundingClientRect();
+            // niente offsetParent: dentro un dialogo modale (position: fixed) vale null anche se l'elemento si vede
+            if (r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden' && e.getClientRects().length) out[k + ':' + i] = [r.x, r.y, r.width, r.height];
+          }));
+          return out;
+        }, selettori);
+      } catch { return; }
+      const t = this.ora(), pad = 6;
+      const rett = ([x, y, w, h]) => {
+        const X = Math.max(0, Math.floor((x * SCALA - pad) / 2) * 2), Y = Math.max(0, Math.floor((y * SCALA - pad) / 2) * 2);
+        return { x: X, y: Y, w: Math.min(VISTA.width * SCALA - X, Math.ceil((w * SCALA + 2 * pad) / 2) * 2), h: Math.min(VISTA.height * SCALA - Y, Math.ceil((h * SCALA + 2 * pad) / 2) * 2) };
+      };
+      for (const [k, c] of attive) {
+        const n = ora[k] && rett(ora[k]);
+        if (!n || n.x !== c.x || n.y !== c.y || n.w !== c.w || n.h !== c.h) { c.a = t; this.coperture.push(c); attive.delete(k); }
+      }
+      for (const [k, v] of Object.entries(ora)) if (!attive.has(k)) attive.set(k, { ...rett(v), da: t - 0.25 });
+    };
+    const id = setInterval(giro, 150);
+    this.fermaCoperture = () => { clearInterval(id); const t = this.ora() + 1; for (const c of attive.values()) { c.a = t; this.coperture.push(c); } attive.clear(); this.fermaCoperture = () => { }; };
+  }
+  fermaCoperture() { }
 
   // ---------- mouse e tastiera, con movimenti visibili ----------
   async centro(sel) {
@@ -199,15 +250,18 @@ export class Regia {
 }
 
 // Apre il browser sul simulatore, registra le scene e salva fotogrammi e tempi
-export async function registra({ url, cartella, scene }) {
-  const browser = await chromium.launch();
+export async function registra({ url, cartella, scene, finestra = false }) {
+  // in finestra si usa Chrome installato (profilo temporaneo vuoto): serve a chi deve scrivere, per esempio la password
+  const browser = await chromium.launch(finestra ? { headless: false, channel: 'chrome' } : {});
   const context = await browser.newContext({ viewport: VISTA, deviceScaleFactor: SCALA, colorScheme: 'dark', locale: 'it-IT' });
   await context.addInitScript(SCRIPT_PAGINA);
   const page = await context.newPage();
   page.on('dialog', d => d.accept());          // le conferme native non si vedono nel video: si accettano
   page.on('pageerror', e => console.warn('  errore nella pagina:', e.message));
-  await page.goto(url);
-  await page.waitForLoadState('networkidle');
+  await page.goto(url, { timeout: 90000 });
+  // la scheda vera chiede i valori di continuo: la rete non si ferma mai, basta il caricamento
+  await page.waitForLoadState(finestra ? 'load' : 'networkidle');
+  if (finestra) await attesa(2500);
   await attesa(800);
 
   const r = new Regia(page, path.join(cartella, 'fotogrammi'));
@@ -216,7 +270,7 @@ export async function registra({ url, cartella, scene }) {
   await r.fermaRegistrazione();
   await browser.close();
 
-  const dati = { t0: r.t0, tFine: r.tFine, fotogrammi: r.fotogrammi, scene: r.scene };
+  const dati = { t0: r.t0, tFine: r.tFine, fotogrammi: r.fotogrammi, scene: r.scene, coperture: r.coperture, tagli: r.tagli };
   fs.writeFileSync(path.join(cartella, 'registrazione.json'), JSON.stringify(dati, null, 1));
   return dati;
 }

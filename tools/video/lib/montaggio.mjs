@@ -24,7 +24,12 @@ function trovaFfmpeg() {
   throw new Error('ffmpeg non trovato: installalo con  winget install Gyan.FFmpeg --scope user');
 }
 const FFMPEG = trovaFfmpeg();
-const ffmpeg = (args, cwd) => execFileSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { cwd, stdio: 'inherit' });
+export const ffmpeg = (args, cwd) => execFileSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { cwd, stdio: 'inherit' });
+
+export function ffprobeDurata(file) {
+  const probe = FFMPEG === 'ffmpeg' ? 'ffprobe' : FFMPEG.replace(/ffmpeg\.exe$/i, 'ffprobe.exe');
+  return +execFileSync(probe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file]).toString().trim();
+}
 
 const tempo = (s, sep = ',') => {
   const ms = Math.max(0, Math.round(s * 1000));
@@ -159,7 +164,8 @@ async function cartelli(video, cartella) {
 // ---------- montaggio completo ----------
 export async function monta(video, cartella, { voce, musica } = {}) {
   const reg = JSON.parse(fs.readFileSync(path.join(cartella, 'registrazione.json'), 'utf8'));
-  const durCorpo = listaFotogrammi(reg, cartella);
+  // corpo già montato (video fatti di pezzi) oppure fotogrammi della registrazione
+  const durCorpo = reg.corpo ? reg.durata : listaFotogrammi(reg, cartella);
   fileAss(reg.scene, cartella);
   await cartelli(video, cartella);
   const totale = DURATA_INTRO + durCorpo + DURATA_CHIUSURA;
@@ -167,7 +173,7 @@ export async function monta(video, cartella, { voce, musica } = {}) {
   // i tre pezzi uniti con dissolvenze dal nero, audio muto o voce/musica
   const ingressi = [
     '-loop', '1', '-framerate', String(FPS), '-t', String(DURATA_INTRO), '-i', 'intro.png',
-    '-f', 'concat', '-safe', '0', '-i', 'fotogrammi.ffconcat',
+    ...(reg.corpo ? ['-i', reg.corpo] : ['-f', 'concat', '-safe', '0', '-i', 'fotogrammi.ffconcat']),
     '-loop', '1', '-framerate', String(FPS), '-t', String(DURATA_CHIUSURA), '-i', 'chiusura.png',
   ];
   let filtro = `[0:v]scale=${W}:${H},fps=${FPS},format=yuv420p,fade=t=in:d=0.6,fade=t=out:st=${DURATA_INTRO - 0.5}:d=0.5,setsar=1[a];` +
