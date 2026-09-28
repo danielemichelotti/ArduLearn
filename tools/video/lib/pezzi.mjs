@@ -10,6 +10,15 @@ import { VISTA, SCALA, durataVoce } from './regia.mjs';
 import { ffmpeg, ffprobeDurata } from './montaggio.mjs';
 
 const FPS = 30, W = VISTA.width * SCALA, H = VISTA.height * SCALA;
+// fascia in alto riservata alle scritte: sotto, app e pagina un po' rimpicciolite, così le scritte non coprono nulla
+export const FASCIA = 124;
+const ALTO = H - FASCIA - 16;               // altezza disponibile per il contenuto
+
+// ombra leggera sotto il riquadro del contenuto, poi il contenuto sopra lo sfondo
+const suSfondo = (bg, dentro, x, y, w, h, durata, uscita) =>
+  `[${bg}]scale=${W}:${H},fps=${FPS},trim=0:${durata.toFixed(3)},setpts=PTS-STARTPTS,` +
+  `drawbox=x=${x + 10}:y=${y + 14}:w=${w}:h=${h}:color=black@0.45:t=fill,boxblur=12:1[bgo];` +
+  `[bgo][${dentro}]overlay=${x}:${y}:shortest=1,fps=${FPS},format=yuv420p,setsar=1[${uscita}]`;
 
 // toglie dai tempi le attese tagliate: un istante dentro un taglio va all'inizio del taglio
 function mappaTagli(tagli = []) {
@@ -83,9 +92,12 @@ function pezzoPagina(nome, dir, def = {}) {
     ...(def.copertureFisse || []).map(c => ({ ...c, a: Math.min(c.a ?? fine, fine) }))].filter(c => c.a > c.da);
   // coda: l'ultimo fotogramma resta fermo qualche secondo (per esempio per finire la frase della voce)
   const coda = def.coda || 0, tot = fine + coda;
+  const pw = Math.round(W * ALTO / H / 2) * 2, x = (W - pw) / 2, y = FASCIA + 8;
   fs.writeFileSync(path.join(dir, 'filtro.txt'), `[0:v]scale=${W}:${H},fps=${FPS},format=yuv420p${coda ? `,tpad=stop_mode=clone:stop_duration=${coda}` : ''}[p];` +
-    catenaSfocature('p', cop.map(c => c.a >= fine - 0.05 ? { ...c, a: tot } : c), 'v'));
-  ffmpeg(['-f', 'concat', '-safe', '0', '-i', 'fotogrammi.ffconcat', '-/filter_complex', 'filtro.txt', '-map', '[v]',
+    catenaSfocature('p', cop.map(c => c.a >= fine - 0.05 ? { ...c, a: tot } : c), 'sf') + ';' +
+    `[sf]scale=${pw}:${ALTO}:flags=lanczos[pag];` + suSfondo('1:v', 'pag', x, y, pw, ALTO, tot, 'v'));
+  ffmpeg(['-f', 'concat', '-safe', '0', '-i', 'fotogrammi.ffconcat', '-loop', '1', '-framerate', String(FPS), '-i', path.resolve(def.sfondo),
+    '-/filter_complex', 'filtro.txt', '-map', '[v]',
     '-t', tot.toFixed(3), '-c:v', 'libx264', '-preset', 'medium', '-crf', '16', '-pix_fmt', 'yuv420p', 'pezzo.mp4'], dir);
   const scene = reg.scene.map(s => ({ ...s, inizio: T(s.inizio), fine: T(s.fine) }));
   scene.at(-1).fine = tot;
@@ -120,17 +132,15 @@ async function pezzoApp(nome, def, cartella) {
     tr.inizio = t; t += (tr.a - tr.da) / v; tr.fine = t;
   });
   const durata = t;
-  // finestra dell'app ingrandita al centro dello sfondo, con un'ombra leggera
-  const k = def.scala || 1.5, fw = Math.round(def.larghezza * k / 2) * 2, fh = Math.round(def.altezza * k / 2) * 2;
-  const x = Math.round((W - fw) / 2), y = Math.round((H - fh) / 2);
+  // finestra dell'app ingrandita sotto la fascia delle scritte, con un'ombra leggera
+  const k = ALTO / def.altezza, fw = Math.round(def.larghezza * k / 2) * 2, fh = Math.round(def.altezza * k / 2) * 2;
+  const x = Math.round((W - fw) / 2), y = FASCIA + 8;
   f += `${def.tratti.map((_, i) => `[t${i}]`).join('')}concat=n=${def.tratti.length}:v=1:a=0,fps=${FPS},scale=${fw}:${fh}:flags=lanczos[app];` +
-    `[1:v]scale=${W}:${H},loop=-1:1,trim=0:${durata.toFixed(3)},setpts=PTS-STARTPTS[bg];` +
-    `[bg]drawbox=x=${x + 10}:y=${y + 14}:w=${fw}:h=${fh}:color=black@0.45:t=fill,boxblur=12:1[bgo];` +
-    `[bgo][app]overlay=${x}:${y}:shortest=1,format=yuv420p[p];`;
+    suSfondo('1:v', 'app', x, y, fw, fh, durata, 'p') + ';';
   const cop = (def.coperture || []).map(c => ({ x: x + Math.round(c.x * k), y: y + Math.round(c.y * k), w: Math.round(c.w * k / 2) * 2, h: Math.round(c.h * k / 2) * 2, da: c.da, a: c.a }));
   f += catenaSfocature('p', cop, 'v');
   fs.writeFileSync(path.join(dir, 'filtro.txt'), f);
-  ffmpeg(['-i', src, '-loop', '1', '-i', bg, '-/filter_complex', 'filtro.txt', '-map', '[v]', '-t', durata.toFixed(3),
+  ffmpeg(['-i', src, '-loop', '1', '-framerate', String(FPS), '-i', bg, '-/filter_complex', 'filtro.txt', '-map', '[v]', '-t', durata.toFixed(3),
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '16', '-pix_fmt', 'yuv420p', 'pezzo.mp4'], dir);
   // scene: ogni scena comincia all'istante indicato (tempo del pezzo finito) e finisce alla successiva
   const scene = def.scene.map((s, i) => ({ basso: false, capitolo: '', ...s, inizio: s.da, fine: i + 1 < def.scene.length ? def.scene[i + 1].da : durata }));
@@ -143,10 +153,13 @@ async function pezzoApp(nome, def, cartella) {
 // ---------- tutti i pezzi, nell'ordine, in corpo.mp4 ----------
 export async function uniscePezzi(video, cartella) {
   const fatti = [];
+  const bg = await sfondo(cartella);
   for (const nome of video.ordine) {
     const def = video.pezzi[nome];
-    fatti.push(def.url ? pezzoPagina(nome, path.join(cartella, nome), def) : await pezzoApp(nome, def, cartella));
+    fatti.push(def.url ? pezzoPagina(nome, path.join(cartella, nome), { ...def, sfondo: bg }) : await pezzoApp(nome, def, cartella));
   }
+  // tutte le scritte nella fascia in alto
+  for (const p of fatti) for (const s of p.scene) s.fascia = true;
   const lista = fatti.map(p => `file '${path.resolve(p.file).replace(/\\/g, '/')}'`).join('\n');
   fs.writeFileSync(path.join(cartella, 'pezzi.txt'), lista + '\n');
   // si ricodifica: una copia diretta di pezzi fatti in modi diversi lasciava tempi sballati e bloccava il montaggio
@@ -156,6 +169,7 @@ export async function uniscePezzi(video, cartella) {
   const scene = [];
   for (const p of fatti) { for (const s of p.scene) scene.push({ ...s, inizio: s.inizio + off, fine: s.fine + off }); off += p.durata; }
   const durata = ffprobeDurata(path.join(cartella, 'corpo.mp4'));
+  if (Math.abs(durata - off) > 0.5) console.warn(`  ATTENZIONE: corpo.mp4 dura ${durata.toFixed(1)} s ma i pezzi sommano ${off.toFixed(1)} s: le scritte sarebbero sfasate`);
   fs.writeFileSync(path.join(cartella, 'registrazione.json'), JSON.stringify({ corpo: 'corpo.mp4', durata, scene }, null, 1));
   return durata;
 }

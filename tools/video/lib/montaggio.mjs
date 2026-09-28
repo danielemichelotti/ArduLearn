@@ -73,9 +73,12 @@ Style: Scritta,Segoe UI,44,&H00FFFFFF,&H00FFFFFF,&H28201812,&H00000000,1,0,0,0,1
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
   // area del foglio: da x=315 a x=1485 (pixel del video); la scritta sta in alto al centro del foglio,
-  // oppure più in basso quando in alto c'è qualcosa da leggere (per esempio il banner del simulatore)
-  for (const s of scene) if (s.scritta)
-    txt += `Dialogue: 0,${tempo(s.inizio, '.').slice(1, -1)},${tempo(s.fine, '.').slice(1, -1)},Scritta,,0,0,0,,{\\an8\\pos(900,${s.basso ? 760 : 248})\\fad(250,250)}${esc(s.scritta)}\n`;
+  // oppure più in basso quando in alto c'è qualcosa da leggere (per esempio il banner del simulatore);
+  // nei video fatti di pezzi le scritte stanno nella fascia libera in alto (vedi FASCIA in lib/pezzi.mjs)
+  for (const s of scene) if (s.scritta) {
+    const pos = s.fascia ? '\\an5\\pos(960,62)' : `\\an8\\pos(900,${s.basso ? 760 : 248})`;
+    txt += `Dialogue: 0,${tempo(s.inizio, '.').slice(1, -1)},${tempo(s.fine, '.').slice(1, -1)},Scritta,,0,0,0,,{${pos}\\fad(250,250)}${esc(s.scritta)}\n`;
+  }
   fs.writeFileSync(path.join(cartella, 'scritte.ass'), txt);
 }
 

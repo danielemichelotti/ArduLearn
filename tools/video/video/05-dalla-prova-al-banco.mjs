@@ -13,6 +13,21 @@ export default {
   sottotitolo: 'Firmware con l\'app per Windows, Wi-Fi e pagina della scheda vera',
   prossimo: '',
   ordine: ['A', 'B', 'C', 'D'],
+
+  youtube: {
+    titolo: 'ArduLearn · 5. Dalla prova al banco: firmware, Wi-Fi e scheda vera (UNO R4 WiFi)',
+    descrizione: `Quinto video tutorial di ArduLearn, il PLC didattico per Arduino che si programma dal browser.
+
+Dopo le prove nel simulatore passiamo alla scheda vera: con l'app ArduLearn per Windows carichiamo il firmware su una UNO R4 WiFi nuova, impostiamo il Wi-Fi dalla pagina della scheda, la ritroviamo nella rete con Trova le schede e le carichiamo il primo programma.
+
+Nel video:
+{capitoli}
+
+App per Windows, manuale e prova online: https://ardulearn.org
+Codice sorgente: https://github.com/danielemichelotti/ArduLearn`,
+    tag: ['ArduLearn', 'Arduino', 'PLC', 'PLC didattico', 'UNO R4 WiFi', 'firmware', 'Wi-Fi', 'automazione', 'tutorial'],
+  },
+  sito: { categoria: 'Primi passi', ordine: 5, descrizione: 'Dal simulatore alla scheda vera: firmware con l\'app per Windows, Wi-Fi della UNO R4 e primo programma caricato.' },
   pezzi: {
     B: {
       url: 'http://192.168.4.1/',
@@ -64,7 +79,7 @@ export default {
 
         await r.scena({
           scritta: 'La scheda passa sulla rete del laboratorio',
-          voce: 'La scheda lascia la sua rete e si collega a quella del laboratorio. Ora ricolleghiamo anche il PC alla stessa rete.',
+          voce: 'La scheda lascia la sua rete e passa a quella del laboratorio: ricolleghiamo anche il PC alla stessa rete.',
         }, async () => {
           await r.pausa(800);
           await r.evidenzia('#dlg', 3500);
@@ -78,12 +93,12 @@ export default {
       larghezza: 980, altezza: 680,
       tratti: [
         { da: 3, a: 8 },                     // Trova le schede → Carica il firmware
-        { da: 8, a: 17 },                    // porta USB, tipo di scheda, Aggiorna
+        { da: 8, a: 16 },                    // porta USB, tipo di scheda, Aggiorna
         { da: 34, a: 39 },                   // clic su Carica il firmware (la conferma è una finestra a parte)
         { da: 40, a: 78, velocita: 5 },      // caricamento, circa un minuto
         { da: 78, a: 83 },                   // "Ultimo passo: scollega e ricollega il cavo USB"
         { da: 83, a: 107, velocita: 8 },     // attesa del cavo
-        { da: 107, a: 117 },                 // "Firmware caricato: la scheda è pronta"
+        { da: 107, a: 115 },                 // "Firmware caricato: la scheda è pronta"
       ],
       scene: [
         {
@@ -94,20 +109,20 @@ export default {
         {
           da: 10,
           scritta: 'Porta USB e tipo di scheda',
-          voce: 'Colleghiamo la UNO R4 con il cavo USB: l\'app trova la porta e il tipo di scheda.',
+          voce: 'Colleghiamo la UNO R4 con il cavo USB: l\'app trova da sola porta e scheda.',
         },
         {
-          da: 18,
+          da: 17,
           scritta: 'Carica il firmware (qui accelerato)',
           voce: 'Premiamo Carica il firmware e confermiamo. Dura circa un minuto: qui è accelerato.',
         },
         {
-          da: 26.6,
+          da: 25.6,
           scritta: 'Ultimo passo: scollega e ricollega il cavo USB',
           voce: 'Alla fine l\'app chiede di scollegare e ricollegare il cavo USB, così la scheda riparte da capo.',
         },
         {
-          da: 34.6,
+          da: 33.6,
           scritta: 'Fatto: la scheda è pronta',
           voce: 'Fatto: la scheda è pronta, ma non conosce ancora nessuna rete Wi-Fi.',
         },
