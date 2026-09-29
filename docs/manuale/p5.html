@@ -122,8 +122,7 @@
   <tr><th style="width:34%">Problema</th><th>Cosa fare</th></tr>
   <tr><td>L'app non trova la scheda</td><td>PC e scheda devono essere sulla stessa rete. Controlla il firewall di Windows (deve permettere l'app). Sulla UNO R4 guarda l'indirizzo che scorre sulla matrice e aprilo a mano. Alcune reti Wi-Fi scolastiche isolano i dispositivi: serve una rete dedicata.</td></tr>
   <tr><td>La pagina non si apre con il nome .local</td><td>Usa l'indirizzo numerico (dall'app, dalla matrice o dal display). Il nome .local non funziona su tutte le reti.</td></tr>
-  <tr><td>La UNO R4 non si collega al Wi-Fi</td><td>Dopo 3 tentativi torna sulla sua rete ArduLearn-xxxx: ricollegati e ricontrolla nome e password. Reti a 5 GHz o con nome utente personale non sono supportate.</td></tr>
-  <tr><td>Non riesco più a raggiungere la UNO R4 (rete cambiata, scheda spostata)</td><td><b>Senza cavo:</b> se la scheda non trova la rete salvata, dopo circa un minuto accende la sua rete ArduLearn-xxxx (password ardulearn): collegati, apri <b>http://192.168.4.1</b> e in Impostazioni → Rete Wi-Fi imposta la nuova rete. Ogni 10 minuti la scheda riprova la rete salvata, ma solo se nessuno è collegato alla sua. <b>Con il cavo USB</b> (funziona sempre, anche se la vecchia rete è ancora raggiungibile): app → Monitor seriale → <code>wifi clear</code>, poi come sopra; oppure imposta subito la nuova rete con <code>wifi ssid …</code>, <code>wifi pass …</code> e <code>wifi connect</code>. Programmi e slot restano.</td></tr>
+  <tr><td>La UNO R4 non si collega al Wi-Fi o non la raggiungo più (rete cambiata)</td><td>Dopo 3 tentativi (circa un minuto) torna sulla sua rete ArduLearn-xxxx: collegati, apri <b>http://192.168.4.1</b> e ricontrolla o cambia la rete nelle Impostazioni. Con il cavo USB: Monitor seriale → <code>wifi clear</code> (programmi e slot restano). Reti a 5 GHz o con nome utente personale non sono supportate.</td></tr>
   <tr><td>"PIN errato" / PIN dimenticato</td><td>App → Monitor seriale → <code>pin reset</code>: il PIN torna 1234.</td></tr>
   <tr><td>"Carica sulla scheda" dice di correggere i problemi</td><td>Leggi l'elenco nel pannello a destra (clic su un problema = porta al blocco): pin non scelto, pin riservato, blocchi senza collegamenti necessari, troppi blocchi.</td></tr>
   <tr><td>I pulsanti virtuali non fanno nulla</td><td>Il programma deve essere caricato e senza modifiche in sospeso ("✓ uguale alla scheda").</td></tr>
@@ -155,7 +154,8 @@
   <tr><td><code>wifi</code></td><td>stato del Wi-Fi</td><td>UNO R4</td></tr>
   <tr><td><code>wifi clear</code></td><td>dimentica la rete e riattiva la rete ArduLearn-xxxx</td><td>UNO R4</td></tr>
   <tr><td><code>wifi ap</code></td><td>passa alla rete della scheda senza dimenticare quella salvata</td><td>UNO R4</td></tr>
-  <tr><td><code>wifi ssid Nome</code> · <code>wifi pass Password</code></td><td>prepara nome e password di una nuova rete (password vuota per le reti aperte)</td><td>UNO R4</td></tr>
+  <tr><td><code>wifi ssid Nome</code></td><td>prepara il nome di una nuova rete</td><td>UNO R4</td></tr>
+  <tr><td><code>wifi pass Password</code></td><td>prepara la password (vuota per le reti aperte)</td><td>UNO R4</td></tr>
   <tr><td><code>wifi connect</code></td><td>salva la rete preparata e si collega</td><td>UNO R4</td></tr>
 </table>
 <h2>Glossario</h2>
