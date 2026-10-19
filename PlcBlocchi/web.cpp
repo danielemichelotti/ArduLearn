@@ -2,6 +2,7 @@
 #include "engine.h"
 #include "storage.h"
 #include "displays.h"
+#include "force.h"
 #if HAS_EMBEDDED_PAGE
 #include "web_page.h"
 #endif
@@ -355,7 +356,9 @@ static void sendLive(Print& o) {
     uint8_t byte = 0;
     for (uint8_t b = 0; b < 8 && base + b < NUM_PINS; b++) {
       uint8_t p = base + b;
-      if (!Engine::isReserved(p) && digitalRead(p)) byte |= 1 << b;
+      int32_t fv;                                  // ingresso forzato: si mostra il valore forzato
+      bool v = Engine::pinModes[p] != PM_OUT && pinForced(p, fv) ? fv != 0 : digitalRead(p);
+      if (!Engine::isReserved(p) && v) byte |= 1 << b;
     }
     if (byte < 16) o.print('0');
     o.print(byte, HEX);
@@ -373,14 +376,16 @@ static void sendLive(Print& o) {
   for (uint8_t i = 0; i < NUM_PINS - FIRST_APIN; i++) {
     if (i) o.print(',');
     uint8_t p = FIRST_APIN + i;
-    if (Engine::pinModes[p] == PM_ANALOG) o.print(analogRead(p));
+    int32_t fv;
+    if (Engine::pinModes[p] == PM_ANALOG) o.print(pinForced(p, fv) ? fv : analogRead(p));
     else o.print(-1);
   }
+  o.print(F("],\"fo\":")); forceJson(o);          // forzature attive: [["p",13,1],["m",5,1],...]
 #if HAS_LED_MATRIX
-  o.print(F("],\"pm\":")); o.print(Engine::pageMtx);
+  o.print(F(",\"pm\":")); o.print(Engine::pageMtx);
   o.print(F(",\"mx\":\"")); ledHex(o); o.print(F("\"}"));       // matrice LED: per l'anteprima nella pagina
 #else
-  o.print(F("]}"));
+  o.print('}');
 #endif
 }
 
@@ -720,6 +725,25 @@ static void route(Out& o, NetClient& c, Req& r) {
   if (post && is(p, PSTR("/api/pinset"))) {
     if (!getLong(r.query, "p", a) || !getLong(r.query, "v", b) || a < 0 || a >= NUM_PINS || !Engine::manualPin(a, b != 0))
       return replyErrP(o, 400, F("Pin non comandabile"));
+    return replyOk(o);
+  }
+
+  // forzature e "Comanda": per docente e studenti, come la prova delle uscite
+  // /api/force?k=p|m|w&i=N&v=V  forza;  &del=1 toglie;  /api/force?all=1&del=1 toglie tutte
+  // /api/modify?k=p|m|w&i=N&v=V scrive una volta
+  if (post && (is(p, PSTR("/api/force")) || is(p, PSTR("/api/modify")))) {
+    char k[2] = "";
+    long del = 0, all = 0;
+    getLong(r.query, "del", del);
+    getLong(r.query, "all", all);
+    if (all && del) { forceClearAll(); displaysShowStatus(); return replyOk(o); }
+    getParam(r.query, "k", k, sizeof(k));
+    uint8_t kind = k[0] == 'p' ? FK_PIN : k[0] == 'm' ? FK_MBIT : k[0] == 'w' ? FK_MWORD : 0;
+    if (!kind || !getLong(r.query, "i", a) || a < 0 || a > 255) return replyErrP(o, 400, F("Parametri non validi"));
+    if (del) { forceClear(kind, a); return replyOk(o); }
+    if (!getLong(r.query, "v", b)) return replyErrP(o, 400, F("Manca il valore"));
+    const __FlashStringHelper* e = is(p, PSTR("/api/force")) ? forceSet(kind, a, b) : forceModify(kind, a, b);
+    if (e) return replyErrP(o, 400, e);
     return replyOk(o);
   }
 

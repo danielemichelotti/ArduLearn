@@ -105,6 +105,9 @@ void        commitStaging();       // il file appena scritto diventa quello atti
 uint16_t maxImage();
 // Programmi nella memoria della scheda: quello attivo su microSD e la copia in EEPROM
 // (la EEPROM si usa quando la microSD manca o non ha un programma attivo)
+// blocco qualunque nella EEPROM (sull'R4 una sola riscrittura del blocco di flash)
+void eeSaveBlock(uint16_t addr, const void* p, uint16_t n);
+void eeLoadBlock(uint16_t addr, void* p, uint16_t n);
 bool eeHasProgram();
 void eeErase();
 bool eeCopyActive();                 // copia il programma attivo della microSD in EEPROM                 // limite del progetto: dipende dalla presenza della SD

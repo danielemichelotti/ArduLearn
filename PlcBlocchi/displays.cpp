@@ -1,5 +1,6 @@
 #include "displays.h"
 #include "engine.h"
+#include "force.h"
 #include "storage.h"
 #if HAS_LCD
 #include "charlcd.h"
@@ -237,10 +238,15 @@ static void renderStatusLcd(uint8_t cols, uint8_t rows) {
 }
 #endif
 
+// Forzature attive (come il LED FRCE delle CPU Siemens): "F" nell'angolo in alto a destra,
+// fissa nella schermata di stato, lampeggiante sopra le scritte del programma
+static bool showForceMark(bool status) { return g_nForces && (status || (millis() / 700) % 2 == 0); }
+
 static void drawOled() {
   bool status = !Engine::usesOled || (int32_t)(statusUntil - millis()) > 0;
   if (status) renderStatusOled();
   else renderBlocks(BT_OLED, &grid[0][0], OLED_COLS, OLED_ROWS, true, Engine::pageOled);
+  if (showForceMark(status)) grid[0][OLED_COLS - 1] = 'F';
 
   for (uint8_t r = 0; r < OLED_ROWS; r++) {
     uint16_t h = 0x811C;                             // hash della riga: testo + immagini visibili
@@ -307,6 +313,7 @@ static void drawLcd() {
   } else {
     renderBlocks(BT_LCD, &lcdWant[0][0], cols, rows, false, Engine::pageLcd);
   }
+  if (showForceMark(status)) lcdWant[0][cols - 1] = 'F';
 
   // aggiorna solo i caratteri cambiati (l'LCD e' lento)
   const char* want = &lcdWant[0][0];

@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "force.h"
 #include "modules.h"
 #include "script.h"
 
@@ -334,6 +335,7 @@ static void applyPinModes() {
 static void outputsOff() {
   for (uint8_t p = 0; p < NUM_PINS; p++)
     if (pinModes[p] == PM_OUT && !isReserved(p)) digitalWrite(p, LOW);  // spegne anche il PWM
+  forceTick();                                       // le uscite forzate restano (come in TIA)
 }
 
 static void clearMemory() {
@@ -413,6 +415,8 @@ bool setVirtual(uint8_t bi, int32_t v) {
 
 bool manualPin(uint8_t pin, uint8_t v) {
   if (pin >= NUM_PINS || isReserved(pin) || pinModes[pin] != PM_OUT) return false;
+  int32_t fv;
+  if (pinForced(pin, fv)) return false;
   if (running && pinDriven(pin)) return false;
   digitalWrite(pin, v ? HIGH : LOW);
   return true;
@@ -482,6 +486,7 @@ void scan() {
   if (!running) return;
   uint32_t t0 = micros();
   uint32_t now = millis();
+  if (g_nForces) forceApplyMem();
 
   for (uint8_t i = 0; i < nBlocks; i++) {
     Block& b = blocks[i];
@@ -490,12 +495,19 @@ void scan() {
     switch (b.type) {
       // ---- ingressi / uscite ----
       case BT_DIN: {
-        bool v = digitalRead((uint8_t)b.k[0]);
+        int32_t fv;                                          // ingresso forzato: vale il valore forzato
+        bool v = pinForced((uint8_t)b.k[0], fv) ? fv != 0 : digitalRead((uint8_t)b.k[0]);
         out[0] = b.k[1] ? !v : v;
         break;
       }
-      case BT_AIN:   out[0] = analogRead((uint8_t)b.k[0]); break;
+      case BT_AIN: {
+        int32_t fv;
+        out[0] = pinForced((uint8_t)b.k[0], fv) ? fv : analogRead((uint8_t)b.k[0]);
+        break;
+      }
       case BT_DOUT: {
+        int32_t fv;
+        if (pinForced((uint8_t)b.k[0], fv)) { b.flags = 0; break; }   // la scrive forceTick()
         uint8_t v = input(b, 0) ? HIGH : LOW;
         if (!(b.flags & 0x80) || (b.flags & 1) != v) {       // scrive solo se cambia
           digitalWrite((uint8_t)b.k[0], v);
@@ -504,6 +516,8 @@ void scan() {
         break;
       }
       case BT_PWM: {
+        int32_t fv;
+        if (pinForced((uint8_t)b.k[0], fv)) { b.flags = 0; break; }
         int32_t v = constrain(input(b, 0), 0, 255);
         if (!(b.flags & 0x80) || T_OF(b) != v) {
           analogWrite((uint8_t)b.k[0], v);
@@ -571,6 +585,7 @@ void scan() {
           case 2: if (en) nv = 0; break;                 // (R)
           case 3: if (en) nv = input(b, 1); break;       // MOVE / uscita di un box
         }
+        if (word ? mwordForced(idx) : mbitForced(idx)) break;      // forzato: il programma non lo cambia
         if (word) mwords[idx] = nv; else setBit(idx, nv != 0);
         break;
       }
