@@ -230,6 +230,12 @@ dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;font-family:var(--mono);font-size:13
 .lw.on{stroke:#16a34a;stroke-width:3.5}
 .lw.off{stroke:#2563eb;stroke-dasharray:6 4}
 .lsym{stroke:var(--fg);stroke-width:2;fill:none;pointer-events:none}
+.lsym.frc1{stroke:var(--force);stroke-width:3;animation:fpulse 1.4s ease-in-out infinite}
+.lsym.frc0{stroke:var(--force);opacity:.55;stroke-dasharray:3 2}
+.lsymt.frc1,.lop.frc1{fill:var(--force);font-weight:700;animation:fpulse 1.4s ease-in-out infinite}
+.lsymt.frc0,.lop.frc0{fill:var(--force);opacity:.6}
+@keyframes fpulse{0%,100%{opacity:1}50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.lsym.frc1,.lsymt.frc1,.lop.frc1{animation:none}}
 .lsymt{fill:var(--fg);font:600 11px var(--mono);pointer-events:none}
 .lop{fill:var(--fg);font:12px var(--font);pointer-events:none}
 .lop.miss{fill:var(--err)}.lop.von{fill:#16a34a;font-weight:700}.lop.voff{fill:#2563eb}
@@ -4969,29 +4975,35 @@ function ladElemSvg(e, x, y, cy, rh, on, vin, vout, err, key, instName) {
   const col = v => v == null ? 'lw' : v ? 'lw on' : 'lw off';
   const mid = x + CW / 2;
   let s = '';
+  // operando forzato (contatti e bobine): arancione che segue il valore forzato, a 1 pulsa
+  const ftg = ['no', 'nc', 'p', 'n'].includes(e.k) || isCoil(e.k) ? opTarget(e.op, 'bit') : null;
+  const fval = ftg ? forcedValue(ftg.k, ftg.i) : undefined;
+  const frc = fval === undefined ? '' : fval ? ' frc1' : ' frc0';
+  // il LADDER si ridisegna a ogni aggiornamento: la pulsazione si aggancia all'orologio per restare fluida
+  const fsty = fval ? ` style="animation-delay:-${Date.now() % 1400}ms"` : '';
   const opLabel = (o, want) => {
     const t = ladOpText(o, want, on);
-    const vcls = t.v == null ? '' : t.v ? ' von' : ' voff';
+    const vcls = frc && want === 'bit' ? frc : t.v == null ? '' : t.v ? ' von' : ' voff';
     const shown = o ? (/^[%\d+-]|^T#|^TRUE$|^FALSE$/i.test(o) ? o : `"${o}"`) : '<??.?>';
     return (t.addr && o && !/^%/.test(o) ? `<text class="laddr" x="${mid}" y="${cy - 28}" text-anchor="middle">${esc(t.addr)}</text>` : '') +
-      `<text class="lop edit${o ? '' : ' miss'}${vcls}" data-edit="${key}|op" x="${mid}" y="${cy - 15}" text-anchor="middle">${esc(shown.length > 20 ? shown.slice(0, 19) + '…' : shown)}</text>` +
+      `<text class="lop edit${o ? '' : ' miss'}${vcls}"${frc && want === 'bit' ? fsty : ''} data-edit="${key}|op" x="${mid}" y="${cy - 15}" text-anchor="middle">${esc(shown.length > 20 ? shown.slice(0, 19) + '…' : shown)}</text>` +
       (t.v != null && want === 'word' ? `<text class="laddr" x="${mid}" y="${cy + 24}" text-anchor="middle">= ${t.v}</text>` : '');
   };
   if (e.k === 'wire') return `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
   if (['no', 'nc', 'p', 'n', 'not'].includes(e.k)) {
     s += `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${mid - 8}" y2="${cy}"/><line class="${col(vout)}" x1="${mid + 8}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
-    s += `<line class="lsym" x1="${mid - 8}" y1="${cy - 11}" x2="${mid - 8}" y2="${cy + 11}"/><line class="lsym" x1="${mid + 8}" y1="${cy - 11}" x2="${mid + 8}" y2="${cy + 11}"/>`;
-    if (e.k === 'nc') s += `<line class="lsym" x1="${mid - 6}" y1="${cy + 9}" x2="${mid + 6}" y2="${cy - 9}"/>`;
-    if (e.k === 'p' || e.k === 'n') s += `<text class="lsymt" x="${mid}" y="${cy + 4}" text-anchor="middle">${e.k.toUpperCase()}</text>`;
+    s += `<line class="lsym${frc}"${fsty} x1="${mid - 8}" y1="${cy - 11}" x2="${mid - 8}" y2="${cy + 11}"/><line class="lsym${frc}"${fsty} x1="${mid + 8}" y1="${cy - 11}" x2="${mid + 8}" y2="${cy + 11}"/>`;
+    if (e.k === 'nc') s += `<line class="lsym${frc}"${fsty} x1="${mid - 6}" y1="${cy + 9}" x2="${mid + 6}" y2="${cy - 9}"/>`;
+    if (e.k === 'p' || e.k === 'n') s += `<text class="lsymt${frc}"${fsty} x="${mid}" y="${cy + 4}" text-anchor="middle">${e.k.toUpperCase()}</text>`;
     if (e.k === 'not') return s + `<text class="lsymt" x="${mid}" y="${cy - 14}" text-anchor="middle">NOT</text>`;
     const dp = DEMO ? simDinPin(e.op) : null;          // simulatore: tastino dell'ingresso sotto il contatto
     return s + opLabel(e.op, 'bit') + (dp != null ? simButton(mid - 20, cy + 13, 40, dp) : '') + fBadgeSvg(opTarget(e.op, 'bit'), mid + 24, cy + 4);
   }
   if (isCoil(e.k)) {
     s += `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${mid - 10}" y2="${cy}"/><line class="${col(vin)}" x1="${mid + 10}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
-    s += `<path class="lsym" d="M${mid - 5},${cy - 11} A12,12 0 0 0 ${mid - 5},${cy + 11} M${mid + 5},${cy - 11} A12,12 0 0 1 ${mid + 5},${cy + 11}"/>`;
+    s += `<path class="lsym${frc}"${fsty} d="M${mid - 5},${cy - 11} A12,12 0 0 0 ${mid - 5},${cy + 11} M${mid + 5},${cy - 11} A12,12 0 0 1 ${mid + 5},${cy + 11}"/>`;
     const letter = { ncoil: '/', set: 'S', reset: 'R' }[e.k];
-    if (letter) s += `<text class="lsymt" x="${mid}" y="${cy + 4}" text-anchor="middle">${letter}</text>`;
+    if (letter) s += `<text class="lsymt${frc}"${fsty} x="${mid}" y="${cy + 4}" text-anchor="middle">${letter}</text>`;
     return s + opLabel(e.op, 'bit') + fBadgeSvg(opTarget(e.op, 'bit'), mid + 24, cy + 4);
   }
   const bx = LAD_BOXES[e.k];
