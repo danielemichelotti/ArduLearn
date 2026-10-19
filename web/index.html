@@ -1030,7 +1030,7 @@ const LHELP = {
 //  Stato
 // =====================================================================
 let info = { host: '', maxBlocks: 64, maxImage: 3072, maxText: 256, res: Object.keys(RES_WHY).map(Number), sd: 0, rev: -1 };
-let project = emptyProject();
+let project = emptyProject('lad');
 let board = { project: null, rev: -1, ids: [], json: '' };   // ultimo programma letto dalla scheda
 let live = null, liveAt = 0, online = false;
 let sel = null;                  // { kind: 'block'|'wire'|'note', id, i }
@@ -1041,7 +1041,8 @@ let auth = (SITO ? '1234' : sessionStorage.getItem('plcb-pin')) || '';
 let knownDr = null, myDr = -1, lastPublished = '', followBase = '', publishTimer = 0;
 let authed = false;
 
-function emptyProject(lang = 'fbd') { return { name: 'Nuovo progetto', lang, pins: {}, blocks: [], notes: [], images: [], funcs: [], networks: lang === 'lad' ? [newNetwork()] : [], tags: [], graph: lang === 'graf' ? newGraph() : undefined, nextId: 1 }; }
+// LADDER e' il linguaggio predefinito dei nuovi progetti
+function emptyProject(lang = 'lad') { return { name: 'Nuovo progetto', lang, pins: {}, blocks: [], notes: [], images: [], funcs: [], networks: lang === 'lad' ? [newNetwork()] : [], tags: [], graph: lang === 'graf' ? newGraph() : undefined, nextId: 1 }; }
 function newId() { return project.nextId++; }
 const blockById = id => project.blocks.find(b => b.id === id);
 const isReserved = p => info.res.includes(p);
@@ -1791,7 +1792,7 @@ function decodeImages(r) {
 function decode(buf) {
   const r = decodeRaw(buf), m = r.meta;
   const ids = m.ids?.length === r.n ? m.ids : r.blocks.map((_, i) => i + 1);
-  const pr = emptyProject();
+  const pr = emptyProject('fbd');                      // la lingua vera arriva dai metadati
   pr.name = m.name || r.name || 'Senza nome';
   r.pins.forEach((mode, p) => { if (mode || m.pl?.[p]) pr.pins[p] = { mode, label: m.pl?.[p] || '' }; });
   for (const p of m.pi || []) if (pr.pins[p]) pr.pins[p].inv = 1;
@@ -3624,8 +3625,8 @@ async function renameProject() {
 document.addEventListener('click', e => { if (e.target.closest('[data-prename]')) renameProject(); });
 $('#newBtn').onclick = async () => {
   const lang = await dialog(`<form method="dialog"><h3>Nuovo progetto</h3><p class="small mut">Scegli il linguaggio. Un programma si scrive in un solo linguaggio e non si converte nell'altro. Il progetto aperto adesso verrà sostituito (puoi prima scaricarlo come file).</p>
-    <div class="langPick"><button value="fbd"><b>Blocchi (FBD)</b>Blocchi collegati da fili, come i diagrammi funzionali. Ideale per iniziare.</button>
-    <button value="lad"><b>LADDER (KOP)</b>Contatti, bobine e box su segmenti, come in Siemens TIA Portal.</button>
+    <div class="langPick"><button value="lad" class="pri" autofocus><b>LADDER (KOP)</b>Contatti, bobine e box su segmenti, come in Siemens TIA Portal. Linguaggio predefinito.</button>
+    <button value="fbd"><b>Blocchi (FBD)</b>Blocchi collegati da fili, come i diagrammi funzionali.</button>
     <button value="graf"><b>GRAFCET</b>Tappe, transizioni e azioni per le sequenze, con segmenti LADDER per le sicurezze.</button></div>
     <div class="row" style="justify-content:flex-end"><button value="">Annulla</button></div></form>`);
   if (lang !== 'fbd' && lang !== 'lad' && lang !== 'graf') return;
@@ -3761,7 +3762,7 @@ function mkLad(name, desc, pins, tags, networks) {
 }
 function mk(name, desc, pins, blocks, wires, notes = []) {
   return { name, desc, lang: 'fbd', build() {
-    const pr = emptyProject();
+    const pr = emptyProject('fbd');
     pr.name = name;
     for (const [p, mode, label] of pins) pr.pins[p] = { mode, label };
     project = pr;      // newBlock usa project.nextId
@@ -3861,7 +3862,8 @@ const EXAMPLES = [
      ['Display', 3, 1, [['0,0', 'oled', null, { a: { V1: 'Pezzi' }, p: { txt: 'Pezzi: {1}', row: 0, col: 0 } }]]]]),
 ];
 function renderExamples() {
-  $('#examples').innerHTML = EXAMPLES.map((x, i) => `<div class="ex"><b>${esc(x.name)}<span class="lang-tag">${{ lad: 'LADDER', graf: 'GRAFCET' }[x.lang] || 'FBD'}</span></b><p>${esc(x.desc)}</p><div><button data-ex="${i}">Apri nell'editor</button></div></div>`).join('');
+  const ord = { lad: 0, fbd: 1, graf: 2 };
+  $('#examples').innerHTML = EXAMPLES.map((x, i) => [x, i]).sort((a, b) => (ord[a[0].lang] ?? 1) - (ord[b[0].lang] ?? 1) || a[1] - b[1]).map(([x, i]) => `<div class="ex"><b>${esc(x.name)}<span class="lang-tag">${{ lad: 'LADDER', graf: 'GRAFCET' }[x.lang] || 'FBD'}</span></b><p>${esc(x.desc)}</p><div><button data-ex="${i}">Apri nell'editor</button></div></div>`).join('');
 }
 $('#examples').addEventListener('click', async e => {
   const i = e.target.dataset.ex;

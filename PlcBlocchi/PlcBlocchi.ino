@@ -313,7 +313,7 @@ static void printHelp() {
 #endif
     "  run / stop         avvia / ferma il programma\n"
     "  io                 ingressi, uscite e valori dei blocchi (io on / io off: ogni secondo)\n"
-    "  forze              forzature attive (forze off: le toglie tutte)\n"
+    "  force              forzature attive (force off: le toglie tutte)\n"
 #if NET_BRIDGE
     "  wifi               stato del Wi-Fi\n"
     "  wifi clear         dimentica la rete e torna alla rete ArduLearn della scheda\n"
@@ -407,7 +407,7 @@ static void serialTick() {
       else Serial.println(Engine::running ? F("Programma avviato (RUN)") : F("Programma fermato (STOP)"));
     }
     else if (!strcmp_P(line, PSTR("io"))) printIo();
-    else if (!strcmp_P(line, PSTR("forze"))) {
+    else if (!strcmp_P(line, PSTR("force")) || !strcmp_P(line, PSTR("forze"))) {
       if (!g_nForces) Serial.println(F("Nessuna forzatura"));
       for (uint8_t i = 0; i < g_nForces; i++) {
         const Force& f = g_forces[i];
@@ -418,7 +418,7 @@ static void serialTick() {
         Serial.print(F(" = ")); Serial.println(f.v);
       }
     }
-    else if (!strcmp_P(line, PSTR("forze off"))) { forceClearAll(); Serial.println(F("Forzature tolte")); }
+    else if (!strcmp_P(line, PSTR("force off")) || !strcmp_P(line, PSTR("forze off"))) { forceClearAll(); Serial.println(F("Forzature tolte")); }
     else if (!strcmp_P(line, PSTR("io on"))) { ioLive = true; ioLast = 0; }
     else if (!strcmp_P(line, PSTR("io off"))) { ioLive = false; Serial.println(F("[io] fermo")); }
 #if NET_BRIDGE

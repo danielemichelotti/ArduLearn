@@ -866,6 +866,8 @@ COMANDI_SEMPLICI = (
     ("io", "ingressi/uscite e valori dei blocchi (una volta)"),
     ("io on", "stato I/O ogni secondo"),
     ("io off", "ferma lo stato I/O periodico"),
+    ("force", "forzature attive (pin, %M, %MW)"),
+    ("force off", "toglie tutte le forzature"),
     ("ip dhcp", "torna al DHCP (riavvio della rete)"),
     ("pin reset", "PIN docente di nuovo 1234"),
 )
@@ -2116,9 +2118,12 @@ GUIDA = [
     ("li", "Scegli la porta, premi \"Connetti\" (115200 baud). Scrivi un comando e premi Invio, "
            "oppure usa i pulsanti a destra."),
     ("li", "Quando si apre la porta il Mega si riavvia: è normale."),
-    ("li", "Comandi: help, info, sd, run, stop, io, io on/off, ip dhcp, ip <indirizzo> "
-           "<maschera> <gateway>, pin reset, mac xx:xx:xx:xx:xx:xx; solo UNO R4 WiFi: wifi, "
-           "wifi clear."),
+    ("li", "Comandi: help, info, sd, run, stop, io, io on/off, force, force off, ip dhcp, "
+           "ip <indirizzo> <maschera> <gateway>, pin reset, mac xx:xx:xx:xx:xx:xx; solo UNO R4 WiFi: "
+           "wifi, wifi clear."),
+    ("li", "Forzature (come in TIA Portal): nella pagina, tasto destro su un pin o una variabile -> "
+           "Forza... Restano anche dopo un riavvio; sulla scheda si vede una F sul display o sulla "
+           "matrice LED. \"force\" le elenca, \"force off\" le toglie tutte."),
 
     ("h2", "5. Se qualcosa non va"),
     ("li", "Scheda non trovata in rete: PC e scheda nella stessa rete, firewall che permette "

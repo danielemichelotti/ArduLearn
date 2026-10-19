@@ -212,3 +212,16 @@
 <h2>Provare le uscite a mano</h2>
 <p>Il pulsante <span class="btn">Prova uscita</span> sotto un'uscita accende e spegne il pin a mano: utilissimo per controllare i collegamenti prima di scrivere il programma. Funziona solo se la configurazione dei pin è già sulla scheda e se quell'uscita non è comandata dal programma in esecuzione (altrimenti prima premi <b>Ferma</b>).</p>
 <p>Sulla Mega i pin riservati (rete, microSD, display) compaiono bloccati, con il motivo scritto accanto.</p>
+
+<h2>Forzare e comandare, come in TIA Portal</h2>
+<p>Con la scheda collegata, il <b>tasto destro</b> su un pin o su una variabile apre un menu la cui prima voce, in grassetto, è <span class="btn">Forza…</span>. Funziona dalla scheda <b>Pin e variabili</b>, dalla tabella delle variabili e dei merker, sui blocchi di ingresso e uscita (FBD), su contatti, bobine e box (LADDER) e su tappe e transizioni (GRAFCET). Possono farlo sia il docente sia gli studenti.</p>
+<table>
+  <tr><th>Cosa</th><th>Forza…</th><th>Effetto</th></tr>
+  <tr><td>Ingresso digitale</td><td>a 1 / a 0</td><td>il programma legge il valore forzato al posto del pin (si forza il <b>livello del pin</b>, come <code>%I</code>: con "Inverti" il programma vede il contrario)</td></tr>
+  <tr><td>Ingresso analogico</td><td>valore 0–1023</td><td>il programma legge quel numero al posto del sensore</td></tr>
+  <tr><td>Uscita</td><td>a 1 / a 0, valore 0–255 sui pin PWM</td><td>l'uscita resta a quel valore qualunque cosa calcoli il programma, <b>anche in STOP</b></td></tr>
+  <tr><td>Merker <code>%M</code>, <code>%MW</code></td><td>1 / 0, oppure un numero</td><td>il programma (blocchi, LADDER, GRAFCET, script) non lo può cambiare</td></tr>
+</table>
+<p><b>Comanda</b> invece scrive un valore <b>una volta sola</b> su un'uscita o un merker, poi il programma riprende il controllo (su un'uscita comandata dal programma in RUN il valore dura quindi un attimo). Gli ingressi non si comandano: si forzano.</p>
+<p>Le forzature si vedono ovunque: una <b>F</b> arancione accanto a pin e variabili, contatti e bobine LADDER <b>arancioni</b> (pulsano se forzati a 1, tratteggiati se a 0), una <b>barra "Forzature attive"</b> in cima alla pagina di tutti i browser collegati, con <span class="btn">Mostra</span> e <span class="btn">Togli tutte</span>, e una <b>F</b> lampeggiante in alto a destra sul display OLED/LCD e sulla matrice LED della UNO R4, come la spia FRCE delle CPU Siemens. Si tolgono dallo stesso menu (<i>Togli forzatura</i>, <i>Togli tutte le forzature</i>) o dal monitor seriale con <code>force off</code>.</p>
+<div class="box att"><span class="t">Le forzature restano</span>Come in TIA Portal restano attive anche dopo un riavvio e dopo il caricamento di un nuovo programma, finché qualcuno non le toglie (al massimo 16 insieme). Prima di una prova o a fine lezione guarda se c'è la barra arancione: un'uscita forzata non obbedisce al programma.</div>

@@ -116,7 +116,7 @@ td.c { text-align: center; }
     <li><span class="n">4</span>Prima configurazione, passo passo<span class="d">firmware, rete, prima apertura, PIN</span></li>
     <li><span class="n">5</span>La pagina di ArduLearn<span class="d">giro guidato, docente e studenti</span></li>
     <li><span class="n">6</span>Come ragiona un PLC<span class="d">il ciclo, i segnali, i numeri, il tempo</span></li>
-    <li><span class="n">7</span>Pin e variabili<span class="d">ingressi, uscite, pull-up, indirizzi</span></li>
+    <li><span class="n">7</span>Pin e variabili<span class="d">ingressi, uscite, pull-up, indirizzi, forzature</span></li>
     <li><span class="n">8</span>Programmare a blocchi (FBD)<span class="d">logica, uso dell'editor, catalogo dei blocchi</span></li>
     <li><span class="n">9</span>Programmare in LADDER<span class="d">contatti, bobine, box, rami</span></li>
     <li><span class="n">10</span>Programmare in GRAFCET<span class="d">tappe, transizioni, azioni, sicurezze</span></li>
@@ -183,7 +183,7 @@ td.c { text-align: center; }
 </div>
 <p>La scheda contiene sia il PLC sia un piccolo <b>sito web</b>: la pagina di ArduLearn. Chi apre l'indirizzo della scheda trova l'editor, scrive o modifica il programma e, se ha il <b>PIN del docente</b>, lo carica. Da quel momento la scheda lavora da sola: anche se si chiude il browser o si spegne il PC, il programma continua a girare, e resta in memoria anche togliendo l'alimentazione.</p>
 
-<div class="box info"><span class="t">Tre linguaggi, uno per volta</span>Ogni progetto si scrive in <b>uno</b> dei tre linguaggi: <b>Blocchi (FBD)</b>, <b>LADDER</b> (a contatti, stile Siemens TIA Portal) o <b>GRAFCET</b> (sequenze a tappe, con segmenti LADDER). Un programma non si converte da un linguaggio all'altro: si sceglie all'inizio, con <span class="btn">Nuovo…</span>.</div>
+<div class="box info"><span class="t">Tre linguaggi, uno per volta</span>Ogni progetto si scrive in <b>uno</b> dei tre linguaggi: <b>Blocchi (FBD)</b>, <b>LADDER</b> (a contatti, stile Siemens TIA Portal) o <b>GRAFCET</b> (sequenze a tappe, con segmenti LADDER). Un programma non si converte da un linguaggio all'altro: si sceglie all'inizio, con <span class="btn">Nuovo…</span>. Il linguaggio <b>predefinito</b> è il LADDER: una scheda nuova o vuota apre un progetto LADDER, e nella finestra <span class="btn">Nuovo…</span> è già selezionato.</div>
 
 <!-- ======================= 2 ======================= -->
 <h1 class="cap"><span class="n">2</span>Le due schede</h1>
@@ -264,7 +264,7 @@ td.c { text-align: center; }
 
 <h2>Monitor seriale</h2>
 <div class="figwrap"><div class="fig" data-f="app_monitor" data-w="150"></div><div class="cap-f">Il monitor seriale, per parlare con la scheda attraverso il cavo USB.</div></div>
-<p>Serve per la <b>diagnosi</b>: scegli la porta (1), premi <span class="btn">Connetti</span> (2) e usa i pulsanti a destra. I più utili sono <code>info</code> (nome, indirizzo, programma), <code>run</code> / <code>stop</code> e soprattutto <code>pin reset</code>, che riporta il PIN del docente a <b>1234</b>. Per la Mega ci sono anche le impostazioni di <b>IP fisso</b> e <b>indirizzo MAC</b>; per la UNO R4 i comandi <code>wifi</code> (stato della rete) e <code>wifi clear</code> (dimentica la rete Wi-Fi salvata). L'elenco completo è in Appendice.</p>
+<p>Serve per la <b>diagnosi</b>: scegli la porta (1), premi <span class="btn">Connetti</span> (2) e usa i pulsanti a destra. I più utili sono <code>info</code> (nome, indirizzo, programma), <code>run</code> / <code>stop</code> e soprattutto <code>pin reset</code>, che riporta il PIN del docente a <b>1234</b>. Per la Mega ci sono anche le impostazioni di <b>IP fisso</b> e <b>indirizzo MAC</b>; per la UNO R4 i comandi <code>wifi</code> (stato della rete) e <code>wifi clear</code> (dimentica la rete Wi-Fi salvata). Su entrambe <code>force</code> elenca le forzature attive e <code>force off</code> le toglie tutte. L'elenco completo è in Appendice.</p>
 <div class="box info">Aprendo il monitor seriale la <b>Mega si riavvia</b>: è normale, il programma riparte da capo dopo pochi secondi.</div>
 
 <h2>Guida</h2>
