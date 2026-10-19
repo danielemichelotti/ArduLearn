@@ -3271,7 +3271,11 @@ function hideBanner() { $('#banner').className = 'hide'; $('#ladBanner').classNa
 //  (la scheda lo tiene in memoria permanente). Comanda: scrive una volta (uscite e merker).
 //  Non serve il PIN docente. live.fo = [["p",13,1],["m",5,1],["w",2,300]]
 // =====================================================================
-const canForce = () => !!(online && live);
+// le forzature servono al firmware 2.3: con una scheda piu' vecchia il menu resta disattivato
+const FORCE_FW = '2.3';
+const forceFwOk = () => DEMO || verCmp(info.fw || '0', FORCE_FW) >= 0;
+const canForce = () => !!(online && live && forceFwOk());
+const forceOffHint = () => online && !forceFwOk() ? `Disponibile con il firmware ${FORCE_FW}` : 'Collegati alla scheda';
 const forceList = () => (online && Array.isArray(live?.fo) ? live.fo : []);
 function forcedValue(k, i) { const f = forceList().find(f => f[0] === k && f[1] === i); return f ? f[2] : undefined; }
 const fAddr = (k, i) => k === 'p' ? pinName(i) : k === 'm' ? `%M${i >> 3}.${i & 7}` : `%MW${i * 2}`;
@@ -3364,7 +3368,7 @@ function forceSub(t) {
 // voce "Forza…" (in grassetto, la prima del menu); senza scheda e' disattivata
 function forceItem(t, label = 'Forza…', why = '') {
   if (!t) return why ? { label, bold: true, disabled: true, hint: why } : null;
-  if (!canForce()) return { label, bold: true, disabled: true, hint: 'Collegati alla scheda' };
+  if (!canForce()) return { label, bold: true, disabled: true, hint: forceOffHint() };
   const fv = forcedValue(t.k, t.i);
   return { label, bold: true, hint: fv !== undefined ? `F = ${fv}` : '', sub: forceSub(t) };
 }
@@ -3373,7 +3377,7 @@ function forceMulti(list) {
   const seen = new Set(), l = list.filter(x => { const k = x.t.k + ':' + x.t.i; if (seen.has(k)) return false; seen.add(k); return true; });
   if (!l.length) return null;
   if (l.length === 1) return forceItem(l[0].t, `Forza ${l[0].name.replace(/^[A-Z0-9]+: /, '')}…`);
-  if (!canForce()) return { label: 'Forza…', bold: true, disabled: true, hint: 'Collegati alla scheda' };
+  if (!canForce()) return { label: 'Forza…', bold: true, disabled: true, hint: forceOffHint() };
   return { label: 'Forza…', bold: true, sub: l.map(x => { const fv = forcedValue(x.t.k, x.t.i); return { label: x.name, hint: fv !== undefined ? `F = ${fv}` : '', sub: forceSub(x.t) }; }) };
 }
 // "F" accanto ai pin e alle variabili forzati e barra arancione per tutti i browser collegati
