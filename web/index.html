@@ -10,17 +10,18 @@
   --bg:#f3f4f7;--panel:#fff;--panel2:#f8f9fb;--fg:#1c1f26;--mut:#6a7080;--line:#dfe2e8;--line2:#c9ced8;
   --acc:#2563eb;--acc-fg:#fff;--on:#16a34a;--on-soft:#dcfce7;--off:#9aa1ad;--err:#dc2626;--err-soft:#fee2e2;--warn:#d97706;
   --canvas:#eef0f4;--dot:#d3d7df;--block:#fff;--shadow:0 1px 2px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.06);
+  --force:#ea580c;
   --r:10px;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){
   --bg:#12141a;--panel:#1a1d24;--panel2:#20242c;--fg:#e6e8ee;--mut:#9097a6;--line:#2b303a;--line2:#3a404c;
   --acc:#4f8cff;--on:#34d058;--on-soft:#133a22;--off:#5b6270;--err:#f05252;--err-soft:#3b1717;
-  --canvas:#15181e;--dot:#262a33;--block:#1f232b;--shadow:0 1px 2px rgba(0,0,0,.4),0 2px 10px rgba(0,0,0,.3);
+  --canvas:#15181e;--dot:#262a33;--block:#1f232b;--shadow:0 1px 2px rgba(0,0,0,.4),0 2px 10px rgba(0,0,0,.3);--force:#f97316;
 }}
 :root[data-theme=dark]{
   --bg:#12141a;--panel:#1a1d24;--panel2:#20242c;--fg:#e6e8ee;--mut:#9097a6;--line:#2b303a;--line2:#3a404c;
   --acc:#4f8cff;--on:#34d058;--on-soft:#133a22;--off:#5b6270;--err:#f05252;--err-soft:#3b1717;
-  --canvas:#15181e;--dot:#262a33;--block:#1f232b;--shadow:0 1px 2px rgba(0,0,0,.4),0 2px 10px rgba(0,0,0,.3);
+  --canvas:#15181e;--dot:#262a33;--block:#1f232b;--shadow:0 1px 2px rgba(0,0,0,.4),0 2px 10px rgba(0,0,0,.3);--force:#f97316;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
@@ -229,6 +230,12 @@ dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;font-family:var(--mono);font-size:13
 .lw.on{stroke:#16a34a;stroke-width:3.5}
 .lw.off{stroke:#2563eb;stroke-dasharray:6 4}
 .lsym{stroke:var(--fg);stroke-width:2;fill:none;pointer-events:none}
+.lsym.frc1{stroke:var(--force);stroke-width:3;animation:fpulse 1.4s ease-in-out infinite}
+.lsym.frc0{stroke:var(--force);opacity:.55;stroke-dasharray:3 2}
+.lsymt.frc1,.lop.frc1{fill:var(--force);font-weight:700;animation:fpulse 1.4s ease-in-out infinite}
+.lsymt.frc0,.lop.frc0{fill:var(--force);opacity:.6}
+@keyframes fpulse{0%,100%{opacity:1}50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.lsym.frc1,.lsymt.frc1,.lop.frc1{animation:none}}
 .lsymt{fill:var(--fg);font:600 11px var(--mono);pointer-events:none}
 .lop{fill:var(--fg);font:12px var(--font);pointer-events:none}
 .lop.miss{fill:var(--err)}.lop.von{fill:#16a34a;font-weight:700}.lop.voff{fill:#2563eb}
@@ -308,6 +315,15 @@ dl.kv dt{color:var(--mut)}dl.kv dd{margin:0;font-family:var(--mono);font-size:13
 .ctxsep{height:1px;background:var(--line);margin:4px 2px}
 .ctxhead{padding:4px 10px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
 .ctxi.open{background:var(--panel2)}
+.ctxi.b .grow{font-weight:700}
+/* forzature: "F" arancione accanto a pin e variabili forzati, barra sotto l'intestazione */
+.fbadge{display:none}
+span.fbadge.on{display:inline-block;background:var(--force);color:#fff;font:700 11px/1 var(--font);padding:2px 4px;border-radius:4px;margin-left:6px;vertical-align:1px}
+g.fbadge.on{display:inline}g.fbadge rect{fill:var(--force)}g.fbadge text{fill:#fff;font:700 11px var(--font)}
+#forceBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:6px 12px;font-size:13px;background:#fff1e6;color:#7c2d12;border-bottom:2px solid var(--force)}
+#forceBar.hide{display:none}#forceBar span.fbadge{margin-left:0}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) #forceBar{background:#3b1f0c;color:#fed7aa}}
+:root[data-theme=dark] #forceBar{background:#3b1f0c;color:#fed7aa}
 dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--fg);padding:18px;max-width:min(420px,92vw);box-shadow:0 10px 40px rgba(0,0,0,.25)}
 dialog::backdrop{background:rgba(0,0,0,.35)}
 dialog h3{margin:0 0 8px}
@@ -364,6 +380,7 @@ dialog.hlp{padding:0;width:min(620px,94vw);max-width:94vw;max-height:88vh;overfl
   <label id="followLbl" class="row small mut" title="Mostra in tempo reale le modifiche che il docente sta facendo al progetto"><input type="checkbox" id="followChk"> 👁 Segui il docente</label>
   <button id="lockBtn" class="ico" title="Accesso docente"></button>
 </header>
+<div id="forceBar" class="hide" role="status"></div>
 
 <main>
   <!-- ================= EDITOR ================= -->
@@ -476,6 +493,7 @@ dialog.hlp{padding:0;width:min(620px,94vw);max-width:94vw;max-height:88vh;overfl
         <label class="row"><input type="checkbox" id="pinsUsedOnly"> mostra solo i pin usati</label>
         <span class="mut">Ingresso pull-up: il pin legge 1 a riposo e 0 quando il pulsante lo collega a GND. &nbsp;~ = supporta PWM.</span>
       </div>
+      <p class="small mut" style="margin:6px 0 0"><b>Tasto destro su un pin o una variabile → Forza…</b>: come in TIA Portal, <i>Forza</i> blocca un ingresso, un'uscita o un merker al valore scelto (il programma non lo cambia) e <i>Comanda</i> scrive un valore una volta sola. Le forzature restano anche dopo un riavvio o un nuovo programma; i pin e le variabili forzati hanno una <span class="fbadge on" style="margin:0">F</span> e sulla scheda lampeggia una F sul display o sulla matrice di LED.</p>
       <p id="pinsDemo" class="small mut hide">Modalità simulazione: clicca sul valore di un ingresso per cambiarne lo stato, trascina il cursore degli analogici.</p>
     </div>
     <div class="card hide" id="varTable"></div>
@@ -1012,7 +1030,7 @@ const LHELP = {
 //  Stato
 // =====================================================================
 let info = { host: '', maxBlocks: 64, maxImage: 3072, maxText: 256, res: Object.keys(RES_WHY).map(Number), sd: 0, rev: -1 };
-let project = emptyProject();
+let project = emptyProject('lad');
 let board = { project: null, rev: -1, ids: [], json: '' };   // ultimo programma letto dalla scheda
 let live = null, liveAt = 0, online = false;
 let sel = null;                  // { kind: 'block'|'wire'|'note', id, i }
@@ -1023,7 +1041,8 @@ let auth = (SITO ? '1234' : sessionStorage.getItem('plcb-pin')) || '';
 let knownDr = null, myDr = -1, lastPublished = '', followBase = '', publishTimer = 0;
 let authed = false;
 
-function emptyProject(lang = 'fbd') { return { name: 'Nuovo progetto', lang, pins: {}, blocks: [], notes: [], images: [], funcs: [], networks: lang === 'lad' ? [newNetwork()] : [], tags: [], graph: lang === 'graf' ? newGraph() : undefined, nextId: 1 }; }
+// LADDER e' il linguaggio predefinito dei nuovi progetti
+function emptyProject(lang = 'lad') { return { name: 'Nuovo progetto', lang, pins: {}, blocks: [], notes: [], images: [], funcs: [], networks: lang === 'lad' ? [newNetwork()] : [], tags: [], graph: lang === 'graf' ? newGraph() : undefined, nextId: 1 }; }
 function newId() { return project.nextId++; }
 const blockById = id => project.blocks.find(b => b.id === id);
 const isReserved = p => info.res.includes(p);
@@ -1773,7 +1792,7 @@ function decodeImages(r) {
 function decode(buf) {
   const r = decodeRaw(buf), m = r.meta;
   const ids = m.ids?.length === r.n ? m.ids : r.blocks.map((_, i) => i + 1);
-  const pr = emptyProject();
+  const pr = emptyProject('fbd');                      // la lingua vera arriva dai metadati
   pr.name = m.name || r.name || 'Senza nome';
   r.pins.forEach((mode, p) => { if (mode || m.pl?.[p]) pr.pins[p] = { mode, label: m.pl?.[p] || '' }; });
   for (const p of m.pi || []) if (pr.pins[p]) pr.pins[p].inv = 1;
@@ -2121,7 +2140,7 @@ function setOnline(on) {
   online = on;
   $('#conn').className = 'dot ' + (on ? 'ok' : 'bad');
   $('#conn').title = on ? 'Collegato alla scheda' : 'Scheda non raggiungibile';
-  renderRun(); renderStatus();
+  renderRun(); renderStatus(); updateForceUi();
 }
 
 // =====================================================================
@@ -2352,6 +2371,7 @@ function blockSvg(b, probs) {
   });
   s += bodySvg(b, HEAD + PAD + rows(b) * ROW);
   s += simBodySvg(b, HEAD + PAD + rows(b) * ROW + bodyH(b));
+  if (b.t >= 1 && b.t <= 4 && b.k[0] >= 0) s += fBadgeSvg({ k: 'p', i: b.k[0] }, W - 9, -7);
   return s + '</g>';
 }
 
@@ -2444,6 +2464,7 @@ function applyLive() {
   const idle = $('#tab-editor').classList.contains('on') && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
   if (isLadView() && idle && $('#ladLive').checked) renderLad();
   if (project.lang === 'graf' && !isLadView() && idle && $('#grafLive').checked && !gDrag) renderGraf();
+  updateForceUi();
 }
 function setSliderPos(b, v) {
   const f = $(`[data-slf="${b.id}"]`), k = $(`[data-slk="${b.id}"]`);
@@ -2926,6 +2947,7 @@ function renderInspector() {
       <li>Imposta i pin nella scheda <b>Pin</b>, poi premi <b>Carica sulla scheda</b>.</li>
       <li>Con il programma in esecuzione i fili <span style="color:var(--on);font-weight:600">verdi</span> valgono 1 (o un numero diverso da 0).</li>
       <li><b>Tasto destro</b> su un blocco: menu con le sue opzioni. Trascinato sul foglio: riquadro di selezione (Maiusc+clic aggiunge o toglie).</li>
+      <li><b>Tasto destro su un pin → Forza…</b> (con la scheda collegata): forza un ingresso o un'uscita a un valore, oppure comanda un'uscita una volta, come in TIA Portal. Le forzature restano anche dopo un riavvio; si riconoscono dalla <span class="fbadge on" style="margin:0">F</span> e dalla F sul display o sulla matrice di LED della scheda.</li>
       <li><kbd>Canc</kbd> elimina, <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> annulla e ripete, <kbd>Ctrl</kbd>+<kbd>D</kbd> duplica, <kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>V</kbd> copia e incolla, <kbd>Ctrl</kbd>+<kbd>A</kbd> seleziona tutto. Rotellina = zoom, trascina lo sfondo per spostarti.</li></ul></div>`;
     el.innerHTML = h;
   }
@@ -3243,6 +3265,166 @@ function showBanner(kind, msg, actions = []) {
 }
 function hideBanner() { $('#banner').className = 'hide'; $('#ladBanner').className = 'hide'; }
 
+// =====================================================================
+//  Forzature, come "Forza" e "Comanda" di TIA Portal (tasto destro su un pin o una variabile).
+//  Forza: il valore resta finche' non si toglie, anche dopo un riavvio o un nuovo programma
+//  (la scheda lo tiene in memoria permanente). Comanda: scrive una volta (uscite e merker).
+//  Non serve il PIN docente. live.fo = [["p",13,1],["m",5,1],["w",2,300]]
+// =====================================================================
+// le forzature servono al firmware 2.3: con una scheda piu' vecchia il menu resta disattivato
+const FORCE_FW = '2.3';
+const forceFwOk = () => DEMO || verCmp(info.fw || '0', FORCE_FW) >= 0;
+const canForce = () => !!(online && live && forceFwOk());
+const forceOffHint = () => online && !forceFwOk() ? `Disponibile con il firmware ${FORCE_FW}` : 'Collegati alla scheda';
+const forceList = () => (online && Array.isArray(live?.fo) ? live.fo : []);
+function forcedValue(k, i) { const f = forceList().find(f => f[0] === k && f[1] === i); return f ? f[2] : undefined; }
+const fAddr = (k, i) => k === 'p' ? pinName(i) : k === 'm' ? `%M${i >> 3}.${i & 7}` : `%MW${i * 2}`;
+function fLongName(k, i) {
+  if (k === 'p') { const a = project.lang !== 'fbd' ? ladIo().addr[i] : ''; return pinName(i) + (a ? ' ' + a : '') + (pinLabel(i) ? ' · ' + pinLabel(i) : ''); }
+  const t = (project.tags || []).find(t => t.t === (k === 'w' ? 'w' : 'b') && t.i === i);
+  return fAddr(k, i) + (t ? ' · ' + t.name : '');
+}
+const fBadgeSvg = (t, x, y) => t ? `<g class="fbadge" data-fk="${t.k}:${t.i}" transform="translate(${x},${y})"><title>Forzato</title><rect width="14" height="14" rx="3"/><text x="7" y="11" text-anchor="middle">F</text></g>` : '';
+// lettura invertita: FBD "Inverti" sul blocco Ingresso digitale, LADDER/GRAFCET "logica inversa" del pin
+function pinInv(p) { return project.lang === 'fbd' ? project.blocks.some(b => b.t === 1 && b.k[0] === p && b.k[1]) : !!project.pins[p]?.inv; }
+function pinTarget(p, inv) {
+  if (p == null || p < 0 || isReserved(p)) return null;
+  const m = pinMode(p);
+  const kind = m === PM.IN || m === PM.PULLUP ? 'din' : m === PM.ANALOG ? 'ain' : m === PM.OUT ? 'dout' : null;
+  return kind && { k: 'p', i: p, kind, inv: kind === 'din' && (inv ?? pinInv(p)) };
+}
+// operando (nome, %I0.0, %M1.2, %MW4, D13…) -> cosa si forza
+function opTarget(op, want = 'bit') {
+  const r = op ? ladResolve(op, want) : null;
+  if (!r || r.err) return null;
+  if (r.pin != null) return pinTarget(r.pin);
+  if (r.mb !== undefined) return { k: 'm', i: r.mb, kind: 'm' };
+  if (r.mw !== undefined) return { k: 'w', i: r.mw, kind: 'w' };
+  return null;
+}
+// operandi di un elemento LADDER: [{ name, t }]
+function ladTargets(e) {
+  const out = [];
+  if (e.op !== undefined) out.push({ name: e.op, t: opTarget(e.op, 'bit') });
+  else if (LAD_BOXES[e.k]?.pins) for (const p of LAD_BOXES[e.k].pins) if (p.k !== 'rc' && e.a?.[p.n]) out.push({ name: `${p.n}: ${e.a[p.n]}`, t: opTarget(e.a[p.n], p.k[1] === 'b' ? 'bit' : 'word') });
+  return out.filter(x => x.t);
+}
+// variabili usate da una tappa (azioni) o da una transizione (recettivita' o segmento LADDER)
+function grafTargets(st, tr) {
+  const out = [];
+  if (st) for (const a of st.acts || []) if (a.op && ['N', 'S', 'R', 'D', 'L', 'V'].includes(a.q)) out.push({ name: a.op, t: opTarget(a.op, a.q === 'V' ? 'word' : 'bit') });
+  if (tr) {
+    if (tr.mode === 'lad') { const nw = project.networks.find(n => n.tr === tr.id); if (nw) for (const e of Object.values(nw.cells)) out.push(...ladTargets(e)); }
+    else for (const w of String(tr.cond || '').match(/%?[A-Za-z_][\w.]*/g) || []) if (!/^(AND|OR|XOR|NOT|RE|FE|TRUE|FALSE|X\d+(\.T)?|T#.*)$/i.test(w)) out.push({ name: w, t: opTarget(w, 'bit') });
+  }
+  return out.filter(x => x.t);
+}
+async function fzReq(url, msg) {
+  try { await post(url); if (msg) toast(msg, 'ok'); } catch (e) { toast(e.message, 'err'); }
+  try { live = await getJson('/api/live'); liveAt = Date.now(); applyLive(); } catch {}
+}
+const fzSet = (t, v) => fzReq(`/api/force?k=${t.k}&i=${t.i}&v=${v}`, `${fAddr(t.k, t.i)} forzato a ${v}`);
+const fzMod = (t, v) => fzReq(`/api/modify?k=${t.k}&i=${t.i}&v=${v}`, `${fAddr(t.k, t.i)} = ${v} (comandato una volta)`);
+const fzDel = t => fzReq(`/api/force?k=${t.k}&i=${t.i}&del=1`, `Forzatura di ${fAddr(t.k, t.i)} tolta`);
+async function fzDelAll(ask = true) {
+  const n = forceList().length;
+  if (!n || (ask && !await confirmDlg(`Togliere tutte le forzature (${n})? Gli ingressi tornano a leggere i valori veri e le uscite tornano al programma.`, 'Togli tutte'))) return;
+  await fzReq('/api/force?all=1&del=1', 'Forzature tolte');
+}
+async function fzAsk(t, force, min, max) {
+  const cur = force ? forcedValue(t.k, t.i) : undefined;
+  const v = await promptDlg(`${force ? 'Forza' : 'Comanda'} ${fLongName(t.k, t.i)}`, cur ?? '', `Un numero intero da ${min} a ${max}. ` + (force ? 'Resta finché non togli la forzatura, anche dopo un riavvio.' : 'Viene scritto una volta: poi il programma può cambiarlo.'), 'number');
+  if (v == null || v.trim() === '') return;
+  const n = Number(v);
+  if (!Number.isInteger(n) || n < min || n > max) { toast(`Valore non valido: un numero intero da ${min} a ${max}`, 'err'); return; }
+  force ? fzSet(t, n) : fzMod(t, n);
+}
+// voci del sottomenu "Forza…"
+function forceSub(t) {
+  const fv = forcedValue(t.k, t.i), forced = fv !== undefined, n = forceList().length, it = [];
+  const on = v => forced && fv === v;
+  const cmd = forced ? { disabled: true, hint: 'è forzato' } : {};
+  const W32 = [-2147483648, 2147483647];
+  if (t.kind === 'din') {
+    it.push({ label: t.inv ? 'Forza a 1 (pin alto)' : 'Forza a 1', checked: on(1), act: () => fzSet(t, 1) },
+      { label: t.inv ? 'Forza a 0 (pin basso)' : 'Forza a 0', checked: on(0), act: () => fzSet(t, 0) });
+    if (t.inv) it.push({ label: 'Lettura invertita: il programma vede il contrario', disabled: true });
+  } else if (t.kind === 'ain') {
+    it.push({ label: 'Forza valore… (0–1023)', checked: forced, hint: forced ? String(fv) : '', act: () => fzAsk(t, true, 0, 1023) });
+  } else if (t.kind === 'dout' || t.kind === 'm') {
+    const pwm = t.kind === 'dout' && isPwm(t.i);
+    it.push({ label: 'Forza a 1', checked: on(1), act: () => fzSet(t, 1) }, { label: 'Forza a 0', checked: on(0), act: () => fzSet(t, 0) });
+    if (pwm) it.push({ label: 'Forza valore… (0–255)', checked: forced && fv > 1, hint: forced && fv > 1 ? String(fv) : '', act: () => fzAsk(t, true, 0, 255) });
+    it.push({ sep: true }, { label: 'Comanda a 1', ...cmd, act: () => fzMod(t, 1) }, { label: 'Comanda a 0', ...cmd, act: () => fzMod(t, 0) });
+    if (pwm) it.push({ label: 'Comanda valore… (0–255)', ...cmd, act: () => fzAsk(t, false, 0, 255) });
+  } else if (t.kind === 'w') {
+    it.push({ label: 'Forza valore…', checked: forced, hint: forced ? String(fv) : '', act: () => fzAsk(t, true, ...W32) },
+      { label: 'Comanda valore…', ...cmd, act: () => fzAsk(t, false, ...W32) });
+  }
+  if (forced) it.push({ sep: true }, { label: 'Togli forzatura', act: () => fzDel(t) });
+  if (n) it.push({ sep: true }, { label: `Togli tutte le forzature (${n})`, act: () => fzDelAll() });
+  return it;
+}
+// voce "Forza…" (in grassetto, la prima del menu); senza scheda e' disattivata
+function forceItem(t, label = 'Forza…', why = '') {
+  if (!t) return why ? { label, bold: true, disabled: true, hint: why } : null;
+  if (!canForce()) return { label, bold: true, disabled: true, hint: forceOffHint() };
+  const fv = forcedValue(t.k, t.i);
+  return { label, bold: true, hint: fv !== undefined ? `F = ${fv}` : '', sub: forceSub(t) };
+}
+// piu' operandi (box LADDER, tappe, transizioni): un sottomenu per ciascuno
+function forceMulti(list) {
+  const seen = new Set(), l = list.filter(x => { const k = x.t.k + ':' + x.t.i; if (seen.has(k)) return false; seen.add(k); return true; });
+  if (!l.length) return null;
+  if (l.length === 1) return forceItem(l[0].t, `Forza ${l[0].name.replace(/^[A-Z0-9]+: /, '')}…`);
+  if (!canForce()) return { label: 'Forza…', bold: true, disabled: true, hint: forceOffHint() };
+  return { label: 'Forza…', bold: true, sub: l.map(x => { const fv = forcedValue(x.t.k, x.t.i); return { label: x.name, hint: fv !== undefined ? `F = ${fv}` : '', sub: forceSub(x.t) }; }) };
+}
+// "F" accanto ai pin e alle variabili forzati e barra arancione per tutti i browser collegati
+let forceBarKey = '';
+function updateForceUi() {
+  const fo = forceList(), set = new Set(fo.map(f => f[0] + ':' + f[1]));
+  for (const el of $$('[data-fk]')) el.classList.toggle('on', set.has(el.dataset.fk));
+  const key = JSON.stringify(fo);
+  if (key === forceBarKey) return;
+  forceBarKey = key;
+  const bar = $('#forceBar');
+  bar.classList.toggle('hide', !fo.length);
+  bar.innerHTML = fo.length ? `<span class="fbadge on">F</span><span class="grow"><b>Forzature attive (${fo.length}):</b> ${esc(fo.map(([k, i, v]) => `${fAddr(k, i)}=${v}`).join(', '))}</span>
+    <button id="foShow">Mostra</button><button id="foAllB" class="danger">Togli tutte</button>` : '';
+  if (fo.length) { $('#foShow').onclick = showForces; $('#foAllB').onclick = () => fzDelAll(); }
+  drawForceList();
+}
+function drawForceList() {
+  const el = $('#foList');
+  if (!el) return;
+  const fo = forceList();
+  el.innerHTML = fo.length ? `<table>${fo.map(([k, i, v]) => `<tr><td><span class="fbadge on" style="margin:0">F</span></td><td><b>${esc(fLongName(k, i))}</b></td><td style="font-family:var(--mono)">= ${v}</td>
+      <td style="text-align:right"><button type="button" class="small" data-fodel="${k}:${i}">Togli</button></td></tr>`).join('')}</table>` : '<p class="mut">Nessuna forzatura attiva.</p>';
+  for (const b of $$('[data-fodel]', el)) b.onclick = () => { const [k, i] = b.dataset.fodel.split(':'); fzDel({ k, i: +i }); };
+  const all = $('#foDlgAll'); if (all) all.disabled = !fo.length;
+}
+async function showForces() {
+  await dialog(`<form method="dialog"><h3>Forzature attive</h3><div id="foList"></div>
+    <p class="small mut">Una forzatura resta anche dopo un riavvio o un nuovo programma, come in TIA Portal; sulla scheda la segnala una F sul display o sulla matrice di LED. Si mette e si toglie con il tasto destro su un pin o una variabile → <b>Forza…</b></p>
+    <div class="row" style="justify-content:flex-end"><button type="button" class="danger" id="foDlgAll">Togli tutte</button><button class="pri" value="" autofocus>Chiudi</button></div></form>`, d => {
+    drawForceList();
+    $('#foDlgAll', d).onclick = () => fzDelAll(false);
+  });
+}
+// scheda "Pin e variabili": tasto destro sui pin e sulle righe delle tabelle
+$('#tab-pins').addEventListener('contextmenu', e => {
+  if (e.target.closest('input, textarea, select')) return;
+  const row = e.target.closest('[data-fop]'), card = e.target.closest('.pin[data-pin]');
+  if (row) {
+    const [name, want] = row.dataset.fop.split('|'), t = opTarget(name, want);
+    if (t) showMenu(e.clientX, e.clientY, [{ head: name }, forceItem(t)]);
+  } else if (card && !card.classList.contains('res')) {
+    const p = +card.dataset.pin;
+    showMenu(e.clientX, e.clientY, [{ head: pinText(p) }, forceItem(pinTarget(p), 'Forza…', 'pin non configurato')]);
+  }
+});
+
 function renderAuth() {
   $('#lockBtn').innerHTML = authed ? '🔓 Docente' : '🔒 Docente';
   $('#lockBtn').title = authed ? 'Accesso docente attivo: clicca per uscire' : 'Accedi come docente per caricare programmi e cambiare impostazioni';
@@ -3306,7 +3488,7 @@ function renderPins() {
     const res = isReserved(p), m = pinMode(p), used = m || usedByBlock.has(p);
     if (usedOnly && !used) return '';
     const isA = p >= FIRST_A;
-    let h = `<div class="pin${res ? ' res' : ''}${m ? ' used' : ''}" data-pin="${p}"><div class="ph"><b>${pinName(p)}</b>${isPwm(p) ? '<span class="tag" title="PWM">~</span>' : ''}${p === 13 ? '<span class="tag" title="LED sulla scheda (L)">LED</span>' : ''}<span class="val" data-pv="${p}"></span></div>`;
+    let h = `<div class="pin${res ? ' res' : ''}${m ? ' used' : ''}" data-pin="${p}"><div class="ph"><b>${pinName(p)}</b>${isPwm(p) ? '<span class="tag" title="PWM">~</span>' : ''}${p === 13 ? '<span class="tag" title="LED sulla scheda (L)">LED</span>' : ''}<span class="fbadge" data-fk="p:${p}" title="Forzato">F</span><span class="val" data-pv="${p}"></span></div>`;
     if (res) return h + `<div class="why">${esc(RES_WHY[p] || 'Display LCD (parallelo)')}</div></div>`;
     if ((project.lang === 'lad' || project.lang === 'graf') && m) {
       const io = ladIo();
@@ -3375,6 +3557,7 @@ $('#tab-pins').addEventListener('click', e => {
   if (f) {
     const p = +f.dataset.force;
     if (isModified() && pinMode(p) !== board.project?.pins[p]?.mode) { toast('Carica prima la configurazione dei pin sulla scheda'); return; }
+    if (forcedValue('p', p) !== undefined) { toast('Questa uscita è forzata: togli prima la forzatura (tasto destro → Forza…)', 'err'); return; }
     post(`/api/pinset?p=${p}&v=${pinState(p) ? 0 : 1}`).catch(err => toast(err.message.includes('comandabile') ? 'Questa uscita è comandata dal programma in esecuzione: fermalo per provarla a mano' : err.message, 'err'));
     return;
   }
@@ -3446,8 +3629,8 @@ async function renameProject() {
 document.addEventListener('click', e => { if (e.target.closest('[data-prename]')) renameProject(); });
 $('#newBtn').onclick = async () => {
   const lang = await dialog(`<form method="dialog"><h3>Nuovo progetto</h3><p class="small mut">Scegli il linguaggio. Un programma si scrive in un solo linguaggio e non si converte nell'altro. Il progetto aperto adesso verrà sostituito (puoi prima scaricarlo come file).</p>
-    <div class="langPick"><button value="fbd"><b>Blocchi (FBD)</b>Blocchi collegati da fili, come i diagrammi funzionali. Ideale per iniziare.</button>
-    <button value="lad"><b>LADDER (KOP)</b>Contatti, bobine e box su segmenti, come in Siemens TIA Portal.</button>
+    <div class="langPick"><button value="lad" class="pri" autofocus><b>LADDER (KOP)</b>Contatti, bobine e box su segmenti, come in Siemens TIA Portal. Linguaggio predefinito.</button>
+    <button value="fbd"><b>Blocchi (FBD)</b>Blocchi collegati da fili, come i diagrammi funzionali.</button>
     <button value="graf"><b>GRAFCET</b>Tappe, transizioni e azioni per le sequenze, con segmenti LADDER per le sicurezze.</button></div>
     <div class="row" style="justify-content:flex-end"><button value="">Annulla</button></div></form>`);
   if (lang !== 'fbd' && lang !== 'lad' && lang !== 'graf') return;
@@ -3583,7 +3766,7 @@ function mkLad(name, desc, pins, tags, networks) {
 }
 function mk(name, desc, pins, blocks, wires, notes = []) {
   return { name, desc, lang: 'fbd', build() {
-    const pr = emptyProject();
+    const pr = emptyProject('fbd');
     pr.name = name;
     for (const [p, mode, label] of pins) pr.pins[p] = { mode, label };
     project = pr;      // newBlock usa project.nextId
@@ -3683,7 +3866,8 @@ const EXAMPLES = [
      ['Display', 3, 1, [['0,0', 'oled', null, { a: { V1: 'Pezzi' }, p: { txt: 'Pezzi: {1}', row: 0, col: 0 } }]]]]),
 ];
 function renderExamples() {
-  $('#examples').innerHTML = EXAMPLES.map((x, i) => `<div class="ex"><b>${esc(x.name)}<span class="lang-tag">${{ lad: 'LADDER', graf: 'GRAFCET' }[x.lang] || 'FBD'}</span></b><p>${esc(x.desc)}</p><div><button data-ex="${i}">Apri nell'editor</button></div></div>`).join('');
+  const ord = { lad: 0, fbd: 1, graf: 2 };
+  $('#examples').innerHTML = EXAMPLES.map((x, i) => [x, i]).sort((a, b) => (ord[a[0].lang] ?? 1) - (ord[b[0].lang] ?? 1) || a[1] - b[1]).map(([x, i]) => `<div class="ex"><b>${esc(x.name)}<span class="lang-tag">${{ lad: 'LADDER', graf: 'GRAFCET' }[x.lang] || 'FBD'}</span></b><p>${esc(x.desc)}</p><div><button data-ex="${i}">Apri nell'editor</button></div></div>`).join('');
 }
 $('#examples').addEventListener('click', async e => {
   const i = e.target.dataset.ex;
@@ -4797,30 +4981,36 @@ function ladElemSvg(e, x, y, cy, rh, on, vin, vout, err, key, instName) {
   const col = v => v == null ? 'lw' : v ? 'lw on' : 'lw off';
   const mid = x + CW / 2;
   let s = '';
+  // operando forzato (contatti e bobine): arancione che segue il valore forzato, a 1 pulsa
+  const ftg = ['no', 'nc', 'p', 'n'].includes(e.k) || isCoil(e.k) ? opTarget(e.op, 'bit') : null;
+  const fval = ftg ? forcedValue(ftg.k, ftg.i) : undefined;
+  const frc = fval === undefined ? '' : fval ? ' frc1' : ' frc0';
+  // il LADDER si ridisegna a ogni aggiornamento: la pulsazione si aggancia all'orologio per restare fluida
+  const fsty = fval ? ` style="animation-delay:-${Date.now() % 1400}ms"` : '';
   const opLabel = (o, want) => {
     const t = ladOpText(o, want, on);
-    const vcls = t.v == null ? '' : t.v ? ' von' : ' voff';
+    const vcls = frc && want === 'bit' ? frc : t.v == null ? '' : t.v ? ' von' : ' voff';
     const shown = o ? (/^[%\d+-]|^T#|^TRUE$|^FALSE$/i.test(o) ? o : `"${o}"`) : '<??.?>';
     return (t.addr && o && !/^%/.test(o) ? `<text class="laddr" x="${mid}" y="${cy - 28}" text-anchor="middle">${esc(t.addr)}</text>` : '') +
-      `<text class="lop edit${o ? '' : ' miss'}${vcls}" data-edit="${key}|op" x="${mid}" y="${cy - 15}" text-anchor="middle">${esc(shown.length > 20 ? shown.slice(0, 19) + '…' : shown)}</text>` +
+      `<text class="lop edit${o ? '' : ' miss'}${vcls}"${frc && want === 'bit' ? fsty : ''} data-edit="${key}|op" x="${mid}" y="${cy - 15}" text-anchor="middle">${esc(shown.length > 20 ? shown.slice(0, 19) + '…' : shown)}</text>` +
       (t.v != null && want === 'word' ? `<text class="laddr" x="${mid}" y="${cy + 24}" text-anchor="middle">= ${t.v}</text>` : '');
   };
   if (e.k === 'wire') return `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
   if (['no', 'nc', 'p', 'n', 'not'].includes(e.k)) {
     s += `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${mid - 8}" y2="${cy}"/><line class="${col(vout)}" x1="${mid + 8}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
-    s += `<line class="lsym" x1="${mid - 8}" y1="${cy - 11}" x2="${mid - 8}" y2="${cy + 11}"/><line class="lsym" x1="${mid + 8}" y1="${cy - 11}" x2="${mid + 8}" y2="${cy + 11}"/>`;
-    if (e.k === 'nc') s += `<line class="lsym" x1="${mid - 6}" y1="${cy + 9}" x2="${mid + 6}" y2="${cy - 9}"/>`;
-    if (e.k === 'p' || e.k === 'n') s += `<text class="lsymt" x="${mid}" y="${cy + 4}" text-anchor="middle">${e.k.toUpperCase()}</text>`;
+    s += `<line class="lsym${frc}"${fsty} x1="${mid - 8}" y1="${cy - 11}" x2="${mid - 8}" y2="${cy + 11}"/><line class="lsym${frc}"${fsty} x1="${mid + 8}" y1="${cy - 11}" x2="${mid + 8}" y2="${cy + 11}"/>`;
+    if (e.k === 'nc') s += `<line class="lsym${frc}"${fsty} x1="${mid - 6}" y1="${cy + 9}" x2="${mid + 6}" y2="${cy - 9}"/>`;
+    if (e.k === 'p' || e.k === 'n') s += `<text class="lsymt${frc}"${fsty} x="${mid}" y="${cy + 4}" text-anchor="middle">${e.k.toUpperCase()}</text>`;
     if (e.k === 'not') return s + `<text class="lsymt" x="${mid}" y="${cy - 14}" text-anchor="middle">NOT</text>`;
     const dp = DEMO ? simDinPin(e.op) : null;          // simulatore: tastino dell'ingresso sotto il contatto
-    return s + opLabel(e.op, 'bit') + (dp != null ? simButton(mid - 20, cy + 13, 40, dp) : '');
+    return s + opLabel(e.op, 'bit') + (dp != null ? simButton(mid - 20, cy + 13, 40, dp) : '') + fBadgeSvg(opTarget(e.op, 'bit'), mid + 24, cy + 4);
   }
   if (isCoil(e.k)) {
     s += `<line class="${col(vin)}" x1="${x}" y1="${cy}" x2="${mid - 10}" y2="${cy}"/><line class="${col(vin)}" x1="${mid + 10}" y1="${cy}" x2="${x + CW}" y2="${cy}"/>`;
-    s += `<path class="lsym" d="M${mid - 5},${cy - 11} A12,12 0 0 0 ${mid - 5},${cy + 11} M${mid + 5},${cy - 11} A12,12 0 0 1 ${mid + 5},${cy + 11}"/>`;
+    s += `<path class="lsym${frc}"${fsty} d="M${mid - 5},${cy - 11} A12,12 0 0 0 ${mid - 5},${cy + 11} M${mid + 5},${cy - 11} A12,12 0 0 1 ${mid + 5},${cy + 11}"/>`;
     const letter = { ncoil: '/', set: 'S', reset: 'R' }[e.k];
-    if (letter) s += `<text class="lsymt" x="${mid}" y="${cy + 4}" text-anchor="middle">${letter}</text>`;
-    return s + opLabel(e.op, 'bit');
+    if (letter) s += `<text class="lsymt${frc}"${fsty} x="${mid}" y="${cy + 4}" text-anchor="middle">${letter}</text>`;
+    return s + opLabel(e.op, 'bit') + fBadgeSvg(opTarget(e.op, 'bit'), mid + 24, cy + 4);
   }
   const bx = LAD_BOXES[e.k];
   if (!bx) return '';
@@ -5149,7 +5339,8 @@ function renderLadInspector() {
       <li><b>↳ Apri ramo</b> fa partire un ramo parallelo (OR) dal bordo sinistro della cella; nel ramo, <b>↰ Chiudi ramo</b> lo ricongiunge sul bordo destro.</li>
       <li>Tasto destro trascinato = seleziona più celle; trascinale per spostarle. <kbd>Canc</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>X</kbd>/<kbd>V</kbd>, <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd>, frecce e <kbd>Maiusc</kbd>+frecce.</li>
       <li>I pin sono nella scheda <b>Pin</b> con i loro indirizzi %I / %Q / %IW; i merker si definiscono lì sotto.</li>
-      <li>Online: <span style="color:var(--on);font-weight:600">verde pieno</span> = passa corrente, <span style="color:#2563eb;font-weight:600">blu tratteggiato</span> = non passa.</li></ul></div>`;
+      <li>Online: <span style="color:var(--on);font-weight:600">verde pieno</span> = passa corrente, <span style="color:#2563eb;font-weight:600">blu tratteggiato</span> = non passa.</li>
+      <li><b>Tasto destro su un contatto, una bobina o un box → Forza…</b>: <i>Forza</i> blocca l'operando (ingresso, uscita, %M, %MW) al valore scelto, <i>Comanda</i> lo scrive una volta, come in TIA Portal. Le forzature restano anche dopo un riavvio; si vedono dalla <span class="fbadge on" style="margin:0">F</span> e dalla F sul display o sulla matrice di LED della scheda.</li></ul></div>`;
     el.innerHTML = h; return;
   }
   const nw = project.networks[ladSel.ni], e = ladCell();
@@ -5244,8 +5435,8 @@ function renderVarTable() {
   for (const t of project.tags || []) rows.push([t.name, t.t === 'w' ? 'Int' : 'Bool', tagAddr(t), '—', t.cm || 'Merker', t.name, t.t === 'w' ? 'word' : 'bit']);
   card.innerHTML = `<h2>Tabella degli ingressi, delle uscite e delle variabili <span class="mut">— come la tabella dei tag di TIA Portal</span></h2>
     <table><tr><th>Nome</th><th>Tipo</th><th>Indirizzo</th><th>Pin</th><th>Descrizione</th><th>Valore</th></tr>
-    ${rows.map(r => `<tr><td><b>${esc(r[0])}</b></td><td>${r[1]}</td><td><code>${r[2]}</code></td><td>${r[3]}</td><td class="mut small">${esc(r[4])}</td><td data-vval="${esc(r[5])}|${r[6]}"></td></tr>`).join('') || '<tr><td colspan="6" class="mut">Configura i pin qui sotto e crea i merker in fondo alla pagina.</td></tr>'}</table>
-    <p class="small mut">I nomi degli ingressi e delle uscite sono le etichette dei pin (modificale qui sotto); gli indirizzi %I/%Q/%IW/%QW vengono assegnati in ordine di pin.</p>`;
+    ${rows.map(r => { const ft = r[6] !== 'none' ? opTarget(r[5], r[6]) : null; return `<tr${ft ? ` data-fop="${esc(r[5])}|${r[6]}"` : ''}><td><b>${esc(r[0])}</b>${ft ? `<span class="fbadge" data-fk="${ft.k}:${ft.i}" title="Forzato">F</span>` : ''}</td><td>${r[1]}</td><td><code>${r[2]}</code></td><td>${r[3]}</td><td class="mut small">${esc(r[4])}</td><td data-vval="${esc(r[5])}|${r[6]}"></td></tr>`; }).join('') || '<tr><td colspan="6" class="mut">Configura i pin qui sotto e crea i merker in fondo alla pagina.</td></tr>'}</table>
+    <p class="small mut">I nomi degli ingressi e delle uscite sono le etichette dei pin (modificale qui sotto); gli indirizzi %I/%Q/%IW/%QW vengono assegnati in ordine di pin. Tasto destro su una riga → <b>Forza…</b> per forzare o comandare la variabile.</p>`;
   updateVarTableLive();
 }
 function updateVarTableLive() {
@@ -5262,7 +5453,7 @@ function renderTags() {
   const card = $('#tagsCard');
   card.classList.toggle('hide', project.lang !== 'lad' && project.lang !== 'graf');
   if (project.lang !== 'lad' && project.lang !== 'graf') return;
-  const rows = project.tags.map((t, i) => `<tr><td><input data-tname="${i}" value="${esc(t.name)}" maxlength="24"></td><td>${t.t === 'w' ? 'Int' : 'Bool'}</td><td><code>${tagAddr(t)}</code></td>
+  const rows = project.tags.map((t, i) => `<tr data-fop="${esc(t.name)}|${t.t === 'w' ? 'word' : 'bit'}"><td><input data-tname="${i}" value="${esc(t.name)}" maxlength="24"><span class="fbadge" data-fk="${t.t === 'w' ? 'w' : 'm'}:${t.i}" title="Forzato">F</span></td><td>${t.t === 'w' ? 'Int' : 'Bool'}</td><td><code>${tagAddr(t)}</code></td>
     <td data-tval="${i}" class="mut"></td><td><input data-tcm="${i}" value="${esc(t.cm || '')}" placeholder="commento"></td><td><button class="danger small" data-tdel="${i}">✕</button></td></tr>`).join('');
   card.innerHTML = `<h2>Merker e variabili <span class="mut">— memorie interne del PLC, come i tag di TIA Portal</span></h2>
     <table><tr><th>Nome</th><th>Tipo</th><th>Indirizzo</th><th>Valore</th><th>Commento</th><th></th></tr>${rows || '<tr><td colspan="6" class="mut">Nessun merker. Si creano anche scrivendo un nome nuovo come operando.</td></tr>'}</table>
@@ -6967,7 +7158,8 @@ function renderGrafInspector() {
     <li><b>↓ Tappa successiva</b> e <b>↺ Torna all'iniziale</b> costruiscono la sequenza e il rinvio dalla tappa selezionata.</li>
     <li>Le azioni si aggiungono nella tappa. Nella vista <b>LADDER</b> puoi aggiungere segmenti per sicurezze ed emergenza: leggono le tappe come X1, X2…</li>
     <li>Clic su una linea = selezionala; <kbd>Canc</kbd> elimina; <kbd>Esc</kbd> annulla il trascinamento; tasto destro trascinato = selezione multipla (poi si spostano insieme); <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd>.</li>
-    <li>Online la tappa attiva diventa verde con il gettone; le recettività vere si colorano.</li></ul></div>`;
+    <li>Online la tappa attiva diventa verde con il gettone; le recettività vere si colorano.</li>
+    <li><b>Tasto destro su una tappa o una transizione → Forza…</b> forza o comanda le variabili che usa (anche dalla tabella delle variabili nella scheda <b>Pin e variabili</b>). Le forzature restano anche dopo un riavvio; si vedono dalla <span class="fbadge on" style="margin:0">F</span> e dalla F sul display o sulla matrice di LED della scheda.</li></ul></div>`;
   el.innerHTML = h;
 }
 insp.addEventListener('change', e => {
@@ -7054,7 +7246,7 @@ function openMenuLevel(items, level, place) {
     if (it.sep) { m.append(Object.assign(document.createElement('div'), { className: 'ctxsep' })); continue; }
     if (it.head) { m.append(Object.assign(document.createElement('div'), { className: 'ctxhead', textContent: it.head })); continue; }
     const row = document.createElement('div');
-    row.className = 'ctxi' + (it.disabled ? ' dis' : '') + (it.sub ? ' has' : '');
+    row.className = 'ctxi' + (it.disabled ? ' dis' : '') + (it.sub ? ' has' : '') + (it.bold ? ' b' : '');
     row.innerHTML = `<span class="ctxc">${it.checked ? '✓' : ''}</span><span class="grow">${esc(it.label)}</span>${it.hint ? `<span class="ctxh">${esc(it.hint)}</span>` : ''}${it.sub ? '<span class="ctxh">▸</span>' : ''}`;
     const openSub = () => { if (it.sub && !it.disabled) { $$('.ctxi.open', m).forEach(x => x.classList.remove('open')); row.classList.add('open'); openMenuLevel(it.sub, level + 1, row.getBoundingClientRect()); } };
     row.onmouseenter = () => { if (it.sub) openSub(); else closeMenu(level + 1); };
@@ -7231,7 +7423,9 @@ function changeBlockType(b, t) {
   else b.in = DEFS[t].ins.map((_, i) => b.in[i] ?? null);
 }
 function blockMenu(b, x, y) {
-  const d = DEFS[b.t], items = [{ head: blockTitle(b) }, { label: '❓ Guida del blocco…', act: () => blockHelp(b) }];
+  const d = DEFS[b.t], items = [{ head: blockTitle(b) }];
+  if (b.t >= 1 && b.t <= 4 && b.k[0] >= 0) items.push(forceItem(pinTarget(b.k[0], b.t === 1 ? !!b.k[1] : undefined), 'Forza…', 'pin non configurato'));
+  items.push({ label: '❓ Guida del blocco…', act: () => blockHelp(b) });
   items.push({ label: 'Proprietà…', act: () => { sel = { kind: 'block', id: b.id }; renderAll(); $('#inspector').scrollTop = 0; $('#inspector input, #inspector select')?.focus(); } });
   items.push({ label: 'Etichetta…', act: async () => { const v = await promptDlg('Etichetta del blocco', b.label || '', 'Un nome che compare in cima al blocco (vuoto = nome del blocco).'); if (v != null) mutate(() => { b.label = v.trim(); }); } });
   const fam = TYPE_FAMILIES.find(f => f.includes(b.t));
@@ -7311,7 +7505,10 @@ function ladMenu(ni, r, c, x, y) {
   }
   if (e) {
     const d = LAD_ELEMS[e.k] || LAD_BOXES[e.k];
-    items.push({ head: d.name || d.t }, { label: '❓ Guida…', act: () => ladHelp(e) });
+    items.push({ head: d.name || d.t });
+    const fts = ladTargets(e);
+    if (fts.length) items.push(forceMulti(fts));
+    items.push({ label: '❓ Guida…', act: () => ladHelp(e) });
     const sw = LAD_SWAPS.find(g => g.includes(e.k));
     if (sw) items.push({ label: 'Cambia in', sub: sw.map(k => ({ label: (LAD_ELEMS[k]?.sym ? LAD_ELEMS[k].sym + '  ' : '') + (LAD_ELEMS[k]?.name || LAD_BOXES[k].t), checked: k === e.k, act: () => mutate(() => {
       const ne = newLadElem(k);
@@ -7348,7 +7545,7 @@ function grafMenu(hit, pt, x, y) {
     const st = gStep(hit.id);
     if (!st) return;
     gSel = [hit]; renderGraf(); renderGrafInspector();
-    showMenu(x, y, [{ head: `Tappa ${st.n}` }, { label: '❓ Guida: tappe e azioni…', act: () => grafHelp('st') },
+    showMenu(x, y, [{ head: `Tappa ${st.n}` }, forceMulti(grafTargets(st, null)), { label: '❓ Guida: tappe e azioni…', act: () => grafHelp('st') },
       { label: 'Tappa iniziale', checked: st.init, act: () => mutate(() => { st.init = !st.init; }) },
       { label: 'Commento…', hint: st.cm || '', act: async () => { const v = await promptDlg(`Commento della tappa ${st.n}`, st.cm || ''); if (v != null) mutate(() => { st.cm = v; }); } },
       { label: 'Aggiungi azione', sub: [['N', 'N continua'], ['S', 'S memorizza'], ['R', 'R cancella'], ['D', 'D ritardata'], ['L', 'L limitata'], ['V', 'V valore'], ['P', 'P1 assegnazione'], ['MSG', 'Messaggio display']].map(([q, l]) => ({ label: l, act: async () => {
@@ -7381,7 +7578,7 @@ function grafMenu(hit, pt, x, y) {
         { sep: true }, { label: 'Elimina la linea', hint: 'Canc', act: gDelete }]);
       return;
     }
-    showMenu(x, y, [{ head: `Transizione T${t.n}` }, { label: '❓ Guida: transizioni e rami…', act: () => grafHelp('tr') },
+    showMenu(x, y, [{ head: `Transizione T${t.n}` }, forceMulti(grafTargets(null, t)), { label: '❓ Guida: transizioni e rami…', act: () => grafHelp('tr') },
       { label: 'Recettività…', hint: t.mode === 'lad' ? '[LADDER]' : (t.cond || '').slice(0, 16), disabled: t.mode === 'lad', act: () => gEditCond(t.id) },
       { label: 'Scritta come', sub: [{ label: 'Espressione', checked: t.mode !== 'lad', act: () => mutate(() => { t.mode = 'text'; }) }, { label: 'Segmento LADDER', checked: t.mode === 'lad', act: () => mutate(() => { t.mode = 'lad'; }) }] },
       { label: 'Modifica il LADDER della condizione', disabled: t.mode !== 'lad', act: () => { $('#inspector [data-gladed]')?.click(); } },
@@ -7490,6 +7687,8 @@ const SIM_R4 = DEMO && new URLSearchParams(location.search).has('r4'), SIM_NSV =
 const sim = {
   image: null, prog: null, run: 1, rev: 1, sens: {}, pwm: {}, tone: {}, lum: 255, leds: [], op: '', lt: '', overrun: 0, draft: null, dr: 0, mem: { mb: new Uint8Array(16), mw: new Int32Array(32), sv: new Int32Array(SIM_NSV), pg: [0, 0, 0] }, vals: [], st: [], pins: {}, inputs: {}, analog: new Array(16).fill(512), t0: Date.now(),
   slots: store.get(SIM_R4 ? 'plcb-demo-slots-r4' : 'plcb-demo-slots', {}),
+  // forzature [k, i, v] come nel firmware (force.cpp): restano dopo il ricaricamento della pagina
+  fo: store.get(SIM_R4 ? 'plcb-demo-force-r4' : 'plcb-demo-force', []),
   // ?demo&r4&ap: scheda appena accesa, sulla sua rete (nessun Wi-Fi impostato)
   wifi: DEMO && new URLSearchParams(location.search).has('ap') ? { mode: 'ap', ssid: '', rssi: 0, ap: 'ArduLearn-6bb6', saved: 0, pass: '' }
     : { mode: 'sta', ssid: 'CasaMia', rssi: -61, ap: 'ArduLearn-6bb6', saved: 1, pass: 'password1' },
@@ -7512,14 +7711,46 @@ const sim = {
   },
   wifiInfo() { const { pass, ...w } = this.wifi; return w; },
   toggleInput(p) { this.inputs[p] = this.readPin(p) ? 0 : 1; },
+  // ---- forzature ----
+  fval(k, i) { const f = this.fo.find(f => f[0] === k && f[1] === i); return f ? f[2] : undefined; },
+  fsave() { store.set(SIM_R4 ? 'plcb-demo-force-r4' : 'plcb-demo-force', this.fo); },
+  fcheck(k, i, v) {
+    if (k === 'p') {
+      if (i >= NUM_PINS || isReserved(i)) return 'Pin non valido';
+      const m = this.prog?.pins[i] || 0;
+      if (m === PM.ANALOG) { if (v < 0 || v > 1023) return 'Valore analogico: da 0 a 1023'; }
+      else if (m === PM.OUT) { if (v < 0 || v > 255 || (v > 1 && !isPwm(i))) return 'Uscita: 0 o 1 (0..255 sui pin PWM)'; }
+      else if (m === PM.IN || m === PM.PULLUP) { if (v !== 0 && v !== 1) return 'Ingresso digitale: 0 o 1'; }
+      else return "Il pin non e' configurato come ingresso o uscita";
+      return null;
+    }
+    if (k === 'm') return i >= 128 ? 'Merker non valido' : null;
+    if (k === 'w') return i >= 32 ? 'Parola %MW non valida' : null;
+    return 'Tipo non valido';
+  },
+  fwrite(p, v) { if (v > 1) { this.pwm[p] = v; this.pins[p] = v > 127 ? 1 : 0; } else { this.pins[p] = v; if (p in this.pwm) this.pwm[p] = v ? 255 : 0; } },
+  fTick() { for (const [k, i, v] of this.fo) if (k === 'p' && this.prog?.pins[i] === PM.OUT) this.fwrite(i, v); },   // uscite forzate, anche in STOP
+  fMem() {
+    const M = this.mem;
+    for (const [k, i, v] of this.fo) { if (k === 'm') { if (v) M.mb[i >> 3] |= 1 << (i & 7); else M.mb[i >> 3] &= ~(1 << (i & 7)); } else if (k === 'w') M.mw[i] = v | 0; }
+  },
+  fclear(k, i) {
+    const j = this.fo.findIndex(f => f[0] === k && f[1] === i);
+    if (j < 0) return;
+    this.fo.splice(j, 1); this.fsave();
+    if (k === 'p' && this.prog?.pins[i] === PM.OUT && !this.run) this.fwrite(i, 0);   // in STOP torna spenta
+  },
   readPin(p) {
     const m = this.prog?.pins[p];
     if (m === PM.OUT) return this.pins[p] ? 1 : 0;
+    const fv = this.fval('p', p);
+    if (fv !== undefined && (m === PM.IN || m === PM.PULLUP)) return fv;
     if (p in this.inputs) return this.inputs[p];
     return m === PM.PULLUP ? 1 : 0;
   },
   scan() {
     const P = this.prog;
+    if (this.fo.length) { this.fTick(); this.fMem(); }
     if (!P || !this.run) return;
     const now = Date.now() - this.t0, V = this.vals;
     const inp = (b, i) => { const s = b.in[i]; if (s !== 255) return V[s >> 1][s & 1]; return (FB_MASK(b.t) >> i) & 1 ? b.k[i] : 0; };
@@ -7529,9 +7760,11 @@ const sim = {
       const o = V[i], s = this.st[i], k = b.k;
       switch (b.t) {
         case 1: { const v = this.readPin(k[0]); o[0] = k[1] ? 1 - v : v; break; }
-        case 3: o[0] = this.analog[k[0] - FIRST_A] ?? 0; break;
-        case 2: this.pins[k[0]] = inp(b, 0) ? 1 : 0; break;
-        case 4: { const v = clamp(inp(b, 0), 0, 255); this.pins[k[0]] = v > 127 ? 1 : 0; this.pwm[k[0]] = v; break; }
+        case 3: o[0] = this.fval('p', k[0]) ?? this.analog[k[0] - FIRST_A] ?? 0; break;
+        // come il firmware: l'uscita si scrive solo quando il valore cambia (cosi' "Comanda" resta finche' il programma non la cambia);
+        // un'uscita forzata la scrive fTick()
+        case 2: { if (this.fval('p', k[0]) !== undefined) { s.dw = undefined; break; } const v = inp(b, 0) ? 1 : 0; if (s.dw !== v) { this.pins[k[0]] = v; s.dw = v; } break; }
+        case 4: { if (this.fval('p', k[0]) !== undefined) { s.dw = undefined; break; } const v = clamp(inp(b, 0), 0, 255); if (s.dw !== v) { this.pins[k[0]] = v > 127 ? 1 : 0; this.pwm[k[0]] = v; s.dw = v; } break; }
         case 5: o[0] = k[0]; break;
         case 10: case 11: case 12: case 13: case 14: {
           let n = 0, ones = 0;
@@ -7560,18 +7793,20 @@ const sim = {
           s.f = (s.f & ~1) | (st ? 1 : 0);
           if (o[1] > 0) { const el = now - s.t; if ((s.f & 2) && el >= inp(b, 2)) { o[0] = 0; s.f &= ~2; s.t = now; o[1]--; } else if (!(s.f & 2) && el >= inp(b, 3)) { o[0] = 1; s.f |= 2; s.t = now; } } else o[0] = 0;
           break; }
-        case 62: { const code = P.code.slice(k[0], k[0] + k[1]); if (!stRun(code, [inp(b, 0), inp(b, 1), inp(b, 2), inp(b, 3)], o, M.sv.subarray(k[2], k[2] + k[3]), M)) this.overrun = i + 1; break; }
+        case 62: { const code = P.code.slice(k[0], k[0] + k[1]); if (!stRun(code, [inp(b, 0), inp(b, 1), inp(b, 2), inp(b, 3)], o, M.sv.subarray(k[2], k[2] + k[3]), M)) this.overrun = i + 1; if (this.fo.length) this.fMem(); break; }
         case 63: {       // Script C, con l'eventuale estensione (64) subito dopo: ingressi 5..8 e uscite 3..4
           const code = P.code.slice(k[0], k[0] + k[1]), ei = P.blocks[i + 1]?.t === 64 ? i + 1 : -1, eb = P.blocks[ei], eo = V[ei];
           const ins = [0, 1, 2, 3].map(j => inp(b, j)).concat(eb ? [0, 1, 2, 3].map(j => inp(eb, j)) : [0, 0, 0, 0]);
           const outs = eb ? [o[0], o[1], eo[0], eo[1]] : [o[0], o[1]];
           if (!stRun(code, ins, outs, M.sv.subarray(k[2], k[2] + k[3]), M, true)) this.overrun = i + 1;
           o[0] = outs[0]; o[1] = outs[1]; if (eb) { eo[0] = outs[2]; eo[1] = outs[3]; }
+          if (this.fo.length) this.fMem();                    // setM/setMW non cambiano i merker forzati
           break;
         }
         case 64: break;
         case 50: { const idx = k[2] & 0xFF; o[0] = (k[2] >> 8) & 0xFF ? M.mw[idx] : (M.mb[idx >> 3] >> (idx & 7)) & 1; break; }
         case 51: { const idx = k[2] & 0xFF, word = (k[2] >> 8) & 0xFF, en = !!inp(b, 0);
+          if (this.fo.length && this.fval(word ? 'w' : 'm', idx) !== undefined) break;       // forzato: il programma non lo cambia
           let v = word ? M.mw[idx] : (M.mb[idx >> 3] >> (idx & 7)) & 1;
           if (k[3] === 0) v = +en; else if (k[3] === 1) { if (en) v = 1; } else if (k[3] === 2) { if (en) v = 0; } else if (en) v = inp(b, 1);
           if (word) M.mw[idx] = v | 0; else if (v) M.mb[idx >> 3] |= 1 << (idx & 7); else M.mb[idx >> 3] &= ~(1 << (idx & 7));
@@ -7605,6 +7840,7 @@ const sim = {
     const lc = info.lcd?.c || 16, lr = info.lcd?.r || 2;
     this.lt = P.blocks.some(b => b.t === 41) ? dispText(P, 41, lc, lr, M.pg[1] || 0, now, inp).map(r => r.join('')).join('\n') : '';
   },
+  fMark(s) { return this.fo.length && (Date.now() / 700 | 0) % 2 === 0 ? s : null; },
   live() {
     let d = '';
     for (let base = 0; base < NUM_PINS; base += 8) {
@@ -7612,9 +7848,15 @@ const sim = {
       for (let b = 0; b < 8 && base + b < NUM_PINS; b++) if (this.prog && this.prog.pins[base + b] && this.readPin(base + b)) byte |= 1 << b;
       d += byte.toString(16).padStart(2, '0');
     }
-    return { rev: this.rev, run: this.run, ld: this.prog ? 1 : 0, scan: 180, smax: 240, so: this.overrun, dr: this.dr, up: Math.round((Date.now() - this.t0) / 1000), mem: 1990, oled: this.op ? 1 : 0, lcd: this.lt ? 1 : 0, err: '', op: this.run ? this.op : '', lt: this.run ? this.lt : '',
-      v: this.vals.flat(), d, mb: [...this.mem.mb].map(x => x.toString(16).padStart(2, '0')).join(''), mw: [...this.mem.mw], pg: this.mem.pg.slice(0, 2), a: this.analog.map((v, i) => this.prog?.pins[FIRST_A + i] === PM.ANALOG ? v : -1),
-      ...(SIM_R4 ? { pm: this.mem.pg[2] || 0, mx: this.run && this.mx ? this.mx : '000000000000000000000000' } : {}) };
+    let lt = this.run ? this.lt : '', mx = this.run && this.mx ? this.mx : '000000000000000000000000';
+    if (this.fMark(1)) {
+      if (lt) { const r = lt.split('\n'); r[0] = r[0].slice(0, -1) + 'F'; lt = r.join('\n'); }
+      const F3 = [0x1F, 0x05, 0x01];                   // "F" 3x5 nell'angolo in alto a destra (colonne 9-11)
+      mx = mx.slice(0, 18) + F3.map((f, c) => ((parseInt(mx.substr(18 + c * 2, 2), 16) & ~0x1F) | f).toString(16).padStart(2, '0')).join('');
+    }
+    return { rev: this.rev, run: this.run, ld: this.prog ? 1 : 0, scan: 180, smax: 240, so: this.overrun, dr: this.dr, up: Math.round((Date.now() - this.t0) / 1000), mem: 1990, oled: this.op ? 1 : 0, lcd: this.lt ? 1 : 0, err: '', op: this.run ? this.op : '', lt,
+      v: this.vals.flat(), d, mb: [...this.mem.mb].map(x => x.toString(16).padStart(2, '0')).join(''), mw: [...this.mem.mw], pg: this.mem.pg.slice(0, 2), a: this.analog.map((v, i) => this.prog?.pins[FIRST_A + i] === PM.ANALOG ? this.fval('p', FIRST_A + i) ?? v : -1),
+      fo: this.fo.map(f => [...f]), ...(SIM_R4 ? { pm: this.mem.pg[2] || 0, mx } : {}) };
   },
   async handle(method, url) {
     const body = arguments[2];
@@ -7645,7 +7887,31 @@ const sim = {
     }
     if (method === 'POST') {
       if (path === '/api/vset') { const i = +q.get('b'), b = this.prog?.blocks[i]; if (!b) return err('Blocco non valido'); this.vals[i][0] = b.t === 7 ? clamp(+q.get('v'), b.k[0], b.k[1]) : +q.get('v') ? 1 : 0; return json({ ok: true }); }
-      if (path === '/api/pinset') { const p = +q.get('p'); const driven = this.run && this.prog?.blocks.some(b => (b.t === 2 || b.t === 4) && b.k[0] === p); if (driven || this.prog?.pins[p] !== PM.OUT) return err('Pin non comandabile'); this.pins[p] = +q.get('v'); return json({ ok: true }); }
+      if (path === '/api/pinset') { const p = +q.get('p'); const driven = this.run && this.prog?.blocks.some(b => (b.t === 2 || b.t === 4) && b.k[0] === p); if (driven || this.prog?.pins[p] !== PM.OUT || this.fval('p', p) !== undefined) return err('Pin non comandabile'); this.pins[p] = +q.get('v'); return json({ ok: true }); }
+      // forzature e "Comanda": per tutti, senza PIN (come il firmware)
+      if (path === '/api/force' || path === '/api/modify') {
+        const del = +q.get('del') || 0;
+        if (+q.get('all') && del) { for (const [k, i] of [...this.fo]) this.fclear(k, i); return json({ ok: true }); }
+        const k = q.get('k'), i = parseInt(q.get('i'));
+        if (!['p', 'm', 'w'].includes(k) || !(i >= 0 && i <= 255)) return err('Parametri non validi');
+        if (del) { this.fclear(k, i); return json({ ok: true }); }
+        let v = parseInt(q.get('v'));
+        if (isNaN(v)) return err('Manca il valore');
+        const e = this.fcheck(k, i, v);
+        if (e) return err(e);
+        if (k === 'm') v = v ? 1 : 0;
+        if (path === '/api/force') {
+          const f = this.fo.find(f => f[0] === k && f[1] === i);
+          if (f) f[2] = v; else { if (this.fo.length >= 16) return err('Troppe forzature (al massimo 16)'); this.fo.push([k, i, v]); }
+          this.fsave(); this.fTick(); this.fMem();
+          return json({ ok: true });
+        }
+        if (this.fval(k, i) !== undefined) return err("E' forzato: togli prima la forzatura");
+        if (k === 'p') { if (this.prog?.pins[i] !== PM.OUT) return err('Comanda vale per uscite e merker (gli ingressi si forzano)'); this.fwrite(i, v); }
+        else if (k === 'm') { const M = this.mem.mb; if (v) M[i >> 3] |= 1 << (i & 7); else M[i >> 3] &= ~(1 << (i & 7)); }
+        else this.mem.mw[i] = v | 0;
+        return json({ ok: true });
+      }
       if (!pinOk()) return err('PIN docente errato', 403);
       if (path === '/api/program') {
         try { decodeRaw(body); } catch (e) { return err(e.message); }
@@ -7654,7 +7920,7 @@ const sim = {
         store.set('plcb-demo-image', btoa(String.fromCharCode(...this.image)));
         return json({ ok: true });
       }
-      if (path === '/api/run') { this.run = +q.get('s') ? 1 : 0; if (this.run) this.setImage(this.image); else for (const p in this.pins) this.pins[p] = 0; return json({ ok: true }); }
+      if (path === '/api/run') { this.run = +q.get('s') ? 1 : 0; if (this.run) this.setImage(this.image); else { for (const p in this.pins) this.pins[p] = 0; for (const p in this.pwm) this.pwm[p] = 0; } this.fTick(); this.fMem(); return json({ ok: true }); }
       if (path === '/api/wifi' && SIM_R4) {
         if (q.get('clear') === '1') { Object.assign(this.wifi, { mode: 'ap', ssid: '', saved: 0, pass: '' }); return json({ ok: true }); }
         const ssid = q.get('ssid') || '', pass = q.get('pass') || '';
