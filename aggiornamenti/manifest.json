@@ -1,6 +1,6 @@
 {
  "r4wifi": {
-  "fw": "2.2",
+  "fw": "2.3",
   "file": "PlcBlocchi_r4wifi.bin"
  },
  "bridge": {
@@ -8,11 +8,24 @@
   "file": "ArduLearnBridge.bin"
  },
  "page": {
-  "ver": 3545165,
+  "ver": 3622093,
   "file": "INDEX.GZ"
  },
- "note": "Rete propria della scheda (ArduLearn-xxxx): la pagina non si apre più da sola (su Windows compariva MSN); apri tu http://192.168.4.1. La pagina risponde più in fretta e il modulo Wi-Fi usa meno memoria.",
+ "note": "Forzature come in TIA Portal: tasto destro su un pin o una variabile → Forza… (ingressi digitali e analogici, uscite, %M, %MW); restano dopo un riavvio e valgono anche in STOP. · Comanda: scrive una volta un'uscita o un merker. · Forzature ben visibili: F accanto a pin e variabili, barra \"Forzature attive\" per tutti, contatti e bobine LADDER in arancione (a 1 pulsano), F sul display e sulla matrice LED. · I nuovi progetti partono in LADDER. · Monitor seriale: comandi force e force off.",
  "novita": [
+  {
+   "data": "20/11/2026",
+   "fw": "2.3",
+   "bridge": "0.3.3",
+   "page": 3622093,
+   "voci": [
+    "Forzature come in TIA Portal: tasto destro su un pin o una variabile → Forza… (ingressi digitali e analogici, uscite, %M, %MW); restano dopo un riavvio e valgono anche in STOP.",
+    "Comanda: scrive una volta un'uscita o un merker.",
+    "Forzature ben visibili: F accanto a pin e variabili, barra \"Forzature attive\" per tutti, contatti e bobine LADDER in arancione (a 1 pulsano), F sul display e sulla matrice LED.",
+    "I nuovi progetti partono in LADDER.",
+    "Monitor seriale: comandi force e force off."
+   ]
+  },
   {
    "data": "28/09/2026",
    "fw": "2.2",
