@@ -670,6 +670,25 @@ static void sendScan(Print& o) {
 // ---------------------------------------------------------------------
 static bool is(const char* path, const char* p) { return strcmp_P(path, p) == 0; }
 
+// /api/force?k=p|m|w&i=N&v=V  forza;  &del=1 toglie;  /api/force?all=1&del=1 toglie tutte
+// /api/modify?k=p|m|w&i=N&v=V scrive una volta.  Funzione a parte (noinline) per non
+// allargare lo stack di route() in tutte le altre richieste: sul Mega la RAM e' poca.
+static __attribute__((noinline)) void postForce(Print& o, Req& r, bool force) {
+  char k[2] = "";
+  long a, b, del = 0, all = 0;
+  getLong(r.query, "del", del);
+  getLong(r.query, "all", all);
+  if (all && del) { forceClearAll(); displaysShowStatus(); return replyOk(o); }
+  getParam(r.query, "k", k, sizeof(k));
+  uint8_t kind = k[0] == 'p' ? FK_PIN : k[0] == 'm' ? FK_MBIT : k[0] == 'w' ? FK_MWORD : 0;
+  if (!kind || !getLong(r.query, "i", a) || a < 0 || a > 255) return replyErrP(o, 400, F("Parametri non validi"));
+  if (del) { forceClear(kind, a); return replyOk(o); }
+  if (!getLong(r.query, "v", b)) return replyErrP(o, 400, F("Manca il valore"));
+  const __FlashStringHelper* e = force ? forceSet(kind, a, b) : forceModify(kind, a, b);
+  if (e) return replyErrP(o, 400, e);
+  replyOk(o);
+}
+
 static void route(Out& o, NetClient& c, Req& r) {
   bool get = !strcmp_P(r.method, PSTR("GET"));
   bool post = !strcmp_P(r.method, PSTR("POST"));
@@ -729,23 +748,7 @@ static void route(Out& o, NetClient& c, Req& r) {
   }
 
   // forzature e "Comanda": per docente e studenti, come la prova delle uscite
-  // /api/force?k=p|m|w&i=N&v=V  forza;  &del=1 toglie;  /api/force?all=1&del=1 toglie tutte
-  // /api/modify?k=p|m|w&i=N&v=V scrive una volta
-  if (post && (is(p, PSTR("/api/force")) || is(p, PSTR("/api/modify")))) {
-    char k[2] = "";
-    long del = 0, all = 0;
-    getLong(r.query, "del", del);
-    getLong(r.query, "all", all);
-    if (all && del) { forceClearAll(); displaysShowStatus(); return replyOk(o); }
-    getParam(r.query, "k", k, sizeof(k));
-    uint8_t kind = k[0] == 'p' ? FK_PIN : k[0] == 'm' ? FK_MBIT : k[0] == 'w' ? FK_MWORD : 0;
-    if (!kind || !getLong(r.query, "i", a) || a < 0 || a > 255) return replyErrP(o, 400, F("Parametri non validi"));
-    if (del) { forceClear(kind, a); return replyOk(o); }
-    if (!getLong(r.query, "v", b)) return replyErrP(o, 400, F("Manca il valore"));
-    const __FlashStringHelper* e = is(p, PSTR("/api/force")) ? forceSet(kind, a, b) : forceModify(kind, a, b);
-    if (e) return replyErrP(o, 400, e);
-    return replyOk(o);
-  }
+  if (post && (is(p, PSTR("/api/force")) || is(p, PSTR("/api/modify")))) return postForce(o, r, is(p, PSTR("/api/force")));
 
   // da qui in poi serve il PIN docente
   if (post && !r.authed) return replyErrP(o, 403, F("PIN docente errato"));

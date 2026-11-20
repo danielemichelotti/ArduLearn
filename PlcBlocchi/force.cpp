@@ -12,7 +12,8 @@ static uint16_t lastPwm[MAX_FORCES];   // ultimo valore scritto sulle uscite for
 // ---------------------------------------------------------------------
 static const uint8_t FORCE_MAGIC = 0xF5;
 
-static void save() {
+// noinline: il buffer non deve finire nello stack di chi chiama (es. il server web)
+static __attribute__((noinline)) void save() {
   uint8_t buf[2 + MAX_FORCES * 6];
   buf[0] = FORCE_MAGIC;
   buf[1] = g_nForces;
@@ -26,7 +27,7 @@ static void save() {
   eeSaveBlock(EE_FORCE_ADDR, buf, 2 + g_nForces * 6);
 }
 
-void forceLoad() {
+__attribute__((noinline)) void forceLoad() {
   uint8_t h[2];
   eeLoadBlock(EE_FORCE_ADDR, h, 2);
   g_nForces = 0;
