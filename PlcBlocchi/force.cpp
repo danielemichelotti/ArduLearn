@@ -66,7 +66,7 @@ static const __FlashStringHelper* check(uint8_t kind, uint8_t idx, int32_t& v) {
       if (m == PM_ANALOG) { if (v < 0 || v > 1023) return F("Valore analogico: da 0 a 1023"); }
       else if (m == PM_OUT) { if (v < 0 || v > 255 || (v > 1 && !Engine::isPwm(idx))) return F("Uscita: 0 o 1 (0..255 sui pin PWM)"); }
       else if (m == PM_IN || m == PM_IN_PULLUP) { if (v != 0 && v != 1) return F("Ingresso digitale: 0 o 1"); }
-      else return F("Il pin non e' configurato come ingresso o uscita");
+      else return F("Pin non configurato come ingresso o uscita");
       return nullptr;
     }
     case FK_MBIT:  if (idx >= NUM_MBITS) return F("Merker non valido"); v = v != 0; return nullptr;
@@ -113,7 +113,7 @@ const __FlashStringHelper* forceModify(uint8_t kind, uint8_t idx, int32_t v) {
   if (forcedValue(kind, idx, fv)) return F("E' forzato: togli prima la forzatura");
   switch (kind) {
     case FK_PIN:
-      if (Engine::pinModes[idx] != PM_OUT) return F("Comanda vale per uscite e merker (gli ingressi si forzano)");
+      if (Engine::pinModes[idx] != PM_OUT) return F("Comanda: solo uscite e merker");
       if (v > 1) analogWrite(idx, v); else digitalWrite(idx, v ? HIGH : LOW);
       break;
     case FK_MBIT:
