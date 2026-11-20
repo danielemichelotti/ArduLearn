@@ -1,6 +1,7 @@
 #include "config.h"
 #if HAS_SCRIPT
 #include "script.h"
+#include "force.h"
 
 bool runScript(Block& b, int32_t* out, Block* ext, int32_t* extOut) {
   const bool wide = b.type == BT_CSCRIPT;                  // 8 ingressi / 4 uscite
@@ -87,10 +88,10 @@ bool runScript(Block& b, int32_t* out, Block* ext, int32_t* extOut) {
         if (pc >= len) return true;
         uint8_t i = c[pc++];
         POP(x);
-        if (i < NUM_MBITS) { if (x) Engine::mbits[i >> 3] |= 1 << (i & 7); else Engine::mbits[i >> 3] &= ~(1 << (i & 7)); }
+        if (i < NUM_MBITS && !mbitForced(i)) { if (x) Engine::mbits[i >> 3] |= 1 << (i & 7); else Engine::mbits[i >> 3] &= ~(1 << (i & 7)); }
         break;
       }
-      case OP_MSETW: { if (pc >= len) return true; uint8_t i = c[pc++]; POP(x); if (i < NUM_MWORDS) Engine::mwords[i] = x; break; }
+      case OP_MSETW: { if (pc >= len) return true; uint8_t i = c[pc++]; POP(x); if (i < NUM_MWORDS && !mwordForced(i)) Engine::mwords[i] = x; break; }
       case OP_MILLIS: PUSH((int32_t)(millis() & 0x7FFFFFFF)); break;
       case OP_BAND: POP(x); POP(a); PUSH(a & x); break;
       case OP_BOR:  POP(x); POP(a); PUSH(a | x); break;

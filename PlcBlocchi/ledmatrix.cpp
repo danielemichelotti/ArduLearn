@@ -1,6 +1,7 @@
 #include "ledmatrix.h"
 #if HAS_LED_MATRIX
 #include "engine.h"
+#include "force.h"
 #include "net.h"
 #include "displays.h"
 #include "font5x7.h"
@@ -50,7 +51,16 @@ static void drawColumn(int16_t x, uint8_t bits) {
   for (uint8_t r = 0; r < 8; r++) frame[r][x] = (bits >> r) & 1;
 }
 
+// Forzature attive: piccola "F" lampeggiante nell'angolo in alto a destra (colonne 9-11, righe 0-4)
+static void forceMark() {
+  if (!g_nForces || (millis() / 700) % 2) return;
+  static const uint8_t F3[3] = { 0x1F, 0x05, 0x01 };       // 3x5, bit 0 in alto
+  for (uint8_t c = 0; c < 3; c++)
+    for (uint8_t r = 0; r < 5; r++) frame[r][9 + c] = (F3[c] >> r) & 1;
+}
+
 static void show() {
+  forceMark();
   if (shownValid && !memcmp(frame, shown, sizeof(frame))) return;
   memcpy(shown, frame, sizeof(frame));
   shownValid = true;

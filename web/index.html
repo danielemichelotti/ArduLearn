@@ -7721,7 +7721,7 @@ const sim = {
       if (m === PM.ANALOG) { if (v < 0 || v > 1023) return 'Valore analogico: da 0 a 1023'; }
       else if (m === PM.OUT) { if (v < 0 || v > 255 || (v > 1 && !isPwm(i))) return 'Uscita: 0 o 1 (0..255 sui pin PWM)'; }
       else if (m === PM.IN || m === PM.PULLUP) { if (v !== 0 && v !== 1) return 'Ingresso digitale: 0 o 1'; }
-      else return "Il pin non e' configurato come ingresso o uscita";
+      else return "Pin non configurato come ingresso o uscita";
       return null;
     }
     if (k === 'm') return i >= 128 ? 'Merker non valido' : null;
@@ -7907,7 +7907,7 @@ const sim = {
           return json({ ok: true });
         }
         if (this.fval(k, i) !== undefined) return err("E' forzato: togli prima la forzatura");
-        if (k === 'p') { if (this.prog?.pins[i] !== PM.OUT) return err('Comanda vale per uscite e merker (gli ingressi si forzano)'); this.fwrite(i, v); }
+        if (k === 'p') { if (this.prog?.pins[i] !== PM.OUT) return err('Comanda: solo uscite e merker'); this.fwrite(i, v); }
         else if (k === 'm') { const M = this.mem.mb; if (v) M[i >> 3] |= 1 << (i & 7); else M[i >> 3] &= ~(1 << (i & 7)); }
         else this.mem.mw[i] = v | 0;
         return json({ ok: true });

@@ -25,6 +25,7 @@
 #include "engine.h"
 #include "displays.h"
 #include "web.h"
+#include "force.h"
 
 uint8_t g_netState = NET_NO_LINK;
 char    g_hostname[16];
@@ -312,6 +313,7 @@ static void printHelp() {
 #endif
     "  run / stop         avvia / ferma il programma\n"
     "  io                 ingressi, uscite e valori dei blocchi (io on / io off: ogni secondo)\n"
+    "  force              forzature attive (force off: le toglie tutte)\n"
 #if NET_BRIDGE
     "  wifi               stato del Wi-Fi\n"
     "  wifi clear         dimentica la rete e torna alla rete ArduLearn della scheda\n"
@@ -405,6 +407,18 @@ static void serialTick() {
       else Serial.println(Engine::running ? F("Programma avviato (RUN)") : F("Programma fermato (STOP)"));
     }
     else if (!strcmp_P(line, PSTR("io"))) printIo();
+    else if (!strcmp_P(line, PSTR("force")) || !strcmp_P(line, PSTR("forze"))) {
+      if (!g_nForces) Serial.println(F("Nessuna forzatura"));
+      for (uint8_t i = 0; i < g_nForces; i++) {
+        const Force& f = g_forces[i];
+        Serial.print(F("  F "));
+        if (f.kind == FK_PIN) pinLabel(f.idx);
+        else if (f.kind == FK_MBIT) { Serial.print(F("%M")); Serial.print(f.idx / 8); Serial.print('.'); Serial.print(f.idx % 8); }
+        else { Serial.print(F("%MW")); Serial.print(f.idx * 2); }
+        Serial.print(F(" = ")); Serial.println(f.v);
+      }
+    }
+    else if (!strcmp_P(line, PSTR("force off")) || !strcmp_P(line, PSTR("forze off"))) { forceClearAll(); Serial.println(F("Forzature tolte")); }
     else if (!strcmp_P(line, PSTR("io on"))) { ioLive = true; ioLast = 0; }
     else if (!strcmp_P(line, PSTR("io off"))) { ioLive = false; Serial.println(F("[io] fermo")); }
 #if NET_BRIDGE
@@ -485,6 +499,7 @@ void setup() {
   Wire.setWireTimeout(5000, true);   // un display scollegato non deve bloccare la scheda
 
   cfgLoad();
+  forceLoad();                         // forzature rimaste dall'ultima volta (come in TIA)
   strlcpy(g_hostname, cfg.host, sizeof(g_hostname));
 
 #if NET_BRIDGE
@@ -521,6 +536,7 @@ void loop() {
   displaysTick();
   serialTick();
   storageTick();
+  if (g_nForces) forceTick();
 #if HAS_LED_MATRIX
   ledTick();
 #endif

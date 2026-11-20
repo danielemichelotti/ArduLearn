@@ -324,6 +324,20 @@ ImgSink* openFileWrite(const char* path) {
 }
 #endif
 
+void eeLoadBlock(uint16_t addr, void* p, uint16_t n) {
+  for (uint16_t i = 0; i < n; i++) ((uint8_t*)p)[i] = EEPROM.read(addr + i);
+}
+
+void eeSaveBlock(uint16_t addr, const void* p, uint16_t n) {
+#if BOARD_R4
+  uint8_t cur[2 + 16 * 6];                     // si riscrive solo se cambia (flash emulata: lenta)
+  if (n <= sizeof(cur)) { eeLoadBlock(addr, cur, n); if (!memcmp(cur, p, n)) return; }
+  eeWriteBytes(addr, (const uint8_t*)p, n);
+#else
+  for (uint16_t i = 0; i < n; i++) EEPROM.update(addr + i, ((const uint8_t*)p)[i]);
+#endif
+}
+
 bool eeHasProgram() { EepromSource e; return e.size() > 0; }
 
 void eeErase() {

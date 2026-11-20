@@ -7,7 +7,7 @@
 //   - Arduino UNO R4 WiFi da solo: Wi-Fi integrato, nessuna shield
 // =====================================================================
 
-#define FW_VERSION "2.2"
+#define FW_VERSION "2.3"
 
 // ---- Scheda: lo stesso sorgente si compila per Mega 2560 e per UNO R4 WiFi ----
 // L'EXE di caricamento sceglie il firmware giusto; la pagina chiede /api/info
@@ -68,6 +68,7 @@ const uint16_t MAX_IMAGE_EE = 3072;   // dimensione massima di un progetto in EE
 const uint16_t MAX_IMAGE_EE = 7680;
 #endif
 const uint16_t MAX_IMAGE_SD = 8192;   // ... e su microSD
+const uint16_t EE_FORCE_ADDR = 400;   // forzature in memoria permanente: 400..497 (prima del programma)
 const uint8_t  NUM_MBITS  = 128;      // memorie a bit  %M0.0 ... %M15.7
 const uint8_t  NUM_MWORDS = 32;       // memorie intere %MW0 ... %MW62 (a 32 bit)
 #if BOARD_MEGA
